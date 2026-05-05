@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Screener</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #c8f135;
+    --accent2: #f1c135;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4d4d;
+    --rank1: #c8f135;
+    --rank2: #f1c135;
+    --rank3: #f17c35;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  /* grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* header */
+  header {
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  textarea, input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder, input::placeholder {
+    color: var(--muted);
+  }
+
+  /* resume list */
+  .resume-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .resume-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 10px;
+    align-items: start;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .resume-item input[type="text"] {
+    background: var(--bg);
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .resume-item textarea {
+    background: var(--bg);
+    font-size: 12px;
+    min-height: 70px;
+    padding: 8px 10px;
+  }
+
+  .remove-btn {
+    background: none;
+    border: 1px solid #333;
+    color: var(--muted);
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .remove-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 500;
+    flex: 1;
+    padding: 14px;
+    font-size: 12px;
+  }
+  .btn-primary:hover { background: #d9ff3d; }
+  .btn-primary:disabled { background: #333; color: var(--muted); cursor: not-allowed; }
+
+  /* top_n row */
+  .options-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .options-row label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .options-row input[type="number"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 6px 10px;
+    width: 70px;
+    outline: none;
+  }
+
+  /* status */
+  #status {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  #status.loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #111;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  #status.error {
+    display: block;
+    background: #1a0000;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+  }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* results */
+  #results { display: none; }
+
+  .results-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .results-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+  }
+
+  .timing {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 16px;
+    align-items: start;
+    animation: fadeUp 0.4s ease both;
+    transition: border-color 0.2s;
+  }
+
+  .result-card:hover { border-color: #3a3a3a; }
+
+  .result-card.rank-0 { border-left: 3px solid var(--rank1); }
+  .result-card.rank-1 { border-left: 3px solid var(--rank2); }
+  .result-card.rank-2 { border-left: 3px solid var(--rank3); }
+
+  .rank-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--muted);
+    text-align: center;
+    padding-top: 4px;
+  }
+
+  .rank-0 .rank-num { color: var(--rank1); }
+  .rank-1 .rank-num { color: var(--rank2); }
+  .rank-2 .rank-num { color: var(--rank3); }
+
+  .result-body {}
+
+  .result-id {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .result-snippet {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .score-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .score-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .score-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .score-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .score-bar {
+    width: 80px;
+    height: 4px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--accent);
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .rank-1 .score-bar-fill { background: var(--rank2); }
+  .rank-2 .score-bar-fill { background: var(--rank3); }
+
+  .score-val {
+    font-size: 11px;
+    color: var(--text);
+    min-width: 36px;
+  }
+
+  /* verdict badge */
+  .verdict {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-bottom: 8px;
+  }
+
+  .verdict.strong { background: rgba(200,241,53,0.15); color: var(--rank1); }
+  .verdict.medium { background: rgba(241,193,53,0.15); color: var(--rank2); }
+  .verdict.weak   { background: rgba(241,124,53,0.15); color: var(--rank3); }
+  .verdict.poor   { background: rgba(255,77,77,0.1);   color: var(--danger); }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="badge">AI-Powered</div>
+    <h1>Resume<br><em>Screener</em></h1>
+    <p class="subtitle">Two-stage pipeline · Bi-encoder retrieval + Cross-encoder reranking</p>
+  </header>
+
+  <!-- Job Description -->
+  <div class="card" style="animation-delay:0.1s">
+    <div class="card-label">Job Description</div>
+    <textarea id="jd" rows="6" placeholder="Paste the full job description here...&#10;&#10;e.g. We are looking for a Senior ML Engineer with expertise in PyTorch, LLMs, and vector databases..."></textarea>
+  </div>
+
+  <!-- Resumes -->
+  <div class="card" style="animation-delay:0.2s">
+    <div class="card-label">Resumes</div>
+    <div class="resume-list" id="resumeList"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-ghost" onclick="addResume()">+ Add Resume</button>
+      <button class="btn btn-ghost" onclick="pasteExample()">Load Example</button>
+    </div>
+  </div>
+
+  <!-- Options + Submit -->
+  <div class="card" style="animation-delay:0.3s">
+    <div class="options-row">
+      <label>Show top</label>
+      <input type="number" id="topN" value="3" min="1" max="20">
+      <label>results</label>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-primary" id="submitBtn" onclick="runScreening()">
+        ▶ Screen Resumes
+      </button>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="status"></div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-header">
+      <div class="results-title">Results</div>
+      <div class="timing" id="timingInfo"></div>
+    </div>
+    <div id="resultCards"></div>
+  </div>
+
+</div>
+
+<script>
+  let resumeCount = 0;
+
+  function addResume(id = '', text = '') {
+    resumeCount++;
+    const defaultId = id || `candidate_${resumeCount}`;
+    const div = document.createElement('div');
+    div.className = 'resume-item';
+    div.innerHTML = `
+      <input type="text" placeholder="ID" value="${defaultId}" class="resume-id">
+      <textarea placeholder="Paste resume text here..." class="resume-text" rows="3">${text}</textarea>
+      <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+    `;
+    document.getElementById('resumeList').appendChild(div);
+  }
+
+  function pasteExample() {
+    document.getElementById('jd').value =
+      'Senior ML Engineer with PyTorch, LLMs, FAISS, and Python experience required. ' +
+      'You will build and deploy large language models. Bonus: LoRA fine-tuning, RLHF, vector databases.';
+
+    document.getElementById('resumeList').innerHTML = '';
+    resumeCount = 0;
+
+    const examples = [
+      ['alice',   'ML engineer, 6 years. PyTorch, transformers, FAISS, LLaMA fine-tuning. Led model deployment at scale.'],
+      ['bob',     'Frontend developer, React, TypeScript, CSS, 4 years experience. Built dashboards and design systems.'],
+      ['carol',   'NLP researcher. Published on BERT, LoRA fine-tuning, RLHF, HuggingFace. PhD Computer Science.'],
+      ['dave',    'DevOps engineer. Kubernetes, Terraform, AWS, CI/CD pipelines. Managed infra for 10M users.'],
+      ['eve',     'Data scientist. scikit-learn, XGBoost, SQL, Tableau. 3 years in fintech analytics.'],
+    ];
+    examples.forEach(([id, text]) => addResume(id, text));
+  }
+
+  function getVerdict(score) {
+    if (score >= 0.75) return { cls: 'strong', label: 'Strong Match' };
+    if (score >= 0.45) return { cls: 'medium', label: 'Good Match' };
+    if (score >= 0.2)  return { cls: 'weak',   label: 'Weak Match' };
+    return { cls: 'poor', label: 'Poor Match' };
+  }
+
+  async function runScreening() {
+    const jd = document.getElementById('jd').value.trim();
+    if (!jd) { showError('Please enter a job description.'); return; }
+
+    const items = document.querySelectorAll('.resume-item');
+    if (items.length === 0) { showError('Please add at least one resume.'); return; }
+
+    const resumes = [];
+    for (const item of items) {
+      const id   = item.querySelector('.resume-id').value.trim();
+      const text = item.querySelector('.resume-text').value.trim();
+      if (!id || !text) { showError('All resumes must have an ID and text.'); return; }
+      resumes.push({ resume_id: id, text });
+    }
+
+    const topN = parseInt(document.getElementById('topN').value) || 3;
+
+    // show loading
+    document.getElementById('results').style.display = 'none';
+    const status = document.getElementById('status');
+    status.className = 'loading';
+    status.innerHTML = '<div class="spinner"></div> Running two-stage pipeline…';
+    document.getElementById('submitBtn').disabled = true;
+
+    try {
+      const res = await fetch('http://localhost:8000/rank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_description: jd, resumes, top_n: topN }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      status.style.display = 'none';
+      renderResults(data);
+
+    } catch (err) {
+      showError(err.message || 'Could not connect to the API. Make sure python run.py is running.');
+    } finally {
+      document.getElementById('submitBtn').disabled = false;
+    }
+  }
+
+  function renderResults(data) {
+    const timing = data.timing || {};
+    document.getElementById('timingInfo').textContent =
+      `${data.total_candidates} candidates screened · ${timing.total_s?.toFixed(2)}s total`;
+
+    const container = document.getElementById('resultCards');
+    container.innerHTML = '';
+
+    data.results.forEach((r, i) => {
+      const verdict = getVerdict(r.final_score);
+      const card = document.createElement('div');
+      card.className = `result-card rank-${i}`;
+      card.style.animationDelay = `${i * 0.08}s`;
+      card.innerHTML = `
+        <div class="rank-num">${i + 1}</div>
+        <div class="result-body">
+          <div class="verdict ${verdict.cls}">${verdict.label}</div>
+          <div class="result-id">${r.resume_id}</div>
+          <div class="result-snippet">${r.text_snippet}</div>
+          <div class="score-row">
+            ${scoreItem('Final Score', r.final_score)}
+            ${scoreItem('Semantic Match', r.embedding_score)}
+            ${scoreItem('Rerank Score', r.rerank_score)}
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function scoreItem(label, val) {
+    const pct = Math.round((val || 0) * 100);
+    return `
+      <div class="score-item">
+        <span class="score-label">${label}</span>
+        <div class="score-bar-wrap">
+          <div class="score-bar">
+            <div class="score-bar-fill" style="width:${pct}%"></div>
+          </div>
+          <span class="score-val">${pct}%</span>
+        </div>
+      </div>`;
+  }
+
+  function showError(msg) {
+    const status = document.getElementById('status');
+    status.className = 'error';
+    status.textContent = '⚠ ' + msg;
+  }
+
+  // Start with 3 empty resumes
+  addResume(); addResume(); addResume();
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - EMBED_MODEL=BAAI/bge-large-en-v1.5
+      - EMBED_DEVICE=cpu
+      - EMBED_BATCH_SIZE=64
+      - TOP_K=50
+      - USE_LLM_RERANKER=false
+      - CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-12-v2
+      - TOP_N=10
+      - CACHE_TTL=3600
+      # Redis (optional)
+      # - REDIS_HOST=redis
+      # - REDIS_PORT=6379
+    volumes:
+      - faiss_data:/app/data/faiss_index
+      - model_cache:/app/models
+      # mount HuggingFace cache to avoid re-downloading on restart
+      - hf_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    restart: unless-stopped
+
+  # Optional Redis for shared embedding cache across workers
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+
+volumes:
+  faiss_data:
+  model_cache:
+  hf_cache:
+  # redis_data:

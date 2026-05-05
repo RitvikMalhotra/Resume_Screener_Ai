@@ -1,0 +1,34 @@
+# ── Core API ────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+python-multipart>=0.0.9       # multipart form uploads
+
+# ── Retrieval ───────────────────────────────────────────────────────────────
+sentence-transformers>=2.7.0
+faiss-cpu>=1.8.0              # swap for faiss-gpu on CUDA hosts
+numpy>=1.26.0
+
+# ── LLM Reranker (optional, heavy) ──────────────────────────────────────────
+# Uncomment for LLaMA 3 8B reranker:
+# torch>=2.3.0
+# transformers>=4.41.0
+# accelerate>=0.30.0
+# peft>=0.11.0
+# bitsandbytes>=0.43.0         # 4-bit quantization
+
+# ── Document parsing ─────────────────────────────────────────────────────────
+pymupdf>=1.24.0               # PDF parsing
+python-docx>=1.1.0            # DOCX parsing
+beautifulsoup4>=4.12.0        # HTML stripping
+
+# ── Caching ──────────────────────────────────────────────────────────────────
+redis>=5.0.0                  # optional; TieredCache falls back gracefully
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+httpx>=0.27.0                 # for FastAPI TestClient
+
+# ── Dev / profiling ──────────────────────────────────────────────────────────
+scipy>=1.13.0                 # optional; used in spearman fallback
