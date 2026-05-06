@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resume Screener</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --bg: #080808;
@@ -38,60 +39,28 @@
 
   body::before {
     content: '';
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background:
       radial-gradient(ellipse 60% 40% at 20% 20%, rgba(232,255,71,0.04) 0%, transparent 60%),
       radial-gradient(ellipse 50% 30% at 80% 80%, rgba(71,217,255,0.03) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
   }
 
   body::after {
     content: '';
-    position: fixed;
-    inset: 0;
-    background-image: repeating-linear-gradient(
-      0deg, transparent, transparent 2px,
-      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
+    position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+    pointer-events: none; z-index: 0;
   }
 
-  .wrap {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 48px 24px 80px;
-    position: relative;
-    z-index: 1;
-  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; position: relative; z-index: 1; }
 
   header { margin-bottom: 56px; animation: fadeDown 0.7s cubic-bezier(0.16,1,0.3,1) both; }
 
-  .top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 32px;
-  }
-
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
   .logo-mark { display: flex; align-items: center; gap: 10px; }
-
-  .logo-square {
-    width: 32px; height: 32px;
-    background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 14px; color: #000;
-  }
-
-  .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 600;
-    letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted2);
-  }
-
+  .logo-square { width: 32px; height: 32px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: #000; }
+  .logo-text { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted2); }
   .status-pill { display: flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.12em; color: var(--muted2); text-transform: uppercase; }
   .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); animation: pulse 2s ease infinite; }
   .status-dot.offline { background: var(--uncertain); animation: none; }
@@ -104,14 +73,7 @@
   .tag-item { display: flex; align-items: center; gap: 6px; }
   .tag-item::before { content: '▸'; color: var(--accent); font-size: 10px; }
 
-  #systemBar {
-    background: var(--s1); border: 1px solid var(--border);
-    padding: 12px 16px; margin-bottom: 28px;
-    display: flex; gap: 24px; flex-wrap: wrap;
-    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-    animation: fadeUp 0.5s ease 0.3s both;
-  }
-
+  #systemBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 28px; display: flex; gap: 24px; flex-wrap: wrap; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; animation: fadeUp 0.5s ease 0.3s both; }
   .sys-item { display: flex; align-items: center; gap: 6px; color: var(--muted2); }
   .sys-val { color: var(--accent); font-weight: 500; }
   .sys-val.na { color: var(--muted); }
@@ -130,44 +92,59 @@
   textarea:focus, input:focus { border-color: var(--accent); }
   textarea::placeholder, input::placeholder { color: var(--muted); }
 
+  /* ── Resume rows ── */
   .resume-list { display: flex; flex-direction: column; gap: 8px; }
 
   .resume-row {
     background: var(--s2); border: 1px solid var(--border);
-    padding: 12px; display: grid;
-    grid-template-columns: 130px 1fr 32px;
-    gap: 8px; align-items: start;
-    animation: fadeUp 0.3s ease both;
+    padding: 12px; animation: fadeUp 0.3s ease both;
   }
 
-  .resume-row input { font-size: 12px; padding: 8px 10px; }
+  .resume-row-top {
+    display: grid;
+    grid-template-columns: 130px 1fr 32px;
+    gap: 8px; align-items: start; margin-bottom: 8px;
+  }
+
+  .resume-row input[type="text"] { font-size: 12px; padding: 8px 10px; }
   .resume-row textarea { font-size: 12px; min-height: 64px; padding: 8px 10px; }
 
-  .rm-btn {
-    width: 32px; height: 32px; background: none;
-    border: 1px solid var(--border); color: var(--muted);
-    cursor: pointer; font-size: 14px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s; flex-shrink: 0;
-  }
+  .rm-btn { width: 32px; height: 32px; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
   .rm-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
 
-  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-
-  .btn {
-    font-family: 'Inconsolata', monospace;
-    font-size: 11px; font-weight: 500;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 9px 18px; cursor: pointer; border: none; transition: all 0.15s;
+  /* PDF upload area */
+  .pdf-upload-row {
+    display: flex; align-items: center; gap: 8px;
+    padding-top: 6px; border-top: 1px solid var(--border);
   }
 
+  .pdf-input { display: none; }
+
+  .pdf-upload-btn {
+    font-family: 'Inconsolata', monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 6px 12px; cursor: pointer; border: 1px dashed var(--border2);
+    color: var(--muted2); background: none; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .pdf-upload-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .pdf-status {
+    font-size: 10px; letter-spacing: 0.08em; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pdf-status.loading { color: var(--accent2); }
+  .pdf-status.done    { color: var(--good); }
+  .pdf-status.error   { color: var(--uncertain); }
+
+  /* ── Buttons ── */
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btn { font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; border: none; transition: all 0.15s; }
   .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--muted2); }
   .btn-ghost:hover { border-color: var(--text); color: var(--text); }
-
   .btn-primary { background: var(--accent); color: #000; font-weight: 700; flex: 1; padding: 13px; font-size: 12px; }
   .btn-primary:hover { background: #f0ff60; }
   .btn-primary:disabled { background: var(--s3); color: var(--muted); cursor: not-allowed; }
-
   .btn-secondary { background: none; border: 1px solid var(--accent2); color: var(--accent2); }
   .btn-secondary:hover { background: rgba(71,217,255,0.08); }
   .btn-secondary:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
@@ -175,14 +152,12 @@
   .options-grid { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
   .opt-label { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
   input[type="number"] { width: 70px; resize: none; padding: 7px 10px; }
-
   .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); cursor: pointer; }
   .checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--accent); }
 
   #status { padding: 12px 16px; margin-bottom: 12px; font-size: 11px; letter-spacing: 0.08em; display: none; align-items: center; gap: 10px; }
   #status.loading { display: flex; background: var(--s1); border: 1px solid var(--border); color: var(--muted2); }
   #status.error { display: flex; background: rgba(255,71,71,0.06); border: 1px solid rgba(255,71,71,0.3); color: var(--uncertain); }
-
   .spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 
   #validationBox { display: none; background: rgba(255,193,71,0.05); border: 1px solid rgba(255,193,71,0.2); padding: 14px 16px; margin-bottom: 12px; font-size: 11px; color: var(--medium); letter-spacing: 0.06em; }
@@ -195,67 +170,68 @@
   .results-heading { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
   .results-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-align: right; line-height: 1.8; }
 
+  /* compare button row */
+  .compare-bar {
+    display: none; background: var(--s1); border: 1px solid var(--border);
+    padding: 12px 16px; margin-bottom: 16px;
+    align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .compare-bar.visible { display: flex; }
+  .compare-info { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
+  .compare-info span { color: var(--accent); font-weight: 600; }
+  .btn-compare { font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 8px 20px; cursor: pointer; background: var(--accent); color: #000; border: none; transition: all 0.15s; }
+  .btn-compare:hover { background: #f0ff60; }
+  .btn-compare:disabled { background: var(--s3); color: var(--muted); cursor: not-allowed; }
+
   #metricsPanel { display: none; background: var(--s1); border: 1px solid var(--border); padding: 20px; margin-bottom: 16px; }
-
   .metrics-grade { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap; }
-
   .grade-circle { width: 64px; height: 64px; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; flex-direction: column; flex-shrink: 0; }
   .grade-letter { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
   .grade-label-text { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted2); }
   .grade-verdict { font-size: 12px; color: var(--muted2); line-height: 1.6; flex: 1; }
-
   .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-
   .metric-cell { background: var(--s2); border: 1px solid var(--border); padding: 10px 12px; }
   .metric-name { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
   .metric-val { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; line-height: 1; }
   .metric-grade { font-size: 9px; letter-spacing: 0.1em; margin-top: 2px; }
+  .grade-A { color: var(--good); } .grade-B { color: var(--accent); } .grade-C { color: var(--medium); } .grade-D { color: var(--low); } .grade-F { color: var(--uncertain); }
 
-  .grade-A { color: var(--good); }
-  .grade-B { color: var(--accent); }
-  .grade-C { color: var(--medium); }
-  .grade-D { color: var(--low); }
-  .grade-F { color: var(--uncertain); }
-
+  /* ── Result cards ── */
   .result-card { background: var(--s1); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
   .result-card:hover { border-color: var(--border2); }
+  .result-card.selected { border-color: var(--accent); }
 
-  .card-top { display: grid; grid-template-columns: 60px 1fr; }
+  .card-top { display: grid; grid-template-columns: 48px 1fr; }
 
-  .rank-col { background: var(--s2); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding: 20px 0; }
+  .rank-col { background: var(--s2); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding: 20px 0; flex-direction: column; gap: 8px; }
   .rank-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--muted); }
+  .rank-0 .rank-num { color: var(--high); } .rank-1 .rank-num { color: var(--medium); } .rank-2 .rank-num { color: var(--low); }
 
-  .rank-0 .rank-num { color: var(--high); }
-  .rank-1 .rank-num { color: var(--medium); }
-  .rank-2 .rank-num { color: var(--low); }
+  /* compare checkbox inside rank col */
+  .compare-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 
   .card-main { padding: 16px 20px; }
-
   .card-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
   .card-id { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
-
   .confidence-badge { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 8px; border: 1px solid; }
   .conf-high      { border-color: var(--high);      color: var(--high); }
   .conf-medium    { border-color: var(--medium);    color: var(--medium); }
   .conf-low       { border-color: var(--low);       color: var(--low); }
   .conf-uncertain { border-color: var(--uncertain); color: var(--uncertain); }
-
   .winner-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; background: var(--accent); color: #000; font-weight: 700; }
   .fallback-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); border: 1px solid rgba(71,217,255,0.3); padding: 2px 6px; }
 
   .card-snippet { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-bottom: 14px; max-height: 48px; overflow: hidden; }
-
   .scores-row { display: flex; gap: 16px; flex-wrap: wrap; }
   .score-block { display: flex; flex-direction: column; gap: 4px; }
   .score-name { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
   .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
   .score-bar { width: 72px; height: 3px; background: var(--s3); position: relative; overflow: hidden; }
   .score-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); transition: width 1s cubic-bezier(0.16,1,0.3,1); }
-  .rank-1 .score-fill { background: var(--medium); }
-  .rank-2 .score-fill { background: var(--low); }
+  .rank-1 .score-fill { background: var(--medium); } .rank-2 .score-fill { background: var(--low); }
   .score-pct { font-size: 11px; color: var(--text); min-width: 32px; }
 
-  .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 80px; font-size: 10px; color: var(--muted); letter-spacing: 0.04em; line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 68px; font-size: 10px; color: var(--muted); letter-spacing: 0.04em; line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
   .footer-reason { flex: 1; min-width: 200px; }
   .footer-gap { color: var(--muted); white-space: nowrap; }
   .footer-gap span { color: var(--text); }
@@ -263,6 +239,102 @@
   #faissBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: none; gap: 20px; flex-wrap: wrap; }
   .faiss-item { display: flex; gap: 6px; align-items: center; }
   .faiss-val { color: var(--accent2); }
+
+  /* ── Comparison Modal ── */
+  #compareModal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  #compareModal.open { display: flex; }
+
+  .compare-box {
+    background: var(--s1); border: 1px solid var(--border2);
+    max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .compare-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .compare-title {
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+  }
+
+  .close-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    width: 28px; height: 28px; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .close-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
+
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0; padding: 20px; gap: 16px;
+  }
+
+  .compare-col {
+    background: var(--s2); border: 1px solid var(--border); padding: 16px;
+  }
+
+  .compare-col-name {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+    letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+
+  .compare-col-rank {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 16px;
+  }
+
+  .compare-section-title {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px; margin-top: 16px;
+    padding-bottom: 4px; border-bottom: 1px solid var(--border);
+  }
+
+  .compare-score-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .compare-score-label { font-size: 10px; color: var(--muted2); letter-spacing: 0.08em; }
+  .compare-score-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .score-better { color: var(--good); }
+  .score-worse  { color: var(--muted); }
+
+  .compare-bar-full { height: 4px; background: var(--s3); margin-bottom: 6px; position: relative; overflow: hidden; }
+  .compare-bar-fill-full { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+
+  .compare-snippet {
+    font-size: 11px; color: var(--muted2); line-height: 1.6; margin-top: 8px;
+    max-height: 120px; overflow-y: auto;
+  }
+
+  .compare-keywords {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;
+  }
+
+  .kw-tag {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 2px 6px; background: rgba(71,217,255,0.1);
+    border: 1px solid rgba(71,217,255,0.2); color: var(--accent2);
+  }
+
+  .verdict-row {
+    margin-top: 16px; padding: 12px 16px;
+    background: var(--s1); border: 1px solid var(--border);
+    font-size: 11px; color: var(--muted2); line-height: 1.6;
+  }
+
+  .verdict-winner {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--accent); margin-bottom: 4px;
+  }
 
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); }  to { opacity: 1; transform: translateY(0); } }
@@ -284,15 +356,12 @@
         <span id="statusText">checking…</span>
       </div>
     </div>
-    <h1>
-      <span class="line1">SCREEN</span>
-      <span class="line2">SMARTER.</span>
-    </h1>
+    <h1><span class="line1">SCREEN</span><span class="line2">SMARTER.</span></h1>
     <div class="tagline">
       <span class="tag-item">FAISS Vector Retrieval</span>
       <span class="tag-item">Cross-Encoder Reranking</span>
-      <span class="tag-item">Confidence Scoring</span>
-      <span class="tag-item">NDCG Evaluation</span>
+      <span class="tag-item">PDF Upload</span>
+      <span class="tag-item">Candidate Comparison</span>
     </div>
   </header>
 
@@ -307,7 +376,7 @@
   <div class="panel" style="animation-delay:0.1s">
     <div class="panel-header"><div class="panel-title">01 — Job Description</div></div>
     <div class="panel-body">
-      <textarea id="jd" rows="7" placeholder="Paste the full job description here…&#10;&#10;Include: role title, required skills, experience level, tech stack, responsibilities.&#10;Longer descriptions produce better ranking accuracy."></textarea>
+      <textarea id="jd" rows="7" placeholder="Paste the full job description here…&#10;&#10;Include: role title, required skills, experience level, tech stack, responsibilities."></textarea>
     </div>
   </div>
 
@@ -334,12 +403,10 @@
         <input type="number" id="topN" value="5" min="1" max="20" style="width:60px">
         <span class="opt-label">results</span>
         <span style="flex:1"></span>
-        <label class="checkbox-row">
-          <input type="checkbox" id="withEval"> Enable evaluation metrics
-        </label>
+        <label class="checkbox-row"><input type="checkbox" id="withEval"> Enable evaluation metrics</label>
       </div>
       <div id="evalIdsRow" style="display:none;margin-bottom:12px">
-        <input type="text" id="relevantIds" placeholder="Relevant candidate IDs (comma-separated) e.g. sarah_chen, priya_nair">
+        <input type="text" id="relevantIds" placeholder="Relevant candidate IDs (comma-separated)">
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" id="submitBtn" onclick="runScreening()">▶ Screen Candidates</button>
@@ -358,19 +425,45 @@
       <div class="results-meta" id="resultsMeta"></div>
     </div>
     <div id="metricsPanel"></div>
+
+    <!-- Compare bar -->
+    <div class="compare-bar" id="compareBar">
+      <div class="compare-info">Select <span id="compareCount">0</span>/2 candidates to compare</div>
+      <button class="btn-compare" id="compareBtn" onclick="openComparison()" disabled>Compare Selected</button>
+    </div>
+
     <div id="resultCards"></div>
   </div>
 
 </div>
 
-<script>
-  const API = 'https://resumescreenerai-production.up.railway.app';
-  let resumeCount = 0;
+<!-- Comparison Modal -->
+<div id="compareModal">
+  <div class="compare-box">
+    <div class="compare-header">
+      <div class="compare-title">Side-by-Side Comparison</div>
+      <button class="close-btn" onclick="closeComparison()">×</button>
+    </div>
+    <div id="compareContent"></div>
+  </div>
+</div>
 
+<script>
+  // ── PDF.js setup ───────────────────────────────────────────────────────
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const API = 'https://resumescreenerai-production.up.railway.app';
+  let resumeCount  = 0;
+  let lastResults  = [];
+  let selectedForCompare = new Set();
+
+  // ── Eval toggle ────────────────────────────────────────────────────────
   document.getElementById('withEval').addEventListener('change', e => {
     document.getElementById('evalIdsRow').style.display = e.target.checked ? 'block' : 'none';
   });
 
+  // ── Health check ───────────────────────────────────────────────────────
   async function checkHealth() {
     try {
       const res  = await fetch(`${API}/health`);
@@ -399,15 +492,99 @@
     document.getElementById('sysJobs').textContent     = jobs  ? jobs.total_jobs        : '0';
   }
 
+  // ── Name extraction from PDF text ─────────────────────────────────────
+  function extractNameFromText(text) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const nameRegex = /^[A-Z][a-z]+([\s-][A-Z][a-z]+){1,3}$/;
+    const skipPatterns = /@|http|linkedin|github|phone|email|\d{3}|\+\d|resume|curriculum|cv/i;
+
+    for (const line of lines.slice(0, 10)) {
+      const clean = line.replace(/[|,]/g, ' ').trim();
+      const firstWord = clean.split(/\s+/)[0];
+      if (
+        nameRegex.test(clean) &&
+        !skipPatterns.test(clean) &&
+        clean.split(/\s+/).length >= 2 &&
+        clean.split(/\s+/).length <= 4 &&
+        firstWord.length > 1
+      ) {
+        // convert "John Smith" → "john_smith"
+        return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      }
+    }
+
+    // fallback: use first line cleaned up
+    const fallback = lines[0]?.split(/[\s|,]+/)[0];
+    if (fallback && fallback.length > 1) {
+      return fallback.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    }
+    return '';
+  }
+
+  // ── PDF parsing ────────────────────────────────────────────────────────
+  async function parsePDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf         = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page  = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+    return fullText.trim();
+  }
+
+  // ── Add resume row ─────────────────────────────────────────────────────
   function addResume(id = '', text = '') {
     resumeCount++;
+    const uid = 'resume_' + Date.now() + '_' + resumeCount;
     const div = document.createElement('div');
     div.className = 'resume-row';
+    div.dataset.uid = uid;
     div.innerHTML = `
-      <input type="text" placeholder="Candidate ID" value="${id}" class="r-id">
-      <textarea placeholder="Paste resume text here…" class="r-text" rows="3">${text}</textarea>
-      <button class="rm-btn" onclick="this.parentElement.remove();updateCount()">×</button>
+      <div class="resume-row-top">
+        <input type="text" placeholder="Candidate ID" value="${id}" class="r-id">
+        <textarea placeholder="Paste resume text here…" class="r-text" rows="3">${text}</textarea>
+        <button class="rm-btn" onclick="this.closest('.resume-row').remove();updateCount()">×</button>
+      </div>
+      <div class="pdf-upload-row">
+        <input type="file" accept=".pdf" class="pdf-input" id="pdf_${uid}">
+        <button class="pdf-upload-btn" onclick="document.getElementById('pdf_${uid}').click()">
+          📄 Upload PDF
+        </button>
+        <div class="pdf-status" id="pdfStatus_${uid}">or paste text above</div>
+      </div>
     `;
+
+    // PDF change handler
+    div.querySelector(`#pdf_${uid}`).addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const statusEl = div.querySelector(`#pdfStatus_${uid}`);
+      statusEl.className = 'pdf-status loading';
+      statusEl.textContent = '⟳ Reading PDF…';
+      try {
+        const text     = await parsePDF(file);
+        const nameId   = extractNameFromText(text);
+        const idInput  = div.querySelector('.r-id');
+        const txtArea  = div.querySelector('.r-text');
+        txtArea.value  = text;
+        if (!idInput.value && nameId) {
+          idInput.value = nameId;
+          statusEl.className = 'pdf-status done';
+          statusEl.textContent = `✓ Loaded · ID auto-set to "${nameId}"`;
+        } else {
+          statusEl.className = 'pdf-status done';
+          statusEl.textContent = `✓ ${file.name} loaded (${Math.round(text.length / 1000)}k chars)`;
+        }
+        updateCount();
+      } catch (err) {
+        statusEl.className = 'pdf-status error';
+        statusEl.textContent = '✗ Failed to read PDF — try a different file';
+      }
+    });
+
     document.getElementById('resumeList').appendChild(div);
     updateCount();
   }
@@ -432,7 +609,7 @@
     clearAll();
     [
       ['sarah_chen', 'Sarah Chen | San Francisco\nSenior ML Engineer at Scale AI. Fine-tuned LLaMA 2/3 with LoRA and QLoRA. Built RLHF pipelines. Deployed FAISS semantic search at 50M queries/day. MS Computer Science Stanford 2020.\nSkills: Python, PyTorch, HuggingFace, FAISS, LangChain, AWS, Docker, Kubernetes'],
-      ['priya_nair',  'Priya Nair | New York\nNLP Research Scientist at Bloomberg AI. Fine-tuned BERT/GPT on financial NLP. RLHF experiments. Built RAG pipeline with FAISS + LangChain. PhD Columbia 2021. 3 ACL/EMNLP papers on LoRA fine-tuning.\nSkills: Python, PyTorch, HuggingFace, FAISS, LoRA, RLHF, AWS'],
+      ['priya_nair',  'Priya Nair | New York\nNLP Research Scientist at Bloomberg AI. Fine-tuned BERT/GPT on financial NLP. RLHF experiments. Built RAG pipeline with FAISS + LangChain. PhD Columbia 2021.\nSkills: Python, PyTorch, HuggingFace, FAISS, LoRA, RLHF, AWS'],
       ['raj_patel',   'Raj Patel | Austin TX\nSenior Backend Engineer at Stripe. High-throughput payment APIs. PostgreSQL, Redis, AWS. Recently integrated OpenAI API for ticket classification. No model training experience.\nSkills: Python, Go, AWS, Kubernetes, Docker, PostgreSQL'],
     ].forEach(([id, text]) => addResume(id, text));
     document.getElementById('withEval').checked = true;
@@ -469,6 +646,7 @@
     document.getElementById('batchBtn').disabled  = false;
   }
 
+  // ── Screening ──────────────────────────────────────────────────────────
   async function runScreening() {
     const jd        = document.getElementById('jd').value.trim();
     const resumes   = collectResumes();
@@ -484,6 +662,7 @@
     document.getElementById('results').style.display = 'none';
     document.getElementById('validationBox').style.display = 'none';
     document.getElementById('faissBar').style.display = 'none';
+    selectedForCompare.clear();
 
     try {
       const res  = await fetch(`${API}/rank`, {
@@ -502,7 +681,7 @@
       renderResults(await res.json());
       checkHealth();
     } catch (e) {
-      setError(e.message || 'Could not reach API. Is python run.py running?');
+      setError(e.message || 'Could not reach API. Is the server running?');
     }
   }
 
@@ -549,12 +728,14 @@
           setLoading(`Job ${data.status} (${data.elapsed_s || 0}s)… polling…`);
         }
       } catch { }
-      if (attempts >= 60) { clearInterval(iv); setError('Job timed out.'); }
+      if (attempts >= 120) { clearInterval(iv); setError('Job timed out.'); }
     }, 1000);
   }
 
+  // ── Render results ─────────────────────────────────────────────────────
   function renderResults(data) {
-    // validation warnings
+    lastResults = data.results || [];
+
     const val = data.validation;
     if (val && val.n_warnings > 0) {
       const box = document.getElementById('validationBox');
@@ -563,7 +744,6 @@
         val.warnings.map(w => `<div class="warn-item">${w.resume_id ? `[${w.resume_id}] ` : ''}${w.message}</div>`).join('');
     }
 
-    // FAISS info
     const fi = data.faiss_info;
     if (fi) {
       const bar = document.getElementById('faissBar');
@@ -573,17 +753,14 @@
         <div class="faiss-item">VECTORS <span class="faiss-val">${fi.n_vectors}</span></div>
         <div class="faiss-item">DIM <span class="faiss-val">${fi.dimension}</span></div>
         <div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>
-        ${fi.nprobe ? `<div class="faiss-item">NPROBE <span class="faiss-val">${fi.nprobe}</span></div>` : ''}
       `;
     }
 
-    // timing
     const t = data.timing || {};
     document.getElementById('resultsMeta').innerHTML =
       `${data.total_candidates} candidates screened<br>` +
-      `Total: ${t.total_s?.toFixed(2)}s &nbsp;·&nbsp; Embed: ${t.index_build_s?.toFixed(2)}s &nbsp;·&nbsp; Rerank: ${t.rerank_s?.toFixed(2)}s`;
+      `Total: ${t.total_s?.toFixed(2)}s · Embed: ${t.index_build_s?.toFixed(2)}s · Rerank: ${t.rerank_s?.toFixed(2)}s`;
 
-    // metrics
     const mp  = document.getElementById('metricsPanel');
     const rep = data.metrics_report;
     if (rep) {
@@ -592,36 +769,36 @@
       mp.innerHTML = `
         <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div>
         <div class="metrics-grade">
-          <div class="grade-circle">
-            <div class="grade-letter">${rep.overall_grade}</div>
-            <div class="grade-label-text">${rep.overall_label}</div>
-          </div>
+          <div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div>
           <div class="grade-verdict">${rep.verdict}</div>
         </div>
         <div class="metrics-grid">
-          ${key.map(m => `
-            <div class="metric-cell">
-              <div class="metric-name">${m.name}</div>
-              <div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div>
-              <div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div>
-            </div>`).join('')}
+          ${key.map(m => `<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}
         </div>`;
     } else {
       mp.style.display = 'none';
     }
 
-    // cards
+    // Show compare bar
+    document.getElementById('compareBar').className = 'compare-bar visible';
+    updateCompareBar();
+
     const container = document.getElementById('resultCards');
     container.innerHTML = '';
-    (data.results || []).forEach((r, i) => {
+    lastResults.forEach((r, i) => {
       const conf  = r.confidence || {};
       const level = conf.level || 'uncertain';
       const card  = document.createElement('div');
       card.className = `result-card rank-${i}`;
+      card.dataset.resumeId = r.resume_id;
       card.style.animationDelay = `${i * 0.07}s`;
       card.innerHTML = `
         <div class="card-top">
-          <div class="rank-col"><div class="rank-num">${i + 1}</div></div>
+          <div class="rank-col">
+            <div class="rank-num">${i + 1}</div>
+            <input type="checkbox" class="compare-check" title="Select for comparison"
+              onchange="toggleCompare('${r.resume_id}', this)">
+          </div>
           <div class="card-main">
             <div class="card-id-row">
               <div class="card-id">${r.resume_id}</div>
@@ -631,9 +808,9 @@
             </div>
             <div class="card-snippet">${r.text_snippet}</div>
             <div class="scores-row">
-              ${sb('Final',    r.final_score,          i)}
-              ${sb('Semantic', r.embedding_score,      i)}
-              ${sb('Rerank',   r.rerank_score,         i)}
+              ${sb('Final',    r.final_score,     i)}
+              ${sb('Semantic', r.embedding_score, i)}
+              ${sb('Rerank',   r.rerank_score,    i)}
               ${r.fallback_used ? sb('Keyword', r.fallback?.score || 0, i) : ''}
             </div>
           </div>
@@ -660,6 +837,140 @@
       </div></div>`;
   }
 
+  // ── Compare logic ──────────────────────────────────────────────────────
+  function toggleCompare(resumeId, checkbox) {
+    if (checkbox.checked) {
+      if (selectedForCompare.size >= 2) {
+        checkbox.checked = false;
+        return;
+      }
+      selectedForCompare.add(resumeId);
+      checkbox.closest('.result-card').classList.add('selected');
+    } else {
+      selectedForCompare.delete(resumeId);
+      checkbox.closest('.result-card').classList.remove('selected');
+    }
+    updateCompareBar();
+  }
+
+  function updateCompareBar() {
+    const count = selectedForCompare.size;
+    document.getElementById('compareCount').textContent = count;
+    document.getElementById('compareBtn').disabled = count !== 2;
+  }
+
+  function openComparison() {
+    const ids = [...selectedForCompare];
+    if (ids.length !== 2) return;
+
+    const a = lastResults.find(r => r.resume_id === ids[0]);
+    const b = lastResults.find(r => r.resume_id === ids[1]);
+    if (!a || !b) return;
+
+    const content = document.getElementById('compareContent');
+    content.innerHTML = buildCompareHTML(a, b);
+    document.getElementById('compareModal').classList.add('open');
+  }
+
+  function closeComparison() {
+    document.getElementById('compareModal').classList.remove('open');
+  }
+
+  // close on backdrop click
+  document.getElementById('compareModal').addEventListener('click', function(e) {
+    if (e.target === this) closeComparison();
+  });
+
+  function buildCompareHTML(a, b) {
+    const aConf = a.confidence || {};
+    const bConf = b.confidence || {};
+    const aRank = lastResults.indexOf(a) + 1;
+    const bRank = lastResults.indexOf(b) + 1;
+
+    // determine winner
+    const aScore = a.final_score || 0;
+    const bScore = b.final_score || 0;
+    const winner = aScore >= bScore ? a.resume_id : b.resume_id;
+    const margin = Math.abs(aScore - bScore);
+
+    const scoreRow = (label, av, bv) => {
+      const ap = Math.round(av * 100);
+      const bp = Math.round(bv * 100);
+      const aBetter = av >= bv;
+      return `
+        <div class="compare-score-row">
+          <span class="compare-score-label">${label}</span>
+          <span class="compare-score-val ${aBetter ? 'score-better' : 'score-worse'}">${ap}%</span>
+        </div>
+        <div class="compare-bar-full">
+          <div class="compare-bar-fill-full" style="width:${ap}%;background:${aBetter ? 'var(--good)' : 'var(--muted)'}"></div>
+        </div>`;
+    };
+
+    const bScoreRow = (label, av, bv) => {
+      const ap = Math.round(av * 100);
+      const bp = Math.round(bv * 100);
+      const bBetter = bv >= av;
+      return `
+        <div class="compare-score-row">
+          <span class="compare-score-label">${label}</span>
+          <span class="compare-score-val ${bBetter ? 'score-better' : 'score-worse'}">${bp}%</span>
+        </div>
+        <div class="compare-bar-full">
+          <div class="compare-bar-fill-full" style="width:${bp}%;background:${bBetter ? 'var(--good)' : 'var(--muted)'}"></div>
+        </div>`;
+    };
+
+    const aKeywords = a.fallback?.matched_keywords || [];
+    const bKeywords = b.fallback?.matched_keywords || [];
+
+    return `
+      <div class="compare-grid">
+        <div class="compare-col">
+          <div class="compare-col-name">${a.resume_id}</div>
+          <div class="compare-col-rank">Rank #${aRank} · ${aConf.label || 'unknown'}</div>
+          <div class="compare-section-title">Scores</div>
+          ${scoreRow('Final Score',    a.final_score,     b.final_score)}
+          ${scoreRow('Semantic Match', a.embedding_score, b.embedding_score)}
+          ${scoreRow('Rerank Score',   a.rerank_score,    b.rerank_score)}
+          <div class="compare-section-title">Confidence</div>
+          <div style="font-size:11px;color:var(--muted2);line-height:1.6">${aConf.reason || '—'}</div>
+          ${aKeywords.length ? `
+            <div class="compare-section-title">Matched Keywords</div>
+            <div class="compare-keywords">${aKeywords.map(k => `<span class="kw-tag">${k}</span>`).join('')}</div>
+          ` : ''}
+          <div class="compare-section-title">Resume Snippet</div>
+          <div class="compare-snippet">${a.text_snippet}</div>
+        </div>
+        <div class="compare-col">
+          <div class="compare-col-name">${b.resume_id}</div>
+          <div class="compare-col-rank">Rank #${bRank} · ${bConf.label || 'unknown'}</div>
+          <div class="compare-section-title">Scores</div>
+          ${bScoreRow('Final Score',    a.final_score,     b.final_score)}
+          ${bScoreRow('Semantic Match', a.embedding_score, b.embedding_score)}
+          ${bScoreRow('Rerank Score',   a.rerank_score,    b.rerank_score)}
+          <div class="compare-section-title">Confidence</div>
+          <div style="font-size:11px;color:var(--muted2);line-height:1.6">${bConf.reason || '—'}</div>
+          ${bKeywords.length ? `
+            <div class="compare-section-title">Matched Keywords</div>
+            <div class="compare-keywords">${bKeywords.map(k => `<span class="kw-tag">${k}</span>`).join('')}</div>
+          ` : ''}
+          <div class="compare-section-title">Resume Snippet</div>
+          <div class="compare-snippet">${b.text_snippet}</div>
+        </div>
+      </div>
+      <div style="padding:0 20px 20px">
+        <div class="verdict-row">
+          <div class="verdict-winner">★ ${winner} is the stronger candidate</div>
+          <div>${margin < 0.05
+            ? 'Scores are very close — both candidates are worth interviewing. Review full resumes to decide.'
+            : `Leading by ${Math.round(margin * 100)}% on final score. ${winner} has a clearer alignment with the job requirements.`
+          }</div>
+        </div>
+      </div>`;
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────
   checkHealth();
   addResume(); addResume(); addResume();
   setInterval(checkHealth, 30000);
