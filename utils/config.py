@@ -13,7 +13,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 
 @dataclass
 class RetrieverConfig:
-    model_name: str = os.getenv("EMBED_MODEL", "BAAI/bge-large-en-v1.5")
+    model_name: str = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
     device: str = os.getenv("EMBED_DEVICE", "cpu")           # "cuda" in prod
     batch_size: int = int(os.getenv("EMBED_BATCH_SIZE", "64"))
     max_seq_len: int = int(os.getenv("EMBED_MAX_SEQ_LEN", "512"))
