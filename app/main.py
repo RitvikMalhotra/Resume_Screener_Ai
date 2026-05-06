@@ -1,11 +1,15 @@
 """
 FastAPI application — Phase 1 + 2 + 3 + 4
 
-Phase 4 additions:
-  - POST /rank/batch  → submit batch job, returns job_id immediately
-  - GET  /jobs/{id}   → poll job status (queued | running | done | error)
-  - GET  /jobs        → list all jobs + queue stats
-  - Rate limiting on all endpoints (sliding window, per IP)
+Phase 1: Batch inference + embedding cache
+Phase 2: Precision@K / NDCG evaluation with graded reports
+Phase 3: Confidence scoring + keyword fallback + input validation
+Phase 4: Async batch jobs + status polling + rate limiting
+
+Confidence penalty sorting:
+  Results are re-sorted after confidence scoring.
+  Uncertain results are penalized so high-confidence
+  candidates always surface to the top.
 """
 from __future__ import annotations
 import logging
@@ -35,6 +39,14 @@ _limiter  = RateLimiter(RateLimitConfig(
     requests_per_minute       = 30,
     requests_per_minute_light = 120,
 ))
+
+# Confidence penalty — subtracted from final_score before re-sorting
+_CONFIDENCE_PENALTY = {
+    "high":      0.00,
+    "medium":    0.05,
+    "low":       0.15,
+    "uncertain": 0.25,
+}
 
 
 def get_pipeline() -> Pipeline:
@@ -171,6 +183,37 @@ async def add_timing_header(request: Request, call_next):
     return response
 
 
+# ── Confidence penalty re-sort ─────────────────────────────────────────────
+
+def apply_confidence_penalty_and_sort(results, confidences, result_dicts):
+    """
+    Penalize uncertain/low confidence results and re-sort.
+    High confidence candidates bubble to the top.
+    """
+    for i in range(len(results)):
+        level   = confidences[i].level
+        penalty = _CONFIDENCE_PENALTY.get(level, 0.0)
+        result_dicts[i]["final_score"] = max(
+            0.0, result_dicts[i]["final_score"] - penalty
+        )
+
+    combined = sorted(
+        zip(results, confidences, result_dicts),
+        key=lambda x: x[2]["final_score"],
+        reverse=True,
+    )
+
+    results_s, confidences_s, result_dicts_s = zip(*combined) if combined else ([], [], [])
+    results_s      = list(results_s)
+    confidences_s  = list(confidences_s)
+    result_dicts_s = list(result_dicts_s)
+
+    for i, r in enumerate(results_s):
+        r.rank = i
+
+    return results_s, confidences_s, result_dicts_s
+
+
 # ── Core ranking logic (reused by /rank and /rank/batch) ──────────────────
 
 def _run_rank(
@@ -218,14 +261,26 @@ def _run_rank(
     )
     loop.close()
 
-    # Phase 3: confidence + fallback
+    # Phase 3: confidence scoring
     final_scores = [r.final_score for r in response.results]
     confidences  = score_confidence(final_scores)
+
+    # Phase 3: keyword fallback
     result_dicts = [
         {"resume_id": r.resume_id, "final_score": r.final_score, "resume_text": r.text}
         for r in response.results
     ]
     result_dicts = apply_fallback(job_description, result_dicts, KeywordFallback())
+
+    # Re-score confidences after fallback may have changed final scores
+    updated_scores = [rd["final_score"] for rd in result_dicts]
+    confidences    = score_confidence(updated_scores)
+
+    # Confidence penalty re-sort — high confidence bubbles to top
+    results_sorted, confidences_sorted, result_dicts_sorted = \
+        apply_confidence_penalty_and_sort(
+            list(response.results), confidences, result_dicts
+        )
 
     # Phase 2: metrics
     metrics_raw = metrics_report = None
@@ -233,7 +288,7 @@ def _run_rank(
         from app.metrics import evaluate_with_report
         eval_result    = evaluate_with_report(
             relevant_ids = set(relevant_ids),
-            ranked_ids   = [r.resume_id for r in response.results],
+            ranked_ids   = [r.resume_id for r in results_sorted],
             k_values     = eval_k_values,
         )
         metrics_raw    = eval_result["raw"]
@@ -248,13 +303,13 @@ def _run_rank(
                 "rank":            r.rank,
                 "embedding_score": round(r.embedding_score, 4),
                 "rerank_score":    round(r.rerank_score, 4),
-                "final_score":     round(result_dicts[i]["final_score"], 4),
+                "final_score":     round(result_dicts_sorted[i]["final_score"], 4),
                 "text_snippet":    r.text[:300],
-                "confidence":      confidences[i].to_dict(),
-                "fallback":        result_dicts[i].get("fallback"),
-                "fallback_used":   result_dicts[i].get("fallback_used", False),
+                "confidence":      confidences_sorted[i].to_dict(),
+                "fallback":        result_dicts_sorted[i].get("fallback"),
+                "fallback_used":   result_dicts_sorted[i].get("fallback_used", False),
             }
-            for i, r in enumerate(response.results)
+            for i, r in enumerate(results_sorted)
         ],
         "total_candidates": response.total_candidates,
         "timing":           response.timing,
@@ -284,6 +339,13 @@ async def health(request: Request):
 
 @app.post("/rank", response_model=RankResponse)
 async def rank_resumes(request: Request, body: RankRequest):
+    """
+    Rank resumes against a job description.
+
+    Results are sorted by confidence-penalized score:
+      High confidence → top
+      Uncertain       → bottom
+    """
     from app.validator  import InputValidator
     from app.confidence import score_confidence
     from app.fallback   import KeywordFallback, apply_fallback
@@ -303,7 +365,10 @@ async def rank_resumes(request: Request, body: RankRequest):
         )
         validation_result = val.to_dict()
         if not val.is_valid:
-            raise HTTPException(status_code=422, detail={"message": "Validation failed.", "validation": validation_result})
+            raise HTTPException(
+                status_code=422,
+                detail={"message": "Validation failed.", "validation": validation_result},
+            )
         valid_ids      = {r["resume_id"] for r in val.cleaned_resumes}
         resumes_to_use = [r for r in body.resumes if r.resume_id in valid_ids]
 
@@ -331,13 +396,23 @@ async def rank_resumes(request: Request, body: RankRequest):
     ]
     result_dicts = apply_fallback(body.job_description, result_dicts, KeywordFallback())
 
+    # Re-score after fallback
+    updated_scores = [rd["final_score"] for rd in result_dicts]
+    confidences    = score_confidence(updated_scores)
+
+    # Confidence penalty re-sort
+    results_sorted, confidences_sorted, result_dicts_sorted = \
+        apply_confidence_penalty_and_sort(
+            list(response.results), confidences, result_dicts
+        )
+
     # Phase 2: metrics
     metrics_raw = metrics_report = None
     if body.relevant_ids:
         from app.metrics import evaluate_with_report
         eval_result    = evaluate_with_report(
             relevant_ids = set(body.relevant_ids),
-            ranked_ids   = [r.resume_id for r in response.results],
+            ranked_ids   = [r.resume_id for r in results_sorted],
             k_values     = body.eval_k_values,
         )
         metrics_raw    = eval_result["raw"]
@@ -351,13 +426,13 @@ async def rank_resumes(request: Request, body: RankRequest):
                 "rank":            r.rank,
                 "embedding_score": round(r.embedding_score, 4),
                 "rerank_score":    round(r.rerank_score, 4),
-                "final_score":     round(result_dicts[i]["final_score"], 4),
+                "final_score":     round(result_dicts_sorted[i]["final_score"], 4),
                 "text_snippet":    r.text[:300],
-                "confidence":      confidences[i].to_dict(),
-                "fallback":        result_dicts[i].get("fallback"),
-                "fallback_used":   result_dicts[i].get("fallback_used", False),
+                "confidence":      confidences_sorted[i].to_dict(),
+                "fallback":        result_dicts_sorted[i].get("fallback"),
+                "fallback_used":   result_dicts_sorted[i].get("fallback_used", False),
             }
-            for i, r in enumerate(response.results)
+            for i, r in enumerate(results_sorted)
         ],
         "total_candidates": response.total_candidates,
         "timing":           response.timing,
@@ -378,8 +453,6 @@ async def rank_batch(request: Request, body: BatchRankRequest):
     """
     Submit multiple ranking jobs at once. Returns job_id immediately.
     Poll GET /jobs/{job_id} for status and results.
-
-    Phase 4 — async batch endpoint.
     """
     _limiter.check(request, heavy=True)
     pipeline = get_pipeline()
@@ -407,25 +480,22 @@ async def rank_batch(request: Request, body: BatchRankRequest):
     )
 
     return {
-        "job_id":       job.job_id,
-        "status":       job.status,
-        "n_queries":    len(body.queries),
-        "n_resumes":    total_resumes,
-        "poll_url":     f"/jobs/{job.job_id}",
-        "message":      "Job submitted. Poll /jobs/{job_id} for status.",
+        "job_id":    job.job_id,
+        "status":    job.status,
+        "n_queries": len(body.queries),
+        "n_resumes": total_resumes,
+        "poll_url":  f"/jobs/{job.job_id}",
+        "message":   "Job submitted. Poll /jobs/{job_id} for status.",
     }
 
 
 @app.get("/jobs/{job_id}")
 async def get_job(job_id: str, request: Request):
-    """
-    Poll job status. Returns result when status = 'done'.
-    """
+    """Poll job status. Returns result when status = 'done'."""
     _limiter.check(request, heavy=False)
     job = _runner.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found.")
-
     if job.status == "done":
         return job.to_dict_with_result()
     return job.to_dict()
@@ -491,6 +561,7 @@ async def warm_cache(request: Request, body: WarmCacheRequest):
 
 @app.post("/evaluate")
 async def evaluate_endpoint(request: Request, body: EvalRequest):
+    """Evaluate ranking quality against labelled ground truth."""
     _limiter.check(request, heavy=True)
     from app.metrics import evaluate_with_report
     pipeline = get_pipeline()
@@ -521,6 +592,7 @@ async def evaluate_endpoint(request: Request, body: EvalRequest):
 
 @app.post("/evaluate/batch")
 async def batch_evaluate_endpoint(request: Request, body: BatchEvalRequest):
+    """Averaged metrics across multiple queries."""
     _limiter.check(request, heavy=True)
     from app.metrics import batch_evaluate
     pipeline    = get_pipeline()
