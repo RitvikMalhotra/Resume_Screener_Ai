@@ -35,8 +35,8 @@ class RerankerConfig:
     load_in_4bit: bool = os.getenv("LOAD_IN_4BIT", "true").lower() == "true"
     # Fallback: cross-encoder
     cross_encoder_model: str = os.getenv(
-        "CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-12-v2"
-    )
+    "CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+)
     rerank_batch_size: int = int(os.getenv("RERANK_BATCH_SIZE", "16"))
     max_rerank_len: int = int(os.getenv("MAX_RERANK_LEN", "512"))
     top_n: int = int(os.getenv("TOP_N", "10"))               # final ranked results
