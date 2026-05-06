@@ -1,20 +1,23 @@
 """
 Stage 1 – Bi-encoder retrieval.
 
-Architecture
-------------
-  - SentenceTransformers bi-encoder for embeddings
-  - FAISS IVFFlat index (L2, with inner-product renormalization → cosine)
-  - Persistent index: save/load from disk between restarts
-  - Tiered cache: embedding results cached by text hash
+Phase 1 changes
+---------------
+  - Replaced raw SentenceTransformer.encode() calls with BatchEmbedder
+    → automatic caching + batching + telemetry in one place
+  - Added FAISSIndexInfo dataclass: exposes index type, size, dim to API
+  - Added explicit logging of index type chosen (Flat vs IVFFlat)
+  - Cache stats now surfaced via .stats() for the /index/stats endpoint
 
-Design notes
-------------
-  FAISS IVFFlat chosen over Flat because:
-    - IVFFlat with nlist=100, nprobe=10 gives ~95% recall at 10x speed on 10k+ items
-    - Switch to IndexHNSWFlat for even better recall if memory allows
-  
-  For 500 resumes we also support brute-force Flat index (simpler, fast enough).
+FAISS index selection
+---------------------
+  N < 1000  → IndexFlatIP   (brute force, exact, fastest for small N)
+  N >= 1000 → IndexIVFFlat  (approximate, nlist clusters, nprobe searched)
+
+Interview talking point:
+  "FAISS IVFFlat partitions the vector space into nlist Voronoi cells.
+   At query time we only search nprobe cells (~10% of index), giving
+   ~95% recall at 10x the speed of brute-force on large corpora."
 """
 from __future__ import annotations
 import logging
@@ -28,7 +31,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# ── lazy imports (expensive) ───────────────────────────────────────────────
 try:
     import faiss
     _FAISS = True
@@ -43,16 +45,19 @@ except ImportError:
     _ST = False
     logger.warning("sentence-transformers not installed")
 
-from utils.cache import TieredCache, sha256_key
+from app.batch_manager import BatchEmbedder
+from utils.cache import sha256_key
 from utils.batching import chunks
 from utils.config import RetrieverConfig, get_config
 
+
+# ── Data classes ───────────────────────────────────────────────────────────
 
 @dataclass
 class RetrievalResult:
     resume_id: str
     text: str
-    embedding_score: float          # cosine similarity [0, 1]
+    embedding_score: float
     rank: int
 
 
@@ -63,214 +68,206 @@ class IndexEntry:
     metadata: dict = field(default_factory=dict)
 
 
+@dataclass
+class FAISSIndexInfo:
+    """
+    Snapshot of FAISS index metadata.
+    Returned by /index/stats — makes the system auditable.
+    """
+    index_type: str        # "FlatIP" or "IVFFlat"
+    n_vectors: int
+    dimension: int
+    nlist: Optional[int]   # IVFFlat only
+    nprobe: Optional[int]  # IVFFlat only
+    index_size_mb: float
+
+    def to_dict(self) -> dict:
+        return {
+            "index_type":    self.index_type,
+            "n_vectors":     self.n_vectors,
+            "dimension":     self.dimension,
+            "nlist":         self.nlist,
+            "nprobe":        self.nprobe,
+            "index_size_mb": self.index_size_mb,
+        }
+
+
+# ── Retriever ──────────────────────────────────────────────────────────────
+
 class Retriever:
     """
-    Manages bi-encoder embedding + FAISS index lifecycle.
-
-    Typical flow
-    ------------
-    r = Retriever()
-    r.build_index(entries)           # build from scratch
-    results = r.retrieve(jd_text, top_k=50)
-
-    Persistence
-    -----------
-    r.save_index()                   # writes .index + .pkl files
-    r.load_index()                   # restores from disk
+    Bi-encoder + FAISS retrieval with Phase 1 upgrades:
+      - BatchEmbedder handles all embed calls (cached + batched)
+      - FAISSIndexInfo exposed for observability
     """
 
     def __init__(self, config: Optional[RetrieverConfig] = None):
-        self.cfg = config or get_config().retriever
+        self.cfg      = config or get_config().retriever
         self._model: Optional[SentenceTransformer] = None
-        self._index = None              # faiss.Index
+        self._embedder: Optional[BatchEmbedder]    = None
+        self._index   = None
         self._entries: list[IndexEntry] = []
         self._dim: int = 0
-        self._cache = TieredCache(lru_size=4096, ttl_seconds=3600)
 
-    # ── model ──────────────────────────────────────────────────────────────
+    # ── model + embedder ───────────────────────────────────────────────────
 
-    def _get_model(self) -> "SentenceTransformer":
-        if self._model is None:
+    def _get_embedder(self) -> BatchEmbedder:
+        if self._embedder is None:
             if not _ST:
                 raise RuntimeError("sentence-transformers is required")
             logger.info("Loading embedding model: %s", self.cfg.model_name)
-            self._model = SentenceTransformer(
-                self.cfg.model_name, device=self.cfg.device
+            model = SentenceTransformer(self.cfg.model_name, device=self.cfg.device)
+            model.max_seq_length = self.cfg.max_seq_len
+            self._model = model
+
+            def _raw_embed(texts: list[str]) -> np.ndarray:
+                return model.encode(
+                    texts,
+                    normalize_embeddings=True,
+                    show_progress_bar=False,
+                    convert_to_numpy=True,
+                ).astype(np.float32)
+
+            self._embedder = BatchEmbedder(
+                model_name=self.cfg.model_name,
+                raw_embed_fn=_raw_embed,
+                batch_size=self.cfg.batch_size,
             )
-            self._model.max_seq_length = self.cfg.max_seq_len
-        return self._model
+        return self._embedder
 
     # ── embedding ──────────────────────────────────────────────────────────
 
     def embed(self, texts: list[str]) -> np.ndarray:
-        """
-        Embed a list of texts. Results are cached by content hash.
-        Returns (N, D) float32 array with L2-normalized vectors.
-        """
-        if not texts:
-            return np.empty((0, self._dim or 1), dtype=np.float32)
-
-        model = self._get_model()
-        results: list[np.ndarray | None] = [None] * len(texts)
-        to_embed_idx: list[int] = []
-
-        # L1 cache lookup
-        for i, text in enumerate(texts):
-            key = sha256_key("embed", self.cfg.model_name, text[:2000])
-            hit, val = self._cache.get(key)
-            if hit:
-                results[i] = val
-            else:
-                to_embed_idx.append(i)
-
-        # batch-embed cache misses
-        if to_embed_idx:
-            miss_texts = [texts[i] for i in to_embed_idx]
-            t0 = time.perf_counter()
-            embeddings = model.encode(
-                miss_texts,
-                batch_size=self.cfg.batch_size,
-                normalize_embeddings=True,      # cosine via inner product
-                show_progress_bar=len(miss_texts) > 100,
-                convert_to_numpy=True,
-            ).astype(np.float32)
-            elapsed = time.perf_counter() - t0
-            logger.debug(
-                "Embedded %d texts in %.2fs", len(miss_texts), elapsed
-            )
-
-            for pos, idx in enumerate(to_embed_idx):
-                vec = embeddings[pos]
-                results[idx] = vec
-                key = sha256_key("embed", self.cfg.model_name, texts[idx][:2000])
-                self._cache.set(key, vec)
-
-            self._dim = embeddings.shape[1]
-
-        return np.vstack(results)
+        vecs = self._get_embedder().embed(texts)
+        if vecs.shape[0] > 0:
+            self._dim = vecs.shape[1]
+        return vecs
 
     # ── index ──────────────────────────────────────────────────────────────
 
     def build_index(self, entries: list[IndexEntry]) -> None:
-        """Build FAISS index from a list of IndexEntry objects."""
         if not _FAISS:
-            raise RuntimeError("faiss-cpu / faiss-gpu is required")
+            raise RuntimeError("faiss-cpu is required")
         if not entries:
             raise ValueError("Cannot build index from empty entry list")
 
-        logger.info("Building FAISS index for %d entries …", len(entries))
-        texts = [e.text for e in entries]
-        embeddings = self.embed(texts)          # (N, D)
-        N, D = embeddings.shape
+        logger.info("Building FAISS index for %d entries…", len(entries))
+        texts      = [e.text for e in entries]
+        embeddings = self.embed(texts).astype(np.float32)
+        N, D       = embeddings.shape
         self._entries = list(entries)
+        self._dim     = D
 
         if N < 1000:
-            # small corpus → brute-force flat index
-            logger.info("Using IndexFlatIP (N=%d < 1000)", N)
+            logger.info("Index type: FlatIP (N=%d < 1000, exact search)", N)
             index = faiss.IndexFlatIP(D)
+            self._index_type = "FlatIP"
         else:
-            # IVF for large corpora
             nlist = min(self.cfg.faiss_nlist, N // 10)
             logger.info(
-                "Using IndexIVFFlat (N=%d, nlist=%d, nprobe=%d)",
+                "Index type: IVFFlat (N=%d, nlist=%d, nprobe=%d)",
                 N, nlist, self.cfg.faiss_nprobe,
             )
             quantizer = faiss.IndexFlatIP(D)
-            index = faiss.IndexIVFFlat(quantizer, D, nlist, faiss.METRIC_INNER_PRODUCT)
+            index     = faiss.IndexIVFFlat(quantizer, D, nlist, faiss.METRIC_INNER_PRODUCT)
             index.nprobe = self.cfg.faiss_nprobe
             index.train(embeddings)
+            self._index_type = "IVFFlat"
 
         index.add(embeddings)
         self._index = index
-        self._dim = D
-        logger.info("Index built: %d vectors, dim=%d", index.ntotal, D)
+        logger.info("Index ready: %d vectors, dim=%d", index.ntotal, D)
 
     def retrieve(
         self,
         query: str,
         top_k: Optional[int] = None,
     ) -> list[RetrievalResult]:
-        """
-        Retrieve top-K most similar entries to the query.
-        Returns list of RetrievalResult sorted by score descending.
-        """
         if self._index is None:
-            raise RuntimeError("Index not built. Call build_index() or load_index().")
+            raise RuntimeError("Index not built. Call build_index() first.")
 
-        k = min(top_k or self.cfg.top_k, len(self._entries))
-        query_vec = self.embed([query])         # (1, D)
-
-        scores, indices = self._index.search(query_vec, k)  # (1, k)
+        k         = min(top_k or self.cfg.top_k, len(self._entries))
+        query_vec = self.embed([query])
+        scores, indices = self._index.search(query_vec, k)
         scores, indices = scores[0], indices[0]
 
         results: list[RetrievalResult] = []
         for rank, (idx, score) in enumerate(zip(indices, scores)):
-            if idx < 0:                         # FAISS returns -1 for padding
+            if idx < 0:
                 continue
             entry = self._entries[idx]
-            results.append(
-                RetrievalResult(
-                    resume_id=entry.resume_id,
-                    text=entry.text,
-                    embedding_score=float(score),
-                    rank=rank,
-                )
-            )
+            results.append(RetrievalResult(
+                resume_id=entry.resume_id,
+                text=entry.text,
+                embedding_score=float(score),
+                rank=rank,
+            ))
         return results
 
     # ── persistence ────────────────────────────────────────────────────────
 
     def save_index(self) -> None:
         if self._index is None:
-            logger.warning("No index to save.")
             return
         idx_path  = self.cfg.faiss_index_path
         meta_path = self.cfg.faiss_meta_path
         idx_path.parent.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self._index, str(idx_path))
         with open(meta_path, "wb") as f:
-            pickle.dump(
-                {"entries": self._entries, "dim": self._dim}, f
-            )
+            pickle.dump({
+                "entries":     self._entries,
+                "dim":         self._dim,
+                "index_type":  getattr(self, "_index_type", "unknown"),
+            }, f)
         logger.info("Index saved → %s", idx_path)
 
     def load_index(self) -> bool:
-        """Returns True if loaded successfully, False if files not found."""
         idx_path  = self.cfg.faiss_index_path
         meta_path = self.cfg.faiss_meta_path
         if not idx_path.exists() or not meta_path.exists():
-            logger.info("No persisted index found at %s", idx_path)
             return False
         self._index = faiss.read_index(str(idx_path))
         with open(meta_path, "rb") as f:
             meta = pickle.load(f)
-        self._entries = meta["entries"]
-        self._dim     = meta["dim"]
+        self._entries    = meta["entries"]
+        self._dim        = meta["dim"]
+        self._index_type = meta.get("index_type", "unknown")
         if hasattr(self._index, "nprobe"):
             self._index.nprobe = self.cfg.faiss_nprobe
-        logger.info(
-            "Loaded index: %d vectors, dim=%d", self._index.ntotal, self._dim
-        )
+        logger.info("Loaded index: %d vectors, dim=%d", self._index.ntotal, self._dim)
         return True
 
     def add_to_index(self, entries: list[IndexEntry]) -> None:
-        """Incrementally add new entries to an existing index."""
         if self._index is None:
             return self.build_index(entries)
-        texts = [e.text for e in entries]
+        texts      = [e.text for e in entries]
         embeddings = self.embed(texts).astype(np.float32)
         self._index.add(embeddings)
         self._entries.extend(entries)
-        logger.info(
-            "Added %d entries; index now has %d total",
-            len(entries), self._index.ntotal,
-        )
 
-    # ── utils ──────────────────────────────────────────────────────────────
+    # ── observability ──────────────────────────────────────────────────────
 
     @property
     def index_size(self) -> int:
         return self._index.ntotal if self._index else 0
 
+    def index_info(self) -> Optional[FAISSIndexInfo]:
+        if self._index is None:
+            return None
+        size_mb = (self._dim * self.index_size * 4) / (1024 ** 2)
+        return FAISSIndexInfo(
+            index_type  = getattr(self, "_index_type", "unknown"),
+            n_vectors   = self.index_size,
+            dimension   = self._dim,
+            nlist       = getattr(self._index, "nlist", None),
+            nprobe      = getattr(self._index, "nprobe", None),
+            index_size_mb = round(size_mb, 2),
+        )
+
     def cache_stats(self) -> dict:
-        return self._cache.stats()
+        if self._embedder is None:
+            return {}
+        return self._embedder.stats()
+
+    def warm_cache(self, texts: list[str]) -> dict:
+        return self._get_embedder().warm_cache(texts)
