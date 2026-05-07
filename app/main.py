@@ -187,26 +187,20 @@ async def add_timing_header(request: Request, call_next):
 
 def apply_confidence_penalty_and_sort(results, confidences, result_dicts):
     """
-    Penalize uncertain/low confidence results and re-sort.
-    High confidence candidates bubble to the top.
+    Sort by confidence tier first, then by final_score within each tier.
+    Tier order: high (0) → medium (1) → low (2) → uncertain (3)
     """
-    for i in range(len(results)):
-        level   = confidences[i].level
-        penalty = _CONFIDENCE_PENALTY.get(level, 0.0)
-        result_dicts[i]["final_score"] = max(
-            0.0, result_dicts[i]["final_score"] - penalty
-        )
+    _TIER = {"high": 0, "medium": 1, "low": 2, "uncertain": 3}
 
-    combined = sorted(
-        zip(results, confidences, result_dicts),
-        key=lambda x: x[2]["final_score"],
-        reverse=True,
-    )
+    combined = list(zip(results, confidences, result_dicts))
+    combined.sort(key=lambda x: (
+        _TIER.get(x[1].level, 3),   # primary: confidence tier
+        -x[2]["final_score"],        # secondary: score descending
+    ))
 
-    results_s, confidences_s, result_dicts_s = zip(*combined) if combined else ([], [], [])
-    results_s      = list(results_s)
-    confidences_s  = list(confidences_s)
-    result_dicts_s = list(result_dicts_s)
+    results_s      = [c[0] for c in combined]
+    confidences_s  = [c[1] for c in combined]
+    result_dicts_s = [c[2] for c in combined]
 
     for i, r in enumerate(results_s):
         r.rank = i
