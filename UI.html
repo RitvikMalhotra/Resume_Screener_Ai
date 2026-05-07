@@ -8,55 +8,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
-    --bg: #080808;
-    --s1: #111;
-    --s2: #181818;
-    --s3: #222;
-    --border: #282828;
-    --border2: #333;
-    --accent: #e8ff47;
-    --accent2: #47d9ff;
-    --accent3: #ff6b47;
-    --text: #f0f0ee;
-    --muted: #555;
-    --muted2: #777;
-    --high: #e8ff47;
-    --medium: #ffc147;
-    --low: #ff8c47;
-    --uncertain: #ff4747;
-    --good: #47ff8c;
+    --bg: #080808; --s1: #111; --s2: #181818; --s3: #222;
+    --border: #282828; --border2: #333;
+    --accent: #e8ff47; --accent2: #47d9ff; --accent3: #ff6b47;
+    --text: #f0f0ee; --muted: #555; --muted2: #777;
+    --high: #e8ff47; --medium: #ffc147; --low: #ff8c47;
+    --uncertain: #ff4747; --good: #47ff8c;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inconsolata', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(232,255,71,0.04) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(71,217,255,0.03) 0%, transparent 60%);
-    pointer-events: none; z-index: 0;
-  }
-
-  body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
-    pointer-events: none; z-index: 0;
-  }
-
+  body { background: var(--bg); color: var(--text); font-family: 'Inconsolata', monospace; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 60% 40% at 20% 20%, rgba(232,255,71,0.04) 0%, transparent 60%), radial-gradient(ellipse 50% 30% at 80% 80%, rgba(71,217,255,0.03) 0%, transparent 60%); pointer-events: none; z-index: 0; }
+  body::after { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 0; }
   .wrap { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; position: relative; z-index: 1; }
 
   header { margin-bottom: 56px; animation: fadeDown 0.7s cubic-bezier(0.16,1,0.3,1) both; }
-
   .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
   .logo-mark { display: flex; align-items: center; gap: 10px; }
   .logo-square { width: 32px; height: 32px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: #000; }
@@ -64,11 +29,9 @@
   .status-pill { display: flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.12em; color: var(--muted2); text-transform: uppercase; }
   .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); animation: pulse 2s ease infinite; }
   .status-dot.offline { background: var(--uncertain); animation: none; }
-
   h1 { font-family: 'Syne', sans-serif; font-size: clamp(48px, 8vw, 88px); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
   h1 .line1 { display: block; color: var(--text); }
   h1 .line2 { display: block; color: var(--accent); }
-
   .tagline { margin-top: 20px; font-size: 12px; color: var(--muted); letter-spacing: 0.08em; display: flex; gap: 20px; flex-wrap: wrap; }
   .tag-item { display: flex; align-items: center; gap: 6px; }
   .tag-item::before { content: '▸'; color: var(--accent); font-size: 10px; }
@@ -83,61 +46,27 @@
   .panel-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
   .panel-body { padding: 20px; }
 
-  textarea, input[type="text"], input[type="number"] {
-    width: 100%; background: var(--s2); border: 1px solid var(--border);
-    color: var(--text); font-family: 'Inconsolata', monospace;
-    font-size: 13px; padding: 12px 14px; outline: none;
-    resize: vertical; line-height: 1.6; transition: border-color 0.15s;
-  }
+  textarea, input[type="text"], input[type="number"] { width: 100%; background: var(--s2); border: 1px solid var(--border); color: var(--text); font-family: 'Inconsolata', monospace; font-size: 13px; padding: 12px 14px; outline: none; resize: vertical; line-height: 1.6; transition: border-color 0.15s; }
   textarea:focus, input:focus { border-color: var(--accent); }
   textarea::placeholder, input::placeholder { color: var(--muted); }
 
-  /* ── Resume rows ── */
   .resume-list { display: flex; flex-direction: column; gap: 8px; }
-
-  .resume-row {
-    background: var(--s2); border: 1px solid var(--border);
-    padding: 12px; animation: fadeUp 0.3s ease both;
-  }
-
-  .resume-row-top {
-    display: grid;
-    grid-template-columns: 130px 1fr 32px;
-    gap: 8px; align-items: start; margin-bottom: 8px;
-  }
-
+  .resume-row { background: var(--s2); border: 1px solid var(--border); padding: 12px; animation: fadeUp 0.3s ease both; }
+  .resume-row-top { display: grid; grid-template-columns: 130px 1fr 32px; gap: 8px; align-items: start; margin-bottom: 8px; }
   .resume-row input[type="text"] { font-size: 12px; padding: 8px 10px; }
   .resume-row textarea { font-size: 12px; min-height: 64px; padding: 8px 10px; }
-
   .rm-btn { width: 32px; height: 32px; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
   .rm-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
 
-  /* PDF upload area */
-  .pdf-upload-row {
-    display: flex; align-items: center; gap: 8px;
-    padding-top: 6px; border-top: 1px solid var(--border);
-  }
-
+  .pdf-upload-row { display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
   .pdf-input { display: none; }
-
-  .pdf-upload-btn {
-    font-family: 'Inconsolata', monospace;
-    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 6px 12px; cursor: pointer; border: 1px dashed var(--border2);
-    color: var(--muted2); background: none; transition: all 0.15s;
-    white-space: nowrap;
-  }
+  .pdf-upload-btn { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 12px; cursor: pointer; border: 1px dashed var(--border2); color: var(--muted2); background: none; transition: all 0.15s; white-space: nowrap; }
   .pdf-upload-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-
-  .pdf-status {
-    font-size: 10px; letter-spacing: 0.08em; color: var(--muted);
-    display: flex; align-items: center; gap: 6px;
-  }
+  .pdf-status { font-size: 10px; letter-spacing: 0.08em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
   .pdf-status.loading { color: var(--accent2); }
-  .pdf-status.done    { color: var(--good); }
-  .pdf-status.error   { color: var(--uncertain); }
+  .pdf-status.done { color: var(--good); }
+  .pdf-status.error { color: var(--uncertain); }
 
-  /* ── Buttons ── */
   .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .btn { font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; border: none; transition: all 0.15s; }
   .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--muted2); }
@@ -165,17 +94,11 @@
   .warn-item::before { content: '⚠'; flex-shrink: 0; }
 
   #results { display: none; }
-
   .results-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
   .results-heading { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
   .results-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-align: right; line-height: 1.8; }
 
-  /* compare button row */
-  .compare-bar {
-    display: none; background: var(--s1); border: 1px solid var(--border);
-    padding: 12px 16px; margin-bottom: 16px;
-    align-items: center; justify-content: space-between; gap: 12px;
-  }
+  .compare-bar { display: none; background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 12px; }
   .compare-bar.visible { display: flex; }
   .compare-info { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
   .compare-info span { color: var(--accent); font-weight: 600; }
@@ -200,16 +123,11 @@
   .result-card { background: var(--s1); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
   .result-card:hover { border-color: var(--border2); }
   .result-card.selected { border-color: var(--accent); }
-
   .card-top { display: grid; grid-template-columns: 48px 1fr; }
-
   .rank-col { background: var(--s2); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding: 20px 0; flex-direction: column; gap: 8px; }
   .rank-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--muted); }
   .rank-0 .rank-num { color: var(--high); } .rank-1 .rank-num { color: var(--medium); } .rank-2 .rank-num { color: var(--low); }
-
-  /* compare checkbox inside rank col */
   .compare-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
-
   .card-main { padding: 16px 20px; }
   .card-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
   .card-id { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
@@ -220,7 +138,6 @@
   .conf-uncertain { border-color: var(--uncertain); color: var(--uncertain); }
   .winner-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; background: var(--accent); color: #000; font-weight: 700; }
   .fallback-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); border: 1px solid rgba(71,217,255,0.3); padding: 2px 6px; }
-
   .card-snippet { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-bottom: 14px; max-height: 48px; overflow: hidden; }
   .scores-row { display: flex; gap: 16px; flex-wrap: wrap; }
   .score-block { display: flex; flex-direction: column; gap: 4px; }
@@ -230,111 +147,94 @@
   .score-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); transition: width 1s cubic-bezier(0.16,1,0.3,1); }
   .rank-1 .score-fill { background: var(--medium); } .rank-2 .score-fill { background: var(--low); }
   .score-pct { font-size: 11px; color: var(--text); min-width: 32px; }
-
   .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 68px; font-size: 10px; color: var(--muted); letter-spacing: 0.04em; line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
   .footer-reason { flex: 1; min-width: 200px; }
   .footer-gap { color: var(--muted); white-space: nowrap; }
   .footer-gap span { color: var(--text); }
+
+  /* ── Explainability section ── */
+  .explain-section {
+    border-top: 1px solid var(--border);
+    padding: 14px 20px 14px 68px;
+  }
+
+  .explain-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .explain-label {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent2); font-weight: 600;
+  }
+
+  .explain-model-tag {
+    font-size: 9px; letter-spacing: 0.1em;
+    color: var(--muted); border: 1px solid var(--border);
+    padding: 1px 6px;
+  }
+
+  .explain-text {
+    font-size: 12px; color: var(--text); line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  .explain-loading {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--muted2); letter-spacing: 0.08em;
+  }
+
+  .explain-spinner {
+    width: 10px; height: 10px;
+    border: 1.5px solid var(--border2);
+    border-top-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .explain-error {
+    font-size: 11px; color: var(--muted);
+    font-style: italic; letter-spacing: 0.04em;
+  }
+
+  /* typing cursor effect */
+  .typing::after {
+    content: '▌';
+    color: var(--accent2);
+    animation: blink 0.8s step-end infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
   #faissBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: none; gap: 20px; flex-wrap: wrap; }
   .faiss-item { display: flex; gap: 6px; align-items: center; }
   .faiss-val { color: var(--accent2); }
 
   /* ── Comparison Modal ── */
-  #compareModal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85); z-index: 1000;
-    align-items: center; justify-content: center;
-    padding: 24px;
-  }
+  #compareModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
   #compareModal.open { display: flex; }
-
-  .compare-box {
-    background: var(--s1); border: 1px solid var(--border2);
-    max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
-    animation: fadeUp 0.3s ease both;
-  }
-
-  .compare-header {
-    padding: 16px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .compare-title {
-    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
-  }
-
-  .close-btn {
-    background: none; border: 1px solid var(--border); color: var(--muted);
-    width: 28px; height: 28px; cursor: pointer; font-size: 16px;
-    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
-  }
+  .compare-box { background: var(--s1); border: 1px solid var(--border2); max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; animation: fadeUp 0.3s ease both; }
+  .compare-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .compare-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
+  .close-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 28px; height: 28px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .close-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
-
-  .compare-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 0; padding: 20px; gap: 16px;
-  }
-
-  .compare-col {
-    background: var(--s2); border: 1px solid var(--border); padding: 16px;
-  }
-
-  .compare-col-name {
-    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
-    letter-spacing: -0.01em; margin-bottom: 4px;
-  }
-
-  .compare-col-rank {
-    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 16px;
-  }
-
-  .compare-section-title {
-    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: 8px; margin-top: 16px;
-    padding-bottom: 4px; border-bottom: 1px solid var(--border);
-  }
-
-  .compare-score-row {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; padding: 20px; gap: 16px; }
+  .compare-col { background: var(--s2); border: 1px solid var(--border); padding: 16px; }
+  .compare-col-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .compare-col-rank { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .compare-section-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; margin-top: 16px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .compare-score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .compare-score-label { font-size: 10px; color: var(--muted2); letter-spacing: 0.08em; }
   .compare-score-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
-  .score-better { color: var(--good); }
-  .score-worse  { color: var(--muted); }
-
+  .score-better { color: var(--good); } .score-worse { color: var(--muted); }
   .compare-bar-full { height: 4px; background: var(--s3); margin-bottom: 6px; position: relative; overflow: hidden; }
   .compare-bar-fill-full { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
-
-  .compare-snippet {
-    font-size: 11px; color: var(--muted2); line-height: 1.6; margin-top: 8px;
-    max-height: 120px; overflow-y: auto;
-  }
-
-  .compare-keywords {
-    display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;
-  }
-
-  .kw-tag {
-    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 2px 6px; background: rgba(71,217,255,0.1);
-    border: 1px solid rgba(71,217,255,0.2); color: var(--accent2);
-  }
-
-  .verdict-row {
-    margin-top: 16px; padding: 12px 16px;
-    background: var(--s1); border: 1px solid var(--border);
-    font-size: 11px; color: var(--muted2); line-height: 1.6;
-  }
-
-  .verdict-winner {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
-    color: var(--accent); margin-bottom: 4px;
-  }
+  .compare-snippet { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-top: 8px; max-height: 120px; overflow-y: auto; }
+  .compare-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .kw-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; background: rgba(71,217,255,0.1); border: 1px solid rgba(71,217,255,0.2); color: var(--accent2); }
+  .verdict-row { margin-top: 16px; padding: 12px 16px; background: var(--s1); border: 1px solid var(--border); font-size: 11px; color: var(--muted2); line-height: 1.6; }
+  .verdict-winner { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
 
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); }  to { opacity: 1; transform: translateY(0); } }
@@ -360,8 +260,8 @@
     <div class="tagline">
       <span class="tag-item">FAISS Vector Retrieval</span>
       <span class="tag-item">Cross-Encoder Reranking</span>
+      <span class="tag-item">AI Explanations</span>
       <span class="tag-item">PDF Upload</span>
-      <span class="tag-item">Candidate Comparison</span>
     </div>
   </header>
 
@@ -425,13 +325,10 @@
       <div class="results-meta" id="resultsMeta"></div>
     </div>
     <div id="metricsPanel"></div>
-
-    <!-- Compare bar -->
     <div class="compare-bar" id="compareBar">
       <div class="compare-info">Select <span id="compareCount">0</span>/2 candidates to compare</div>
       <button class="btn-compare" id="compareBtn" onclick="openComparison()" disabled>Compare Selected</button>
     </div>
-
     <div id="resultCards"></div>
   </div>
 
@@ -449,13 +346,18 @@
 </div>
 
 <script>
-  // ── PDF.js setup ───────────────────────────────────────────────────────
+  // ── Config ─────────────────────────────────────────────────────────────
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  const API = 'https://resumescreenerai-production.up.railway.app';
-  let resumeCount  = 0;
-  let lastResults  = [];
+  const API          = 'https://resumescreenerai-production.up.railway.app';
+  const NVIDIA_KEY   = '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';
+  const NVIDIA_URL   = 'https://integrate.api.nvidia.com/v1/chat/completions';
+  const NVIDIA_MODEL = 'meta/llama-4-maverick-17b-128e-instruct';
+
+  let resumeCount        = 0;
+  let lastResults        = [];
+  let lastJD             = '';
   let selectedForCompare = new Set();
 
   // ── Eval toggle ────────────────────────────────────────────────────────
@@ -492,50 +394,34 @@
     document.getElementById('sysJobs').textContent     = jobs  ? jobs.total_jobs        : '0';
   }
 
-  // ── Name extraction from PDF text ─────────────────────────────────────
-  function extractNameFromText(text) {
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const nameRegex = /^[A-Z][a-z]+([\s-][A-Z][a-z]+){1,3}$/;
-    const skipPatterns = /@|http|linkedin|github|phone|email|\d{3}|\+\d|resume|curriculum|cv/i;
-
-    for (const line of lines.slice(0, 10)) {
-      const clean = line.replace(/[|,]/g, ' ').trim();
-      const firstWord = clean.split(/\s+/)[0];
-      if (
-        nameRegex.test(clean) &&
-        !skipPatterns.test(clean) &&
-        clean.split(/\s+/).length >= 2 &&
-        clean.split(/\s+/).length <= 4 &&
-        firstWord.length > 1
-      ) {
-        // convert "John Smith" → "john_smith"
-        return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      }
-    }
-
-    // fallback: use first line cleaned up
-    const fallback = lines[0]?.split(/[\s|,]+/)[0];
-    if (fallback && fallback.length > 1) {
-      return fallback.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    }
-    return '';
-  }
-
   // ── PDF parsing ────────────────────────────────────────────────────────
   async function parsePDF(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf         = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let fullText = '';
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page  = await pdf.getPage(i);
+      const page    = await pdf.getPage(i);
       const content = await page.getTextContent();
-      const pageText = content.items.map(item => item.str).join(' ');
-      fullText += pageText + '\n';
+      fullText += content.items.map(item => item.str).join(' ') + '\n';
     }
     return fullText.trim();
   }
 
-  // ── Add resume row ─────────────────────────────────────────────────────
+  function extractNameFromText(text) {
+    const lines       = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const nameRegex   = /^[A-Z][a-z]+([\s-][A-Z][a-z]+){1,3}$/;
+    const skipPattern = /@|http|linkedin|github|phone|email|\d{3}|\+\d|resume|curriculum|cv/i;
+    for (const line of lines.slice(0, 10)) {
+      const clean = line.replace(/[|,]/g, ' ').trim();
+      if (nameRegex.test(clean) && !skipPattern.test(clean) && clean.split(/\s+/).length >= 2) {
+        return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      }
+    }
+    const fallback = lines[0]?.split(/[\s|,]+/)[0];
+    return fallback ? fallback.toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+  }
+
+  // ── Resume management ──────────────────────────────────────────────────
   function addResume(id = '', text = '') {
     resumeCount++;
     const uid = 'resume_' + Date.now() + '_' + resumeCount;
@@ -550,38 +436,33 @@
       </div>
       <div class="pdf-upload-row">
         <input type="file" accept=".pdf" class="pdf-input" id="pdf_${uid}">
-        <button class="pdf-upload-btn" onclick="document.getElementById('pdf_${uid}').click()">
-          📄 Upload PDF
-        </button>
+        <button class="pdf-upload-btn" onclick="document.getElementById('pdf_${uid}').click()">📄 Upload PDF</button>
         <div class="pdf-status" id="pdfStatus_${uid}">or paste text above</div>
-      </div>
-    `;
+      </div>`;
 
-    // PDF change handler
     div.querySelector(`#pdf_${uid}`).addEventListener('change', async function(e) {
-      const file = e.target.files[0];
+      const file     = e.target.files[0];
       if (!file) return;
       const statusEl = div.querySelector(`#pdfStatus_${uid}`);
-      statusEl.className = 'pdf-status loading';
+      statusEl.className   = 'pdf-status loading';
       statusEl.textContent = '⟳ Reading PDF…';
       try {
-        const text     = await parsePDF(file);
-        const nameId   = extractNameFromText(text);
-        const idInput  = div.querySelector('.r-id');
-        const txtArea  = div.querySelector('.r-text');
-        txtArea.value  = text;
+        const text   = await parsePDF(file);
+        const nameId = extractNameFromText(text);
+        div.querySelector('.r-text').value = text;
+        const idInput = div.querySelector('.r-id');
         if (!idInput.value && nameId) {
-          idInput.value = nameId;
-          statusEl.className = 'pdf-status done';
+          idInput.value        = nameId;
+          statusEl.className   = 'pdf-status done';
           statusEl.textContent = `✓ Loaded · ID auto-set to "${nameId}"`;
         } else {
-          statusEl.className = 'pdf-status done';
-          statusEl.textContent = `✓ ${file.name} loaded (${Math.round(text.length / 1000)}k chars)`;
+          statusEl.className   = 'pdf-status done';
+          statusEl.textContent = `✓ ${file.name} loaded`;
         }
         updateCount();
-      } catch (err) {
-        statusEl.className = 'pdf-status error';
-        statusEl.textContent = '✗ Failed to read PDF — try a different file';
+      } catch {
+        statusEl.className   = 'pdf-status error';
+        statusEl.textContent = '✗ Failed to read PDF';
       }
     });
 
@@ -646,6 +527,91 @@
     document.getElementById('batchBtn').disabled  = false;
   }
 
+  // ── LLaMA 4 explanation generator ─────────────────────────────────────
+  async function generateExplanation(jd, candidate, rank, finalScore, embeddingScore, rerankScore, confidence) {
+    const prompt = `You are an expert technical recruiter. Analyze why this candidate ranked #${rank + 1} for the job.
+
+JOB DESCRIPTION:
+${jd.slice(0, 800)}
+
+CANDIDATE (${candidate.resume_id}):
+${candidate.text_snippet}
+
+SCORES:
+- Final Score: ${Math.round(finalScore * 100)}%
+- Semantic Match: ${Math.round(embeddingScore * 100)}%
+- Rerank Score: ${Math.round(rerankScore * 100)}%
+- Confidence: ${confidence}
+
+Write ONE concise paragraph (3-4 sentences) explaining:
+1. The specific skills/experience that matched the JD
+2. Why they ranked at position #${rank + 1}
+3. The main gap or risk (if any)
+
+Be specific, mention actual skills from their resume. Do NOT use bullet points. Do NOT start with "This candidate".`;
+
+    const res = await fetch(NVIDIA_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NVIDIA_KEY}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        model: NVIDIA_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 200,
+        temperature: 0.4,
+        top_p: 0.9,
+        stream: false,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`NVIDIA API error: ${res.status}`);
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content?.trim() || 'Explanation unavailable.';
+  }
+
+  // ── Generate all explanations after ranking ────────────────────────────
+  async function generateAllExplanations(jd, results) {
+    for (let i = 0; i < results.length; i++) {
+      const r         = results[i];
+      const explainEl = document.getElementById(`explain_${r.resume_id}`);
+      if (!explainEl) continue;
+
+      explainEl.innerHTML = `
+        <div class="explain-loading">
+          <div class="explain-spinner"></div>
+          Generating AI explanation…
+        </div>`;
+
+      try {
+        const explanation = await generateExplanation(
+          jd, r, i,
+          r.final_score, r.embedding_score, r.rerank_score,
+          r.confidence?.label || 'unknown'
+        );
+
+        // typewriter effect
+        explainEl.innerHTML = `<div class="explain-text typing"></div>`;
+        const textEl = explainEl.querySelector('.explain-text');
+        let charIdx = 0;
+        const interval = setInterval(() => {
+          textEl.textContent = explanation.slice(0, charIdx);
+          charIdx += 3;
+          if (charIdx > explanation.length) {
+            textEl.textContent = explanation;
+            textEl.classList.remove('typing');
+            clearInterval(interval);
+          }
+        }, 20);
+
+      } catch (err) {
+        explainEl.innerHTML = `<div class="explain-error">⚠ Could not generate explanation — ${err.message}</div>`;
+      }
+    }
+  }
+
   // ── Screening ──────────────────────────────────────────────────────────
   async function runScreening() {
     const jd        = document.getElementById('jd').value.trim();
@@ -663,9 +629,10 @@
     document.getElementById('validationBox').style.display = 'none';
     document.getElementById('faissBar').style.display = 'none';
     selectedForCompare.clear();
+    lastJD = jd;
 
     try {
-      const res  = await fetch(`${API}/rank`, {
+      const res = await fetch(`${API}/rank`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -678,10 +645,13 @@
         throw new Error(err.detail?.message || err.detail || `HTTP ${res.status}`);
       }
       clearStatus();
-      renderResults(await res.json());
+      const data = await res.json();
+      renderResults(data);
       checkHealth();
+      // generate explanations after cards are rendered
+      generateAllExplanations(jd, data.results || []);
     } catch (e) {
-      setError(e.message || 'Could not reach API. Is the server running?');
+      setError(e.message || 'Could not reach API.');
     }
   }
 
@@ -689,11 +659,10 @@
     const jd      = document.getElementById('jd').value.trim();
     const resumes = collectResumes();
     const topN    = parseInt(document.getElementById('topN').value) || 5;
-
     if (!jd)             return setError('Please enter a job description.');
     if (!resumes.length) return setError('Please add at least one candidate.');
-
     setLoading('Submitting batch job…');
+    lastJD = jd;
     try {
       const res  = await fetch(`${API}/rank/batch`, {
         method: 'POST',
@@ -721,6 +690,7 @@
           const result = Array.isArray(data.result) ? data.result[0] : data.result;
           renderResults(result);
           checkHealth();
+          generateAllExplanations(lastJD, result.results || []);
         } else if (data.status === 'error') {
           clearInterval(iv);
           setError('Batch job failed: ' + (data.error || 'unknown'));
@@ -752,8 +722,7 @@
         <div class="faiss-item">INDEX <span class="faiss-val">${fi.index_type}</span></div>
         <div class="faiss-item">VECTORS <span class="faiss-val">${fi.n_vectors}</span></div>
         <div class="faiss-item">DIM <span class="faiss-val">${fi.dimension}</span></div>
-        <div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>
-      `;
+        <div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>`;
     }
 
     const t = data.timing || {};
@@ -779,7 +748,6 @@
       mp.style.display = 'none';
     }
 
-    // Show compare bar
     document.getElementById('compareBar').className = 'compare-bar visible';
     updateCompareBar();
 
@@ -796,8 +764,7 @@
         <div class="card-top">
           <div class="rank-col">
             <div class="rank-num">${i + 1}</div>
-            <input type="checkbox" class="compare-check" title="Select for comparison"
-              onchange="toggleCompare('${r.resume_id}', this)">
+            <input type="checkbox" class="compare-check" title="Select for comparison" onchange="toggleCompare('${r.resume_id}', this)">
           </div>
           <div class="card-main">
             <div class="card-id-row">
@@ -819,6 +786,15 @@
           <div class="footer-reason">${conf.reason || ''}</div>
           ${conf.score_gap > 0 ? `<div class="footer-gap">Gap to next: <span>${(conf.score_gap*100).toFixed(1)}%</span></div>` : ''}
           ${r.fallback_used && r.fallback ? `<div class="footer-gap">Keywords: <span>${r.fallback.matched_keywords.slice(0,5).join(', ')}</span></div>` : ''}
+        </div>
+        <div class="explain-section">
+          <div class="explain-header">
+            <span class="explain-label">⚡ AI Explanation</span>
+            <span class="explain-model-tag">LLaMA 4 Maverick</span>
+          </div>
+          <div id="explain_${r.resume_id}" class="explain-loading">
+            <div class="explain-spinner"></div> Waiting to generate…
+          </div>
         </div>`;
       container.appendChild(card);
     });
@@ -829,21 +805,13 @@
 
   function sb(label, val, rank) {
     const pct = Math.round((val || 0) * 100);
-    return `<div class="score-block">
-      <div class="score-name">${label}</div>
-      <div class="score-bar-wrap">
-        <div class="score-bar"><div class="score-fill rank-${rank}" style="width:${pct}%"></div></div>
-        <div class="score-pct">${pct}%</div>
-      </div></div>`;
+    return `<div class="score-block"><div class="score-name">${label}</div><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill rank-${rank}" style="width:${pct}%"></div></div><div class="score-pct">${pct}%</div></div></div>`;
   }
 
-  // ── Compare logic ──────────────────────────────────────────────────────
+  // ── Compare ────────────────────────────────────────────────────────────
   function toggleCompare(resumeId, checkbox) {
     if (checkbox.checked) {
-      if (selectedForCompare.size >= 2) {
-        checkbox.checked = false;
-        return;
-      }
+      if (selectedForCompare.size >= 2) { checkbox.checked = false; return; }
       selectedForCompare.add(resumeId);
       checkbox.closest('.result-card').classList.add('selected');
     } else {
@@ -862,13 +830,10 @@
   function openComparison() {
     const ids = [...selectedForCompare];
     if (ids.length !== 2) return;
-
     const a = lastResults.find(r => r.resume_id === ids[0]);
     const b = lastResults.find(r => r.resume_id === ids[1]);
     if (!a || !b) return;
-
-    const content = document.getElementById('compareContent');
-    content.innerHTML = buildCompareHTML(a, b);
+    document.getElementById('compareContent').innerHTML = buildCompareHTML(a, b);
     document.getElementById('compareModal').classList.add('open');
   }
 
@@ -876,7 +841,6 @@
     document.getElementById('compareModal').classList.remove('open');
   }
 
-  // close on backdrop click
   document.getElementById('compareModal').addEventListener('click', function(e) {
     if (e.target === this) closeComparison();
   });
@@ -886,43 +850,25 @@
     const bConf = b.confidence || {};
     const aRank = lastResults.indexOf(a) + 1;
     const bRank = lastResults.indexOf(b) + 1;
+    const winner = (a.final_score || 0) >= (b.final_score || 0) ? a.resume_id : b.resume_id;
+    const margin = Math.abs((a.final_score || 0) - (b.final_score || 0));
 
-    // determine winner
-    const aScore = a.final_score || 0;
-    const bScore = b.final_score || 0;
-    const winner = aScore >= bScore ? a.resume_id : b.resume_id;
-    const margin = Math.abs(aScore - bScore);
-
-    const scoreRow = (label, av, bv) => {
-      const ap = Math.round(av * 100);
-      const bp = Math.round(bv * 100);
-      const aBetter = av >= bv;
-      return `
-        <div class="compare-score-row">
-          <span class="compare-score-label">${label}</span>
-          <span class="compare-score-val ${aBetter ? 'score-better' : 'score-worse'}">${ap}%</span>
-        </div>
-        <div class="compare-bar-full">
-          <div class="compare-bar-fill-full" style="width:${ap}%;background:${aBetter ? 'var(--good)' : 'var(--muted)'}"></div>
-        </div>`;
+    const sRow = (label, av, bv, isA) => {
+      const val  = isA ? av : bv;
+      const other = isA ? bv : av;
+      const better = val >= other;
+      const pct  = Math.round(val * 100);
+      return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${better ? 'score-better' : 'score-worse'}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${better ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
     };
 
-    const bScoreRow = (label, av, bv) => {
-      const ap = Math.round(av * 100);
-      const bp = Math.round(bv * 100);
-      const bBetter = bv >= av;
-      return `
-        <div class="compare-score-row">
-          <span class="compare-score-label">${label}</span>
-          <span class="compare-score-val ${bBetter ? 'score-better' : 'score-worse'}">${bp}%</span>
-        </div>
-        <div class="compare-bar-full">
-          <div class="compare-bar-fill-full" style="width:${bp}%;background:${bBetter ? 'var(--good)' : 'var(--muted)'}"></div>
-        </div>`;
-    };
+    const aKw = a.fallback?.matched_keywords || [];
+    const bKw = b.fallback?.matched_keywords || [];
 
-    const aKeywords = a.fallback?.matched_keywords || [];
-    const bKeywords = b.fallback?.matched_keywords || [];
+    // get AI explanations if already generated
+    const aExplainEl = document.getElementById(`explain_${a.resume_id}`);
+    const bExplainEl = document.getElementById(`explain_${b.resume_id}`);
+    const aExplain = aExplainEl?.querySelector('.explain-text')?.textContent || '';
+    const bExplain = bExplainEl?.querySelector('.explain-text')?.textContent || '';
 
     return `
       <div class="compare-grid">
@@ -930,15 +876,11 @@
           <div class="compare-col-name">${a.resume_id}</div>
           <div class="compare-col-rank">Rank #${aRank} · ${aConf.label || 'unknown'}</div>
           <div class="compare-section-title">Scores</div>
-          ${scoreRow('Final Score',    a.final_score,     b.final_score)}
-          ${scoreRow('Semantic Match', a.embedding_score, b.embedding_score)}
-          ${scoreRow('Rerank Score',   a.rerank_score,    b.rerank_score)}
-          <div class="compare-section-title">Confidence</div>
-          <div style="font-size:11px;color:var(--muted2);line-height:1.6">${aConf.reason || '—'}</div>
-          ${aKeywords.length ? `
-            <div class="compare-section-title">Matched Keywords</div>
-            <div class="compare-keywords">${aKeywords.map(k => `<span class="kw-tag">${k}</span>`).join('')}</div>
-          ` : ''}
+          ${sRow('Final Score', a.final_score, b.final_score, true)}
+          ${sRow('Semantic Match', a.embedding_score, b.embedding_score, true)}
+          ${sRow('Rerank Score', a.rerank_score, b.rerank_score, true)}
+          ${aKw.length ? `<div class="compare-section-title">Matched Keywords</div><div class="compare-keywords">${aKw.map(k=>`<span class="kw-tag">${k}</span>`).join('')}</div>` : ''}
+          ${aExplain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${aExplain}</div>` : ''}
           <div class="compare-section-title">Resume Snippet</div>
           <div class="compare-snippet">${a.text_snippet}</div>
         </div>
@@ -946,15 +888,11 @@
           <div class="compare-col-name">${b.resume_id}</div>
           <div class="compare-col-rank">Rank #${bRank} · ${bConf.label || 'unknown'}</div>
           <div class="compare-section-title">Scores</div>
-          ${bScoreRow('Final Score',    a.final_score,     b.final_score)}
-          ${bScoreRow('Semantic Match', a.embedding_score, b.embedding_score)}
-          ${bScoreRow('Rerank Score',   a.rerank_score,    b.rerank_score)}
-          <div class="compare-section-title">Confidence</div>
-          <div style="font-size:11px;color:var(--muted2);line-height:1.6">${bConf.reason || '—'}</div>
-          ${bKeywords.length ? `
-            <div class="compare-section-title">Matched Keywords</div>
-            <div class="compare-keywords">${bKeywords.map(k => `<span class="kw-tag">${k}</span>`).join('')}</div>
-          ` : ''}
+          ${sRow('Final Score', a.final_score, b.final_score, false)}
+          ${sRow('Semantic Match', a.embedding_score, b.embedding_score, false)}
+          ${sRow('Rerank Score', a.rerank_score, b.rerank_score, false)}
+          ${bKw.length ? `<div class="compare-section-title">Matched Keywords</div><div class="compare-keywords">${bKw.map(k=>`<span class="kw-tag">${k}</span>`).join('')}</div>` : ''}
+          ${bExplain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${bExplain}</div>` : ''}
           <div class="compare-section-title">Resume Snippet</div>
           <div class="compare-snippet">${b.text_snippet}</div>
         </div>
@@ -962,10 +900,7 @@
       <div style="padding:0 20px 20px">
         <div class="verdict-row">
           <div class="verdict-winner">★ ${winner} is the stronger candidate</div>
-          <div>${margin < 0.05
-            ? 'Scores are very close — both candidates are worth interviewing. Review full resumes to decide.'
-            : `Leading by ${Math.round(margin * 100)}% on final score. ${winner} has a clearer alignment with the job requirements.`
-          }</div>
+          <div>${margin < 0.05 ? 'Scores are very close — both candidates are worth interviewing.' : `Leading by ${Math.round(margin*100)}% on final score.`}</div>
         </div>
       </div>`;
   }
