@@ -618,6 +618,71 @@ async def batch_evaluate_endpoint(request: Request, body: BatchEvalRequest):
     }
 
 
+@app.post("/explain")
+async def explain_candidate(request: Request, body: dict):
+    """
+    Proxy NVIDIA NIM API call server-side to avoid CORS.
+    Generates plain English explanation for a ranked candidate.
+    """
+    import httpx
+    _limiter.check(request, heavy=False)
+
+    NVIDIA_KEY   = "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"
+    NVIDIA_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
+    NVIDIA_MODEL = "meta/llama-4-maverick-17b-128e-instruct"
+
+    jd           = body.get("jd", "")[:800]
+    resume_id    = body.get("resume_id", "")
+    snippet      = body.get("snippet", "")[:600]
+    rank         = body.get("rank", 0)
+    final_score  = body.get("final_score", 0)
+    embed_score  = body.get("embedding_score", 0)
+    rerank_score = body.get("rerank_score", 0)
+    confidence   = body.get("confidence", "unknown")
+
+    prompt = f"""You are an expert technical recruiter. Analyze why this candidate ranked #{rank + 1}.
+
+JOB DESCRIPTION:
+{jd}
+
+CANDIDATE ({resume_id}):
+{snippet}
+
+SCORES: Final={round(final_score*100)}% | Semantic={round(embed_score*100)}% | Rerank={round(rerank_score*100)}% | Confidence={confidence}
+
+Write ONE concise paragraph (3-4 sentences) explaining:
+1. Specific skills/experience that matched the JD
+2. Why they ranked #{rank + 1}
+3. The main gap or risk if any
+
+Be specific. Mention actual skills from their resume. No bullet points. Do not start with "This candidate"."""
+
+    payload = {
+        "model": NVIDIA_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 200,
+        "temperature": 0.4,
+        "top_p": 0.9,
+        "stream": False,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            res = await client.post(
+                NVIDIA_URL,
+                headers={
+                    "Authorization": f"Bearer {NVIDIA_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            res.raise_for_status()
+            data = res.json()
+            text = data["choices"][0]["message"]["content"].strip()
+            return {"explanation": text}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    
 @app.get("/metrics/cache")
 async def cache_metrics(request: Request):
     _limiter.check(request, heavy=False)
