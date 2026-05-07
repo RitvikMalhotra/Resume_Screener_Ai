@@ -62,7 +62,7 @@
   .pdf-input { display: none; }
   .pdf-upload-btn { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 12px; cursor: pointer; border: 1px dashed var(--border2); color: var(--muted2); background: none; transition: all 0.15s; white-space: nowrap; }
   .pdf-upload-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .pdf-status { font-size: 10px; letter-spacing: 0.08em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .pdf-status { font-size: 10px; letter-spacing: 0.08em; color: var(--muted); }
   .pdf-status.loading { color: var(--accent2); }
   .pdf-status.done { color: var(--good); }
   .pdf-status.error { color: var(--uncertain); }
@@ -119,7 +119,6 @@
   .metric-grade { font-size: 9px; letter-spacing: 0.1em; margin-top: 2px; }
   .grade-A { color: var(--good); } .grade-B { color: var(--accent); } .grade-C { color: var(--medium); } .grade-D { color: var(--low); } .grade-F { color: var(--uncertain); }
 
-  /* ── Result cards ── */
   .result-card { background: var(--s1); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
   .result-card:hover { border-color: var(--border2); }
   .result-card.selected { border-color: var(--accent); }
@@ -152,88 +151,43 @@
   .footer-gap { color: var(--muted); white-space: nowrap; }
   .footer-gap span { color: var(--text); }
 
-  /* ── Explainability section ── */
-  .explain-section {
-    border-top: 1px solid var(--border);
-    padding: 14px 20px 14px 68px;
-  }
-
-  .explain-header {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .explain-label {
-    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--accent2); font-weight: 600;
-  }
-
-  .explain-model-tag {
-    font-size: 9px; letter-spacing: 0.1em;
-    color: var(--muted); border: 1px solid var(--border);
-    padding: 1px 6px;
-  }
-
-  .explain-text {
-    font-size: 12px; color: var(--text); line-height: 1.8;
-    letter-spacing: 0.02em;
-  }
-
-  .explain-loading {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11px; color: var(--muted2); letter-spacing: 0.08em;
-  }
-
-  .explain-spinner {
-    width: 10px; height: 10px;
-    border: 1.5px solid var(--border2);
-    border-top-color: var(--accent2);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-
-  .explain-error {
-    font-size: 11px; color: var(--muted);
-    font-style: italic; letter-spacing: 0.04em;
-  }
-
-  /* typing cursor effect */
-  .typing::after {
-    content: '▌';
-    color: var(--accent2);
-    animation: blink 0.8s step-end infinite;
-  }
-
+  .explain-section { border-top: 1px solid var(--border); padding: 14px 20px 14px 68px; }
+  .explain-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .explain-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent2); font-weight: 600; }
+  .explain-model-tag { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; }
+  .explain-text { font-size: 12px; color: var(--text); line-height: 1.8; letter-spacing: 0.02em; }
+  .explain-loading { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
+  .explain-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  .explain-error { font-size: 11px; color: var(--muted); font-style: italic; letter-spacing: 0.04em; }
+  .typing::after { content: '▌'; color: var(--accent2); animation: blink 0.8s step-end infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
   #faissBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: none; gap: 20px; flex-wrap: wrap; }
   .faiss-item { display: flex; gap: 6px; align-items: center; }
   .faiss-val { color: var(--accent2); }
 
-  /* ── Comparison Modal ── */
-  #compareModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+  #compareModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
   #compareModal.open { display: flex; }
-  .compare-box { background: var(--s1); border: 1px solid var(--border2); max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; animation: fadeUp 0.3s ease both; }
-  .compare-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .compare-box { background: var(--s1); border: 1px solid var(--border2); width: 100%; max-width: 1200px; margin: auto; animation: fadeUp 0.3s ease both; }
+  .compare-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--s1); z-index: 10; }
   .compare-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
   .close-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 28px; height: 28px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .close-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
-  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; padding: 20px; gap: 16px; }
+  .compare-grid { display: grid; padding: 20px; gap: 12px; }
   .compare-col { background: var(--s2); border: 1px solid var(--border); padding: 16px; }
-  .compare-col-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
-  .compare-col-rank { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
-  .compare-section-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; margin-top: 16px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
-  .compare-score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .compare-col-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .compare-col-rank { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .compare-section-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .compare-score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .compare-score-label { font-size: 10px; color: var(--muted2); letter-spacing: 0.08em; }
-  .compare-score-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .compare-score-val { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; }
   .score-better { color: var(--good); } .score-worse { color: var(--muted); }
-  .compare-bar-full { height: 4px; background: var(--s3); margin-bottom: 6px; position: relative; overflow: hidden; }
-  .compare-bar-fill-full { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
-  .compare-snippet { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-top: 8px; max-height: 120px; overflow-y: auto; }
-  .compare-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .kw-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; background: rgba(71,217,255,0.1); border: 1px solid rgba(71,217,255,0.2); color: var(--accent2); }
-  .verdict-row { margin-top: 16px; padding: 12px 16px; background: var(--s1); border: 1px solid var(--border); font-size: 11px; color: var(--muted2); line-height: 1.6; }
+  .compare-bar-full { height: 3px; background: var(--s3); margin-bottom: 5px; position: relative; overflow: hidden; }
+  .compare-bar-fill-full { position: absolute; left: 0; top: 0; bottom: 0; }
+  .compare-snippet { font-size: 10px; color: var(--muted2); line-height: 1.5; margin-top: 6px; max-height: 80px; overflow-y: auto; }
+  .compare-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .kw-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 5px; background: rgba(71,217,255,0.1); border: 1px solid rgba(71,217,255,0.2); color: var(--accent2); }
+  .verdict-row { margin: 0 20px 20px; padding: 12px 16px; background: var(--s1); border: 1px solid var(--border); font-size: 11px; color: var(--muted2); line-height: 1.6; }
   .verdict-winner { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
 
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
@@ -276,7 +230,7 @@
   <div class="panel" style="animation-delay:0.1s">
     <div class="panel-header"><div class="panel-title">01 — Job Description</div></div>
     <div class="panel-body">
-      <textarea id="jd" rows="7" placeholder="Paste the full job description here…&#10;&#10;Include: role title, required skills, experience level, tech stack, responsibilities."></textarea>
+      <textarea id="jd" rows="7" placeholder="Paste the full job description here…"></textarea>
     </div>
   </div>
 
@@ -326,19 +280,19 @@
     </div>
     <div id="metricsPanel"></div>
     <div class="compare-bar" id="compareBar">
-      <div class="compare-info">Select <span id="compareCount">0</span>/2 candidates to compare</div>
+      <div class="compare-info">
+        <span id="compareCount">0</span> selected · select 2–<span id="compareMax">?</span> to compare
+      </div>
       <button class="btn-compare" id="compareBtn" onclick="openComparison()" disabled>Compare Selected</button>
     </div>
     <div id="resultCards"></div>
   </div>
-
 </div>
 
-<!-- Comparison Modal -->
 <div id="compareModal">
   <div class="compare-box">
     <div class="compare-header">
-      <div class="compare-title">Side-by-Side Comparison</div>
+      <div class="compare-title">Candidate Comparison</div>
       <button class="close-btn" onclick="closeComparison()">×</button>
     </div>
     <div id="compareContent"></div>
@@ -346,26 +300,21 @@
 </div>
 
 <script>
-  // ── Config ─────────────────────────────────────────────────────────────
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   const API          = 'https://resumescreenerai-production.up.railway.app';
-  const NVIDIA_KEY   = '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';
-  const NVIDIA_URL   = 'https://integrate.api.nvidia.com/v1/chat/completions';
-  const NVIDIA_MODEL = 'meta/llama-4-maverick-17b-128e-instruct';
 
   let resumeCount        = 0;
   let lastResults        = [];
   let lastJD             = '';
+  let totalCandidates    = 0;
   let selectedForCompare = new Set();
 
-  // ── Eval toggle ────────────────────────────────────────────────────────
   document.getElementById('withEval').addEventListener('change', e => {
     document.getElementById('evalIdsRow').style.display = e.target.checked ? 'block' : 'none';
   });
 
-  // ── Health check ───────────────────────────────────────────────────────
   async function checkHealth() {
     try {
       const res  = await fetch(`${API}/health`);
@@ -380,9 +329,7 @@
   }
 
   function updateSystemBar(data) {
-    const idx   = data.index;
-    const cache = data.cache?.cache;
-    const jobs  = data.jobs;
+    const idx = data.index, cache = data.cache?.cache, jobs = data.jobs;
     document.getElementById('sysIndex').textContent    = idx   ? idx.index_type         : '—';
     document.getElementById('sysIndex').className      = idx   ? 'sys-val'              : 'sys-val na';
     document.getElementById('sysVectors').textContent  = idx   ? idx.n_vectors          : '—';
@@ -394,40 +341,35 @@
     document.getElementById('sysJobs').textContent     = jobs  ? jobs.total_jobs        : '0';
   }
 
-  // ── PDF parsing ────────────────────────────────────────────────────────
   async function parsePDF(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf         = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page    = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      fullText += content.items.map(item => item.str).join(' ') + '\n';
+      const page = await pdf.getPage(i);
+      const c    = await page.getTextContent();
+      text += c.items.map(x => x.str).join(' ') + '\n';
     }
-    return fullText.trim();
+    return text.trim();
   }
 
-  function extractNameFromText(text) {
-    const lines       = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const nameRegex   = /^[A-Z][a-z]+([\s-][A-Z][a-z]+){1,3}$/;
-    const skipPattern = /@|http|linkedin|github|phone|email|\d{3}|\+\d|resume|curriculum|cv/i;
+  function extractName(text) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const re    = /^[A-Z][a-z]+([\s-][A-Z][a-z]+){1,3}$/;
+    const skip  = /@|http|linkedin|github|\d{3}|\+\d|resume|cv/i;
     for (const line of lines.slice(0, 10)) {
       const clean = line.replace(/[|,]/g, ' ').trim();
-      if (nameRegex.test(clean) && !skipPattern.test(clean) && clean.split(/\s+/).length >= 2) {
+      if (re.test(clean) && !skip.test(clean) && clean.split(/\s+/).length >= 2)
         return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      }
     }
-    const fallback = lines[0]?.split(/[\s|,]+/)[0];
-    return fallback ? fallback.toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+    return lines[0]?.split(/[\s|,]+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, '_') || '';
   }
 
-  // ── Resume management ──────────────────────────────────────────────────
   function addResume(id = '', text = '') {
     resumeCount++;
-    const uid = 'resume_' + Date.now() + '_' + resumeCount;
+    const uid = 'r_' + Date.now() + '_' + resumeCount;
     const div = document.createElement('div');
     div.className = 'resume-row';
-    div.dataset.uid = uid;
     div.innerHTML = `
       <div class="resume-row-top">
         <input type="text" placeholder="Candidate ID" value="${id}" class="r-id">
@@ -437,35 +379,23 @@
       <div class="pdf-upload-row">
         <input type="file" accept=".pdf" class="pdf-input" id="pdf_${uid}">
         <button class="pdf-upload-btn" onclick="document.getElementById('pdf_${uid}').click()">📄 Upload PDF</button>
-        <div class="pdf-status" id="pdfStatus_${uid}">or paste text above</div>
+        <div class="pdf-status" id="ps_${uid}">or paste text above</div>
       </div>`;
-
     div.querySelector(`#pdf_${uid}`).addEventListener('change', async function(e) {
-      const file     = e.target.files[0];
-      if (!file) return;
-      const statusEl = div.querySelector(`#pdfStatus_${uid}`);
-      statusEl.className   = 'pdf-status loading';
-      statusEl.textContent = '⟳ Reading PDF…';
+      const file = e.target.files[0]; if (!file) return;
+      const st = div.querySelector(`#ps_${uid}`);
+      st.className = 'pdf-status loading'; st.textContent = '⟳ Reading PDF…';
       try {
-        const text   = await parsePDF(file);
-        const nameId = extractNameFromText(text);
-        div.querySelector('.r-text').value = text;
-        const idInput = div.querySelector('.r-id');
-        if (!idInput.value && nameId) {
-          idInput.value        = nameId;
-          statusEl.className   = 'pdf-status done';
-          statusEl.textContent = `✓ Loaded · ID auto-set to "${nameId}"`;
-        } else {
-          statusEl.className   = 'pdf-status done';
-          statusEl.textContent = `✓ ${file.name} loaded`;
-        }
+        const txt  = await parsePDF(file);
+        const name = extractName(txt);
+        div.querySelector('.r-text').value = txt;
+        const idEl = div.querySelector('.r-id');
+        if (!idEl.value && name) { idEl.value = name; st.textContent = `✓ ID auto-set to "${name}"`; }
+        else { st.textContent = `✓ ${file.name} loaded`; }
+        st.className = 'pdf-status done';
         updateCount();
-      } catch {
-        statusEl.className   = 'pdf-status error';
-        statusEl.textContent = '✗ Failed to read PDF';
-      }
+      } catch { st.className = 'pdf-status error'; st.textContent = '✗ Failed to read PDF'; }
     });
-
     document.getElementById('resumeList').appendChild(div);
     updateCount();
   }
@@ -475,24 +405,17 @@
     document.getElementById('resumeCount').textContent = n + ' added';
   }
 
-  function clearAll() {
-    document.getElementById('resumeList').innerHTML = '';
-    resumeCount = 0;
-    updateCount();
-  }
+  function clearAll() { document.getElementById('resumeList').innerHTML = ''; resumeCount = 0; updateCount(); }
 
   function loadExample() {
     document.getElementById('jd').value =
-      'We are hiring a Senior Machine Learning Engineer to join our AI team. ' +
-      'You will design, fine-tune, and deploy large language models in production. ' +
-      'Requirements: 4+ years ML engineering, strong Python and PyTorch, LLM fine-tuning ' +
-      '(LoRA, RLHF), vector databases (FAISS, Pinecone), deployment at scale (AWS, Docker, Kubernetes).';
+      'We are hiring a Senior Machine Learning Engineer. Requirements: 4+ years ML engineering, Python, PyTorch, LLM fine-tuning (LoRA, RLHF), FAISS, AWS, Docker, Kubernetes.';
     clearAll();
     [
-      ['sarah_chen', 'Sarah Chen | San Francisco\nSenior ML Engineer at Scale AI. Fine-tuned LLaMA 2/3 with LoRA and QLoRA. Built RLHF pipelines. Deployed FAISS semantic search at 50M queries/day. MS Computer Science Stanford 2020.\nSkills: Python, PyTorch, HuggingFace, FAISS, LangChain, AWS, Docker, Kubernetes'],
-      ['priya_nair',  'Priya Nair | New York\nNLP Research Scientist at Bloomberg AI. Fine-tuned BERT/GPT on financial NLP. RLHF experiments. Built RAG pipeline with FAISS + LangChain. PhD Columbia 2021.\nSkills: Python, PyTorch, HuggingFace, FAISS, LoRA, RLHF, AWS'],
-      ['raj_patel',   'Raj Patel | Austin TX\nSenior Backend Engineer at Stripe. High-throughput payment APIs. PostgreSQL, Redis, AWS. Recently integrated OpenAI API for ticket classification. No model training experience.\nSkills: Python, Go, AWS, Kubernetes, Docker, PostgreSQL'],
-    ].forEach(([id, text]) => addResume(id, text));
+      ['sarah_chen', 'Sarah Chen | San Francisco\nSenior ML Engineer at Scale AI. Fine-tuned LLaMA 2/3 with LoRA. Built RLHF pipelines. FAISS at 50M queries/day. MS Stanford.\nSkills: Python, PyTorch, HuggingFace, FAISS, LoRA, RLHF, AWS, Docker, Kubernetes'],
+      ['priya_nair',  'Priya Nair | New York\nNLP Researcher at Bloomberg AI. Fine-tuned BERT/GPT. RLHF experiments. RAG with FAISS. PhD Columbia.\nSkills: Python, PyTorch, FAISS, LoRA, RLHF, AWS'],
+      ['raj_patel',   'Raj Patel | Austin\nBackend Engineer at Stripe. Python APIs, PostgreSQL, Redis, AWS. No ML training experience.\nSkills: Python, Go, AWS, Kubernetes, Docker, PostgreSQL'],
+    ].forEach(([id, t]) => addResume(id, t));
     document.getElementById('withEval').checked = true;
     document.getElementById('evalIdsRow').style.display = 'block';
     document.getElementById('relevantIds').value = 'sarah_chen, priya_nair';
@@ -506,16 +429,14 @@
 
   function setLoading(msg) {
     const el = document.getElementById('status');
-    el.className = 'loading';
-    el.innerHTML = `<div class="spinner"></div> ${msg}`;
+    el.className = 'loading'; el.innerHTML = `<div class="spinner"></div> ${msg}`;
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('batchBtn').disabled  = true;
   }
 
   function setError(msg) {
     const el = document.getElementById('status');
-    el.className = 'error';
-    el.innerHTML = `<span>⚠</span> ${msg}`;
+    el.className = 'error'; el.innerHTML = `<span>⚠</span> ${msg}`;
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('batchBtn').disabled  = false;
   }
@@ -527,103 +448,63 @@
     document.getElementById('batchBtn').disabled  = false;
   }
 
-  // ── LLaMA 4 explanation generator ─────────────────────────────────────
-  async function generateExplanation(jd, candidate, rank, finalScore, embeddingScore, rerankScore, confidence) {
-    const prompt = `You are an expert technical recruiter. Analyze why this candidate ranked #${rank + 1} for the job.
-
-JOB DESCRIPTION:
-${jd.slice(0, 800)}
-
-CANDIDATE (${candidate.resume_id}):
-${candidate.text_snippet}
-
-SCORES:
-- Final Score: ${Math.round(finalScore * 100)}%
-- Semantic Match: ${Math.round(embeddingScore * 100)}%
-- Rerank Score: ${Math.round(rerankScore * 100)}%
-- Confidence: ${confidence}
-
-Write ONE concise paragraph (3-4 sentences) explaining:
-1. The specific skills/experience that matched the JD
-2. Why they ranked at position #${rank + 1}
-3. The main gap or risk (if any)
-
-Be specific, mention actual skills from their resume. Do NOT use bullet points. Do NOT start with "This candidate".`;
-
-    const res = await fetch(NVIDIA_URL, {
+  // ── Explanation via backend ────────────────────────────────────────────
+  async function generateExplanation(jd, r, rank) {
+    const res = await fetch(`${API}/explain`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NVIDIA_KEY}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: NVIDIA_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 200,
-        temperature: 0.4,
-        top_p: 0.9,
-        stream: false,
+        jd:              jd,
+        resume_id:       r.resume_id,
+        snippet:         r.text_snippet,
+        rank:            rank,
+        final_score:     r.final_score,
+        embedding_score: r.embedding_score,
+        rerank_score:    r.rerank_score,
+        confidence:      r.confidence?.label || 'unknown',
       }),
     });
-
-    if (!res.ok) throw new Error(`NVIDIA API error: ${res.status}`);
+    if (!res.ok) throw new Error(`${res.status}`);
     const data = await res.json();
-    return data.choices?.[0]?.message?.content?.trim() || 'Explanation unavailable.';
+    return data.explanation;
   }
 
-  // ── Generate all explanations after ranking ────────────────────────────
   async function generateAllExplanations(jd, results) {
     for (let i = 0; i < results.length; i++) {
-      const r         = results[i];
-      const explainEl = document.getElementById(`explain_${r.resume_id}`);
-      if (!explainEl) continue;
-
-      explainEl.innerHTML = `
-        <div class="explain-loading">
-          <div class="explain-spinner"></div>
-          Generating AI explanation…
-        </div>`;
-
+      const r  = results[i];
+      const el = document.getElementById(`explain_${r.resume_id}`);
+      if (!el) continue;
+      el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Generating explanation…</div>`;
       try {
-        const explanation = await generateExplanation(
-          jd, r, i,
-          r.final_score, r.embedding_score, r.rerank_score,
-          r.confidence?.label || 'unknown'
-        );
-
-        // typewriter effect
-        explainEl.innerHTML = `<div class="explain-text typing"></div>`;
-        const textEl = explainEl.querySelector('.explain-text');
-        let charIdx = 0;
-        const interval = setInterval(() => {
-          textEl.textContent = explanation.slice(0, charIdx);
-          charIdx += 3;
-          if (charIdx > explanation.length) {
-            textEl.textContent = explanation;
-            textEl.classList.remove('typing');
-            clearInterval(interval);
-          }
-        }, 20);
-
+        const text = await generateExplanation(jd, r, i);
+        el.innerHTML = `<div class="explain-text typing"></div>`;
+        const tEl = el.querySelector('.explain-text');
+        let idx = 0;
+        const iv = setInterval(() => {
+          tEl.textContent = text.slice(0, idx);
+          idx += 4;
+          if (idx > text.length) { tEl.textContent = text; tEl.classList.remove('typing'); clearInterval(iv); }
+        }, 18);
       } catch (err) {
-        explainEl.innerHTML = `<div class="explain-error">⚠ Could not generate explanation — ${err.message}</div>`;
+        el.innerHTML = `<div class="explain-error">⚠ Could not generate explanation (${err.message})</div>`;
       }
     }
   }
 
   // ── Screening ──────────────────────────────────────────────────────────
   async function runScreening() {
-    const jd        = document.getElementById('jd').value.trim();
-    const resumes   = collectResumes();
-    const topN      = parseInt(document.getElementById('topN').value) || 5;
-    const withEval  = document.getElementById('withEval').checked;
-    const relRaw    = document.getElementById('relevantIds').value;
+    const jd       = document.getElementById('jd').value.trim();
+    const resumes  = collectResumes();
+    const topN     = parseInt(document.getElementById('topN').value) || 5;
+    const withEval = document.getElementById('withEval').checked;
+    const relRaw   = document.getElementById('relevantIds').value;
     const relevantIds = withEval && relRaw ? relRaw.split(',').map(s => s.trim()).filter(Boolean) : null;
 
     if (!jd)             return setError('Please enter a job description.');
     if (!resumes.length) return setError('Please add at least one candidate.');
 
+    // track total candidates submitted
+    totalCandidates = resumes.length;
     setLoading('Running two-stage pipeline…');
     document.getElementById('results').style.display = 'none';
     document.getElementById('validationBox').style.display = 'none';
@@ -640,41 +521,29 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
           ...(relevantIds ? { relevant_ids: relevantIds, eval_k_values: [1, 3, 5] } : {}),
         }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail?.message || err.detail || `HTTP ${res.status}`);
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail?.message || e.detail || `HTTP ${res.status}`); }
       clearStatus();
       const data = await res.json();
       renderResults(data);
       checkHealth();
-      // generate explanations after cards are rendered
       generateAllExplanations(jd, data.results || []);
-    } catch (e) {
-      setError(e.message || 'Could not reach API.');
-    }
+    } catch (e) { setError(e.message || 'Could not reach API.'); }
   }
 
   async function runBatch() {
     const jd      = document.getElementById('jd').value.trim();
     const resumes = collectResumes();
     const topN    = parseInt(document.getElementById('topN').value) || 5;
-    if (!jd)             return setError('Please enter a job description.');
-    if (!resumes.length) return setError('Please add at least one candidate.');
+    if (!jd || !resumes.length) return setError('Please add a job description and candidates.');
+    totalCandidates = resumes.length;
     setLoading('Submitting batch job…');
     lastJD = jd;
     try {
-      const res  = await fetch(`${API}/rank/batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queries: [{ job_description: jd, resumes, top_n: topN }] }),
-      });
+      const res  = await fetch(`${API}/rank/batch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries: [{ job_description: jd, resumes, top_n: topN }] }) });
       const data = await res.json();
       setLoading(`Job queued (${data.job_id.slice(0,8)}…) — polling…`);
       pollJob(data.job_id);
-    } catch (e) {
-      setError(e.message || 'Batch submission failed.');
-    }
+    } catch (e) { setError(e.message || 'Batch failed.'); }
   }
 
   async function pollJob(jobId) {
@@ -685,32 +554,26 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
         const res  = await fetch(`${API}/jobs/${jobId}`);
         const data = await res.json();
         if (data.status === 'done') {
-          clearInterval(iv);
-          clearStatus();
+          clearInterval(iv); clearStatus();
           const result = Array.isArray(data.result) ? data.result[0] : data.result;
-          renderResults(result);
-          checkHealth();
+          renderResults(result); checkHealth();
           generateAllExplanations(lastJD, result.results || []);
-        } else if (data.status === 'error') {
-          clearInterval(iv);
-          setError('Batch job failed: ' + (data.error || 'unknown'));
-        } else {
-          setLoading(`Job ${data.status} (${data.elapsed_s || 0}s)… polling…`);
-        }
-      } catch { }
+        } else if (data.status === 'error') { clearInterval(iv); setError('Job failed: ' + data.error); }
+        else { setLoading(`Job ${data.status} (${data.elapsed_s || 0}s)…`); }
+      } catch {}
       if (attempts >= 120) { clearInterval(iv); setError('Job timed out.'); }
     }, 1000);
   }
 
-  // ── Render results ─────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────
   function renderResults(data) {
     lastResults = data.results || [];
 
     const val = data.validation;
-    if (val && val.n_warnings > 0) {
+    if (val?.n_warnings > 0) {
       const box = document.getElementById('validationBox');
       box.style.display = 'block';
-      box.innerHTML = `<strong style="letter-spacing:0.1em;text-transform:uppercase;font-size:10px">${val.n_warnings} Validation Warning${val.n_warnings > 1 ? 's' : ''}</strong><br><br>` +
+      box.innerHTML = `<strong style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">${val.n_warnings} Warning${val.n_warnings > 1 ? 's' : ''}</strong><br><br>` +
         val.warnings.map(w => `<div class="warn-item">${w.resume_id ? `[${w.resume_id}] ` : ''}${w.message}</div>`).join('');
     }
 
@@ -718,37 +581,23 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
     if (fi) {
       const bar = document.getElementById('faissBar');
       bar.style.display = 'flex';
-      bar.innerHTML = `
-        <div class="faiss-item">INDEX <span class="faiss-val">${fi.index_type}</span></div>
-        <div class="faiss-item">VECTORS <span class="faiss-val">${fi.n_vectors}</span></div>
-        <div class="faiss-item">DIM <span class="faiss-val">${fi.dimension}</span></div>
-        <div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>`;
+      bar.innerHTML = `<div class="faiss-item">INDEX <span class="faiss-val">${fi.index_type}</span></div><div class="faiss-item">VECTORS <span class="faiss-val">${fi.n_vectors}</span></div><div class="faiss-item">DIM <span class="faiss-val">${fi.dimension}</span></div><div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>`;
     }
 
     const t = data.timing || {};
     document.getElementById('resultsMeta').innerHTML =
-      `${data.total_candidates} candidates screened<br>` +
-      `Total: ${t.total_s?.toFixed(2)}s · Embed: ${t.index_build_s?.toFixed(2)}s · Rerank: ${t.rerank_s?.toFixed(2)}s`;
+      `${data.total_candidates} candidates screened<br>Total: ${t.total_s?.toFixed(2)}s · Embed: ${t.index_build_s?.toFixed(2)}s · Rerank: ${t.rerank_s?.toFixed(2)}s`;
 
-    const mp  = document.getElementById('metricsPanel');
-    const rep = data.metrics_report;
+    const mp = document.getElementById('metricsPanel'), rep = data.metrics_report;
     if (rep) {
       mp.style.display = 'block';
-      const key = (rep.metrics || []).filter(m => ['ndcg@5','ndcg@3','precision@3','recall@3','mrr'].includes(m.name)).slice(0, 5);
-      mp.innerHTML = `
-        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div>
-        <div class="metrics-grade">
-          <div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div>
-          <div class="grade-verdict">${rep.verdict}</div>
-        </div>
-        <div class="metrics-grid">
-          ${key.map(m => `<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}
-        </div>`;
-    } else {
-      mp.style.display = 'none';
-    }
+      const key = (rep.metrics || []).filter(m => ['ndcg@5','ndcg@3','precision@3','recall@3','mrr'].includes(m.name)).slice(0,5);
+      mp.innerHTML = `<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div><div class="metrics-grade"><div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div><div class="grade-verdict">${rep.verdict}</div></div><div class="metrics-grid">${key.map(m=>`<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}</div>`;
+    } else { mp.style.display = 'none'; }
 
+    // compare bar — max = total candidates submitted
     document.getElementById('compareBar').className = 'compare-bar visible';
+    document.getElementById('compareMax').textContent = totalCandidates;
     updateCompareBar();
 
     const container = document.getElementById('resultCards');
@@ -757,7 +606,7 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
       const conf  = r.confidence || {};
       const level = conf.level || 'uncertain';
       const card  = document.createElement('div');
-      card.className = `result-card rank-${i}`;
+      card.className = `result-card rank-${Math.min(i, 2)}`;
       card.dataset.resumeId = r.resume_id;
       card.style.animationDelay = `${i * 0.07}s`;
       card.innerHTML = `
@@ -775,10 +624,10 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
             </div>
             <div class="card-snippet">${r.text_snippet}</div>
             <div class="scores-row">
-              ${sb('Final',    r.final_score,     i)}
-              ${sb('Semantic', r.embedding_score, i)}
-              ${sb('Rerank',   r.rerank_score,    i)}
-              ${r.fallback_used ? sb('Keyword', r.fallback?.score || 0, i) : ''}
+              ${sb('Final', r.final_score, Math.min(i,2))}
+              ${sb('Semantic', r.embedding_score, Math.min(i,2))}
+              ${sb('Rerank', r.rerank_score, Math.min(i,2))}
+              ${r.fallback_used ? sb('Keyword', r.fallback?.score||0, Math.min(i,2)) : ''}
             </div>
           </div>
         </div>
@@ -790,7 +639,7 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
         <div class="explain-section">
           <div class="explain-header">
             <span class="explain-label">⚡ AI Explanation</span>
-            <span class="explain-model-tag">LLaMA 4 Maverick</span>
+            <span class="explain-model-tag">Qwen3 32B</span>
           </div>
           <div id="explain_${r.resume_id}" class="explain-loading">
             <div class="explain-spinner"></div> Waiting to generate…
@@ -808,10 +657,13 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
     return `<div class="score-block"><div class="score-name">${label}</div><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill rank-${rank}" style="width:${pct}%"></div></div><div class="score-pct">${pct}%</div></div></div>`;
   }
 
-  // ── Compare ────────────────────────────────────────────────────────────
+  // ── Compare — limit = totalCandidates ─────────────────────────────────
   function toggleCompare(resumeId, checkbox) {
     if (checkbox.checked) {
-      if (selectedForCompare.size >= 2) { checkbox.checked = false; return; }
+      if (selectedForCompare.size >= totalCandidates) {
+        checkbox.checked = false;
+        return;
+      }
       selectedForCompare.add(resumeId);
       checkbox.closest('.result-card').classList.add('selected');
     } else {
@@ -822,90 +674,61 @@ Be specific, mention actual skills from their resume. Do NOT use bullet points. 
   }
 
   function updateCompareBar() {
-    const count = selectedForCompare.size;
-    document.getElementById('compareCount').textContent = count;
-    document.getElementById('compareBtn').disabled = count !== 2;
+    document.getElementById('compareCount').textContent = selectedForCompare.size;
+    document.getElementById('compareBtn').disabled = selectedForCompare.size < 2;
   }
 
   function openComparison() {
-    const ids = [...selectedForCompare];
-    if (ids.length !== 2) return;
-    const a = lastResults.find(r => r.resume_id === ids[0]);
-    const b = lastResults.find(r => r.resume_id === ids[1]);
-    if (!a || !b) return;
-    document.getElementById('compareContent').innerHTML = buildCompareHTML(a, b);
+    const ids      = [...selectedForCompare];
+    const selected = ids.map(id => lastResults.find(r => r.resume_id === id)).filter(Boolean);
+    if (selected.length < 2) return;
+    document.getElementById('compareContent').innerHTML = buildCompareHTML(selected);
     document.getElementById('compareModal').classList.add('open');
   }
 
-  function closeComparison() {
-    document.getElementById('compareModal').classList.remove('open');
-  }
+  function closeComparison() { document.getElementById('compareModal').classList.remove('open'); }
+  document.getElementById('compareModal').addEventListener('click', function(e) { if (e.target === this) closeComparison(); });
 
-  document.getElementById('compareModal').addEventListener('click', function(e) {
-    if (e.target === this) closeComparison();
-  });
+  function buildCompareHTML(candidates) {
+    const n      = candidates.length;
+    const cols   = Math.min(n, 5);
+    const winner = candidates.reduce((a, b) => (a.final_score||0) >= (b.final_score||0) ? a : b);
 
-  function buildCompareHTML(a, b) {
-    const aConf = a.confidence || {};
-    const bConf = b.confidence || {};
-    const aRank = lastResults.indexOf(a) + 1;
-    const bRank = lastResults.indexOf(b) + 1;
-    const winner = (a.final_score || 0) >= (b.final_score || 0) ? a.resume_id : b.resume_id;
-    const margin = Math.abs((a.final_score || 0) - (b.final_score || 0));
+    const colHTML = candidates.map(r => {
+      const rank    = lastResults.indexOf(r) + 1;
+      const conf    = r.confidence || {};
+      const kws     = r.fallback?.matched_keywords || [];
+      const explainEl = document.getElementById(`explain_${r.resume_id}`);
+      const explain   = explainEl?.querySelector('.explain-text')?.textContent || '';
+      const isWinner  = r.resume_id === winner.resume_id;
 
-    const sRow = (label, av, bv, isA) => {
-      const val  = isA ? av : bv;
-      const other = isA ? bv : av;
-      const better = val >= other;
-      const pct  = Math.round(val * 100);
-      return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${better ? 'score-better' : 'score-worse'}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${better ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
-    };
+      const sRow = (label, val) => {
+        const pct = Math.round((val||0)*100);
+        return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${isWinner ? 'score-better' : ''}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${isWinner ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
+      };
 
-    const aKw = a.fallback?.matched_keywords || [];
-    const bKw = b.fallback?.matched_keywords || [];
-
-    // get AI explanations if already generated
-    const aExplainEl = document.getElementById(`explain_${a.resume_id}`);
-    const bExplainEl = document.getElementById(`explain_${b.resume_id}`);
-    const aExplain = aExplainEl?.querySelector('.explain-text')?.textContent || '';
-    const bExplain = bExplainEl?.querySelector('.explain-text')?.textContent || '';
+      return `<div class="compare-col">
+        <div class="compare-col-name">${r.resume_id}${isWinner ? ' ★' : ''}</div>
+        <div class="compare-col-rank">Rank #${rank} · ${conf.label || '—'}</div>
+        <div class="compare-section-title">Scores</div>
+        ${sRow('Final Score', r.final_score)}
+        ${sRow('Semantic', r.embedding_score)}
+        ${sRow('Rerank', r.rerank_score)}
+        ${kws.length ? `<div class="compare-section-title">Keywords</div><div class="compare-keywords">${kws.slice(0,8).map(k=>`<span class="kw-tag">${k}</span>`).join('')}</div>` : ''}
+        ${explain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${explain}</div>` : ''}
+        <div class="compare-section-title">Snippet</div>
+        <div class="compare-snippet">${r.text_snippet}</div>
+      </div>`;
+    }).join('');
 
     return `
-      <div class="compare-grid">
-        <div class="compare-col">
-          <div class="compare-col-name">${a.resume_id}</div>
-          <div class="compare-col-rank">Rank #${aRank} · ${aConf.label || 'unknown'}</div>
-          <div class="compare-section-title">Scores</div>
-          ${sRow('Final Score', a.final_score, b.final_score, true)}
-          ${sRow('Semantic Match', a.embedding_score, b.embedding_score, true)}
-          ${sRow('Rerank Score', a.rerank_score, b.rerank_score, true)}
-          ${aKw.length ? `<div class="compare-section-title">Matched Keywords</div><div class="compare-keywords">${aKw.map(k=>`<span class="kw-tag">${k}</span>`).join('')}</div>` : ''}
-          ${aExplain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${aExplain}</div>` : ''}
-          <div class="compare-section-title">Resume Snippet</div>
-          <div class="compare-snippet">${a.text_snippet}</div>
-        </div>
-        <div class="compare-col">
-          <div class="compare-col-name">${b.resume_id}</div>
-          <div class="compare-col-rank">Rank #${bRank} · ${bConf.label || 'unknown'}</div>
-          <div class="compare-section-title">Scores</div>
-          ${sRow('Final Score', a.final_score, b.final_score, false)}
-          ${sRow('Semantic Match', a.embedding_score, b.embedding_score, false)}
-          ${sRow('Rerank Score', a.rerank_score, b.rerank_score, false)}
-          ${bKw.length ? `<div class="compare-section-title">Matched Keywords</div><div class="compare-keywords">${bKw.map(k=>`<span class="kw-tag">${k}</span>`).join('')}</div>` : ''}
-          ${bExplain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${bExplain}</div>` : ''}
-          <div class="compare-section-title">Resume Snippet</div>
-          <div class="compare-snippet">${b.text_snippet}</div>
-        </div>
-      </div>
-      <div style="padding:0 20px 20px">
-        <div class="verdict-row">
-          <div class="verdict-winner">★ ${winner} is the stronger candidate</div>
-          <div>${margin < 0.05 ? 'Scores are very close — both candidates are worth interviewing.' : `Leading by ${Math.round(margin*100)}% on final score.`}</div>
-        </div>
+      <div class="compare-grid" style="grid-template-columns:repeat(${cols},1fr)">${colHTML}</div>
+      <div class="verdict-row">
+        <div class="verdict-winner">★ ${winner.resume_id} is the strongest candidate</div>
+        <div>Final score ${Math.round((winner.final_score||0)*100)}% across ${n} candidates compared.</div>
       </div>`;
   }
 
-  // ── Init ───────────────────────────────────────────────────────────────
   checkHealth();
   addResume(); addResume(); addResume();
   setInterval(checkHealth, 30000);
