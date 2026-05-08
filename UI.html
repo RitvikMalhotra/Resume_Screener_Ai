@@ -21,6 +21,7 @@
   body::after { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 0; }
   .wrap { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; position: relative; z-index: 1; }
 
+  /* ── Header ── */
   header { margin-bottom: 56px; animation: fadeDown 0.7s cubic-bezier(0.16,1,0.3,1) both; }
   .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
   .logo-mark { display: flex; align-items: center; gap: 10px; }
@@ -36,11 +37,13 @@
   .tag-item { display: flex; align-items: center; gap: 6px; }
   .tag-item::before { content: '▸'; color: var(--accent); font-size: 10px; }
 
+  /* ── System bar ── */
   #systemBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 28px; display: flex; gap: 24px; flex-wrap: wrap; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; animation: fadeUp 0.5s ease 0.3s both; }
   .sys-item { display: flex; align-items: center; gap: 6px; color: var(--muted2); }
   .sys-val { color: var(--accent); font-weight: 500; }
   .sys-val.na { color: var(--muted); }
 
+  /* ── Panels ── */
   .panel { background: var(--s1); border: 1px solid var(--border); margin-bottom: 12px; animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
   .panel-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .panel-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
@@ -50,49 +53,154 @@
   textarea:focus, input:focus { border-color: var(--accent); }
   textarea::placeholder, input::placeholder { color: var(--muted); }
 
-  .resume-list { display: flex; flex-direction: column; gap: 8px; }
-  .resume-row { background: var(--s2); border: 1px solid var(--border); padding: 12px; animation: fadeUp 0.3s ease both; }
-  .resume-row-top { display: grid; grid-template-columns: 130px 1fr 32px; gap: 8px; align-items: start; margin-bottom: 8px; }
-  .resume-row input[type="text"] { font-size: 12px; padding: 8px 10px; }
-  .resume-row textarea { font-size: 12px; min-height: 64px; padding: 8px 10px; }
+  /* ── PDF Upload zone ── */
+  #pdfInput { display: none; }
+
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--s2);
+    margin-bottom: 16px;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(232,255,71,0.02); }
+  .upload-zone.dragover { border-color: var(--accent); background: rgba(232,255,71,0.05); }
+
+  .upload-icon { font-size: 32px; margin-bottom: 12px; }
+
+  .upload-title {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--accent); margin-bottom: 6px; letter-spacing: -0.01em;
+  }
+
+  .upload-sub {
+    font-size: 11px; color: var(--muted2); letter-spacing: 0.08em;
+    line-height: 1.6;
+  }
+
+  .upload-sub span { color: var(--accent2); }
+
+  /* processing indicator */
+  #processingBar {
+    display: none; background: var(--s1); border: 1px solid var(--border);
+    padding: 12px 16px; margin-bottom: 12px;
+    font-size: 11px; letter-spacing: 0.08em; color: var(--muted2);
+    align-items: center; gap: 10px;
+  }
+  #processingBar.active { display: flex; }
+  .mini-spinner { width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+
+  /* ── Candidate cards (auto-generated) ── */
+  #candidateList { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+  .cand-card {
+    background: var(--s2); border: 1px solid var(--border);
+    animation: fadeUp 0.35s cubic-bezier(0.16,1,0.3,1) both;
+    overflow: hidden;
+  }
+
+  .cand-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    background: var(--s1);
+  }
+
+  .cand-num {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    color: var(--muted); min-width: 24px;
+  }
+
+  .cand-id-input {
+    flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border);
+    color: var(--accent); font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700; padding: 2px 4px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .cand-id-input:focus { border-bottom-color: var(--accent); }
+
+  .cand-file-tag {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); border: 1px solid var(--border);
+    padding: 2px 6px; white-space: nowrap;
+  }
+
+  .cand-remove {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 16px; padding: 0 4px;
+    transition: color 0.15s; flex-shrink: 0;
+  }
+  .cand-remove:hover { color: var(--uncertain); }
+
+  .cand-text {
+    font-size: 11px; color: var(--muted2); line-height: 1.6;
+    padding: 10px 14px; max-height: 80px; overflow: hidden;
+    cursor: pointer; position: relative;
+  }
+
+  .cand-text::after {
+    content: '▾ show more';
+    position: absolute; bottom: 0; right: 14px;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: var(--s2);
+    padding-left: 8px;
+  }
+
+  .cand-text.expanded { max-height: none; }
+  .cand-text.expanded::after { content: '▴ show less'; }
+
+  .cand-status {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 14px; color: var(--good);
+  }
+
+  /* ── Manual add fallback ── */
+  .manual-toggle {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); cursor: pointer; text-align: center;
+    padding: 8px; border: 1px dashed var(--border); transition: all 0.15s;
+    background: none; width: 100%;
+  }
+  .manual-toggle:hover { color: var(--muted2); border-color: var(--border2); }
+
+  #manualForm { display: none; margin-top: 10px; }
+  .manual-row { display: grid; grid-template-columns: 140px 1fr 32px; gap: 8px; margin-bottom: 8px; }
+  .manual-row input { font-size: 12px; padding: 8px 10px; }
+  .manual-row textarea { font-size: 12px; min-height: 64px; padding: 8px 10px; }
   .rm-btn { width: 32px; height: 32px; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
   .rm-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
 
-  .pdf-upload-row { display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
-  .pdf-input { display: none; }
-  .pdf-upload-btn { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 12px; cursor: pointer; border: 1px dashed var(--border2); color: var(--muted2); background: none; transition: all 0.15s; white-space: nowrap; }
-  .pdf-upload-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .pdf-status { font-size: 10px; letter-spacing: 0.08em; color: var(--muted); }
-  .pdf-status.loading { color: var(--accent2); }
-  .pdf-status.done { color: var(--good); }
-  .pdf-status.error { color: var(--uncertain); }
-
-  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  .btn { font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; border: none; transition: all 0.15s; }
-  .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--muted2); }
-  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
-  .btn-primary { background: var(--accent); color: #000; font-weight: 700; flex: 1; padding: 13px; font-size: 12px; }
-  .btn-primary:hover { background: #f0ff60; }
-  .btn-primary:disabled { background: var(--s3); color: var(--muted); cursor: not-allowed; }
-  .btn-secondary { background: none; border: 1px solid var(--accent2); color: var(--accent2); }
-  .btn-secondary:hover { background: rgba(71,217,255,0.08); }
-  .btn-secondary:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
-
+  /* ── Options ── */
   .options-grid { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
   .opt-label { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
   input[type="number"] { width: 70px; resize: none; padding: 7px 10px; }
   .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); cursor: pointer; }
   .checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--accent); }
 
+  /* ── Buttons ── */
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #000; font-weight: 700; flex: 1; padding: 14px; font-size: 12px; }
+  .btn-primary:hover { background: #f0ff60; }
+  .btn-primary:disabled { background: var(--s3); color: var(--muted); cursor: not-allowed; }
+  .btn-secondary { background: none; border: 1px solid var(--accent2); color: var(--accent2); }
+  .btn-secondary:hover { background: rgba(71,217,255,0.08); }
+  .btn-secondary:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+  .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--muted2); }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── Status ── */
   #status { padding: 12px 16px; margin-bottom: 12px; font-size: 11px; letter-spacing: 0.08em; display: none; align-items: center; gap: 10px; }
   #status.loading { display: flex; background: var(--s1); border: 1px solid var(--border); color: var(--muted2); }
   #status.error { display: flex; background: rgba(255,71,71,0.06); border: 1px solid rgba(255,71,71,0.3); color: var(--uncertain); }
   .spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 
-  #validationBox { display: none; background: rgba(255,193,71,0.05); border: 1px solid rgba(255,193,71,0.2); padding: 14px 16px; margin-bottom: 12px; font-size: 11px; color: var(--medium); letter-spacing: 0.06em; }
+  #validationBox { display: none; background: rgba(255,193,71,0.05); border: 1px solid rgba(255,193,71,0.2); padding: 14px 16px; margin-bottom: 12px; font-size: 11px; color: var(--medium); }
   .warn-item { margin-bottom: 4px; display: flex; gap: 8px; }
   .warn-item::before { content: '⚠'; flex-shrink: 0; }
 
+  /* ── Results ── */
   #results { display: none; }
   .results-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
   .results-heading { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
@@ -119,6 +227,7 @@
   .metric-grade { font-size: 9px; letter-spacing: 0.1em; margin-top: 2px; }
   .grade-A { color: var(--good); } .grade-B { color: var(--accent); } .grade-C { color: var(--medium); } .grade-D { color: var(--low); } .grade-F { color: var(--uncertain); }
 
+  /* ── Result cards ── */
   .result-card { background: var(--s1); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
   .result-card:hover { border-color: var(--border2); }
   .result-card.selected { border-color: var(--accent); }
@@ -129,14 +238,14 @@
   .compare-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
   .card-main { padding: 16px 20px; }
   .card-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-  .card-id { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .card-id { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
   .confidence-badge { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 8px; border: 1px solid; }
   .conf-high      { border-color: var(--high);      color: var(--high); }
   .conf-medium    { border-color: var(--medium);    color: var(--medium); }
   .conf-low       { border-color: var(--low);       color: var(--low); }
   .conf-uncertain { border-color: var(--uncertain); color: var(--uncertain); }
   .winner-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; background: var(--accent); color: #000; font-weight: 700; }
-  .fallback-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); border: 1px solid rgba(71,217,255,0.3); padding: 2px 6px; }
+  .fallback-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); border: 1px solid rgba(71,217,255,0.3); padding: 2px 6px; }
   .card-snippet { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-bottom: 14px; max-height: 48px; overflow: hidden; }
   .scores-row { display: flex; gap: 16px; flex-wrap: wrap; }
   .score-block { display: flex; flex-direction: column; gap: 4px; }
@@ -146,26 +255,27 @@
   .score-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); transition: width 1s cubic-bezier(0.16,1,0.3,1); }
   .rank-1 .score-fill { background: var(--medium); } .rank-2 .score-fill { background: var(--low); }
   .score-pct { font-size: 11px; color: var(--text); min-width: 32px; }
-  .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 68px; font-size: 10px; color: var(--muted); letter-spacing: 0.04em; line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 68px; font-size: 10px; color: var(--muted); line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
   .footer-reason { flex: 1; min-width: 200px; }
-  .footer-gap { color: var(--muted); white-space: nowrap; }
+  .footer-gap { white-space: nowrap; }
   .footer-gap span { color: var(--text); }
 
   .explain-section { border-top: 1px solid var(--border); padding: 14px 20px 14px 68px; }
   .explain-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .explain-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent2); font-weight: 600; }
-  .explain-model-tag { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; }
-  .explain-text { font-size: 12px; color: var(--text); line-height: 1.8; letter-spacing: 0.02em; }
-  .explain-loading { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
+  .explain-model-tag { font-size: 9px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; }
+  .explain-text { font-size: 12px; color: var(--text); line-height: 1.8; }
+  .explain-loading { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); }
   .explain-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-  .explain-error { font-size: 11px; color: var(--muted); font-style: italic; letter-spacing: 0.04em; }
+  .explain-error { font-size: 11px; color: var(--muted); font-style: italic; }
   .typing::after { content: '▌'; color: var(--accent2); animation: blink 0.8s step-end infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
   #faissBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: none; gap: 20px; flex-wrap: wrap; }
-  .faiss-item { display: flex; gap: 6px; align-items: center; }
+  .faiss-item { display: flex; gap: 6px; }
   .faiss-val { color: var(--accent2); }
 
+  /* ── Compare modal ── */
   #compareModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
   #compareModal.open { display: flex; }
   .compare-box { background: var(--s1); border: 1px solid var(--border2); width: 100%; max-width: 1200px; margin: auto; animation: fadeUp 0.3s ease both; }
@@ -175,18 +285,18 @@
   .close-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
   .compare-grid { display: grid; padding: 20px; gap: 12px; }
   .compare-col { background: var(--s2); border: 1px solid var(--border); padding: 16px; }
-  .compare-col-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .compare-col-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 4px; }
   .compare-col-rank { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
   .compare-section-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
   .compare-score-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-  .compare-score-label { font-size: 10px; color: var(--muted2); letter-spacing: 0.08em; }
+  .compare-score-label { font-size: 10px; color: var(--muted2); }
   .compare-score-val { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; }
   .score-better { color: var(--good); } .score-worse { color: var(--muted); }
   .compare-bar-full { height: 3px; background: var(--s3); margin-bottom: 5px; position: relative; overflow: hidden; }
   .compare-bar-fill-full { position: absolute; left: 0; top: 0; bottom: 0; }
   .compare-snippet { font-size: 10px; color: var(--muted2); line-height: 1.5; margin-top: 6px; max-height: 80px; overflow-y: auto; }
   .compare-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .kw-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 5px; background: rgba(71,217,255,0.1); border: 1px solid rgba(71,217,255,0.2); color: var(--accent2); }
+  .kw-tag { font-size: 9px; padding: 2px 5px; background: rgba(71,217,255,0.1); border: 1px solid rgba(71,217,255,0.2); color: var(--accent2); }
   .verdict-row { margin: 0 20px 20px; padding: 12px 16px; background: var(--s1); border: 1px solid var(--border); font-size: 11px; color: var(--muted2); line-height: 1.6; }
   .verdict-winner { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
 
@@ -212,10 +322,10 @@
     </div>
     <h1><span class="line1">SCREEN</span><span class="line2">SMARTER.</span></h1>
     <div class="tagline">
-      <span class="tag-item">FAISS Vector Retrieval</span>
-      <span class="tag-item">Cross-Encoder Reranking</span>
+      <span class="tag-item">Multi-PDF Upload</span>
+      <span class="tag-item">Auto Name Detection</span>
       <span class="tag-item">AI Explanations</span>
-      <span class="tag-item">PDF Upload</span>
+      <span class="tag-item">Candidate Comparison</span>
     </div>
   </header>
 
@@ -227,30 +337,57 @@
     <div class="sys-item">JOBS <span class="sys-val na" id="sysJobs">0</span></div>
   </div>
 
+  <!-- Step 1: Job Description -->
   <div class="panel" style="animation-delay:0.1s">
     <div class="panel-header"><div class="panel-title">01 — Job Description</div></div>
     <div class="panel-body">
-      <textarea id="jd" rows="7" placeholder="Paste the full job description here…"></textarea>
+      <textarea id="jd" rows="7" placeholder="Paste the full job description here…&#10;&#10;Include: role title, required skills, experience level, tech stack, responsibilities.&#10;Longer descriptions produce better ranking accuracy."></textarea>
     </div>
   </div>
 
+  <!-- Step 2: Upload PDFs -->
   <div class="panel" style="animation-delay:0.15s">
     <div class="panel-header">
-      <div class="panel-title">02 — Candidates</div>
-      <div style="font-size:10px;color:var(--muted)" id="resumeCount">0 added</div>
+      <div class="panel-title">02 — Upload Resumes</div>
+      <div style="font-size:10px;color:var(--muted)" id="candCount"></div>
     </div>
     <div class="panel-body">
-      <div class="resume-list" id="resumeList"></div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="addResume()">+ Add Candidate</button>
-        <button class="btn btn-ghost" onclick="loadExample()">Load Example</button>
-        <button class="btn btn-ghost" onclick="clearAll()">Clear All</button>
+
+      <!-- Multi-file input -->
+      <input type="file" id="pdfInput" accept=".pdf" multiple>
+
+      <!-- Drop zone -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfInput').click()">
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Click to upload resumes</div>
+        <div class="upload-sub">
+          Select <span>multiple PDF files</span> at once<br>
+          Candidate names are detected automatically
+        </div>
       </div>
+
+      <!-- Processing indicator -->
+      <div id="processingBar">
+        <div class="mini-spinner"></div>
+        <span id="processingText">Processing PDFs…</span>
+      </div>
+
+      <!-- Auto-generated candidate cards -->
+      <div id="candidateList"></div>
+
+      <!-- Manual fallback -->
+      <button class="manual-toggle" onclick="toggleManual()">+ Add candidate manually</button>
+      <div id="manualForm">
+        <div id="manualList"></div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:10px" onclick="addManual()">+ Add another</button>
+      </div>
+
     </div>
   </div>
 
+  <!-- Step 3: Options + Screen -->
   <div class="panel" style="animation-delay:0.2s">
-    <div class="panel-header"><div class="panel-title">03 — Options</div></div>
+    <div class="panel-header"><div class="panel-title">03 — Screen</div></div>
     <div class="panel-body">
       <div class="options-grid">
         <span class="opt-label">Show top</span>
@@ -259,7 +396,7 @@
         <span style="flex:1"></span>
         <label class="checkbox-row"><input type="checkbox" id="withEval"> Enable evaluation metrics</label>
       </div>
-      <div id="evalIdsRow" style="display:none;margin-bottom:12px">
+      <div id="evalIdsRow" style="display:none;margin-bottom:16px">
         <input type="text" id="relevantIds" placeholder="Relevant candidate IDs (comma-separated)">
       </div>
       <div class="btn-row">
@@ -281,12 +418,13 @@
     <div id="metricsPanel"></div>
     <div class="compare-bar" id="compareBar">
       <div class="compare-info">
-        <span id="compareCount">0</span> selected · select 2–<span id="compareMax">?</span> to compare
+        <span id="compareCount">0</span> selected · select 2–<span id="compareMax">?</span> to compare all
       </div>
       <button class="btn-compare" id="compareBtn" onclick="openComparison()" disabled>Compare Selected</button>
     </div>
     <div id="resultCards"></div>
   </div>
+
 </div>
 
 <div id="compareModal">
@@ -303,18 +441,18 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  const API          = 'https://resumescreenerai-production.up.railway.app';
+  const API = 'https://resumescreenerai-production.up.railway.app';
 
-  let resumeCount        = 0;
-  let lastResults        = [];
-  let lastJD             = '';
-  let totalCandidates    = 0;
+  // State
+  let candidates        = [];   // [{id, text, filename}]
+  let lastResults       = [];
+  let lastJD            = '';
+  let totalCandidates   = 0;
   let selectedForCompare = new Set();
+  let manualCount       = 0;
+  let manualVisible     = false;
 
-  document.getElementById('withEval').addEventListener('change', e => {
-    document.getElementById('evalIdsRow').style.display = e.target.checked ? 'block' : 'none';
-  });
-
+  // ── Health ─────────────────────────────────────────────────────────────
   async function checkHealth() {
     try {
       const res  = await fetch(`${API}/health`);
@@ -330,17 +468,22 @@
 
   function updateSystemBar(data) {
     const idx = data.index, cache = data.cache?.cache, jobs = data.jobs;
-    document.getElementById('sysIndex').textContent    = idx   ? idx.index_type         : '—';
-    document.getElementById('sysIndex').className      = idx   ? 'sys-val'              : 'sys-val na';
-    document.getElementById('sysVectors').textContent  = idx   ? idx.n_vectors          : '—';
-    document.getElementById('sysVectors').className    = idx   ? 'sys-val'              : 'sys-val na';
-    document.getElementById('sysDim').textContent      = idx   ? idx.dimension          : '—';
-    document.getElementById('sysDim').className        = idx   ? 'sys-val'              : 'sys-val na';
-    document.getElementById('sysCacheHit').textContent = cache ? cache.hit_rate_pct+'%' : '—';
-    document.getElementById('sysCacheHit').className   = cache ? 'sys-val'              : 'sys-val na';
-    document.getElementById('sysJobs').textContent     = jobs  ? jobs.total_jobs        : '0';
+    const set = (id, val, hasVal) => {
+      document.getElementById(id).textContent = val;
+      document.getElementById(id).className = hasVal ? 'sys-val' : 'sys-val na';
+    };
+    set('sysIndex',    idx   ? idx.index_type         : '—', !!idx);
+    set('sysVectors',  idx   ? idx.n_vectors           : '—', !!idx);
+    set('sysDim',      idx   ? idx.dimension           : '—', !!idx);
+    set('sysCacheHit', cache ? cache.hit_rate_pct+'%'  : '—', !!cache);
+    set('sysJobs',     jobs  ? jobs.total_jobs          : '0', true);
   }
 
+  document.getElementById('withEval').addEventListener('change', e => {
+    document.getElementById('evalIdsRow').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // ── PDF parsing ────────────────────────────────────────────────────────
   async function parsePDF(file) {
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -353,94 +496,166 @@
     return text.trim();
   }
 
-  function extractName(text) {
+  function extractName(text, filename) {
+    // Try from text first
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const re    = /^[A-Z][a-z]+([\s-][A-Z][a-z]+){1,3}$/;
-    const skip  = /@|http|linkedin|github|\d{3}|\+\d|resume|cv/i;
-    for (const line of lines.slice(0, 10)) {
-      const clean = line.replace(/[|,]/g, ' ').trim();
-      if (re.test(clean) && !skip.test(clean) && clean.split(/\s+/).length >= 2)
+    const re    = /^[A-Z][a-z]+([\s\-][A-Z][a-z]+){1,3}$/;
+    const skip  = /@|http|linkedin|github|\d{3}|\+\d|resume|cv|summary|experience|education|skills/i;
+
+    for (const line of lines.slice(0, 8)) {
+      const clean = line.replace(/[|,·•]/g, ' ').trim();
+      const words = clean.split(/\s+/);
+      if (re.test(clean) && !skip.test(clean) && words.length >= 2 && words.length <= 4) {
         return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      }
     }
-    return lines[0]?.split(/[\s|,]+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, '_') || '';
+
+    // fallback: use filename without extension
+    const base = filename.replace(/\.pdf$/i, '').replace(/[_\-\s]+/g, '_').toLowerCase().replace(/[^a-z0-9_]/g, '');
+    return base || 'candidate_' + Date.now();
   }
 
-  function addResume(id = '', text = '') {
-    resumeCount++;
-    const uid = 'r_' + Date.now() + '_' + resumeCount;
-    const div = document.createElement('div');
-    div.className = 'resume-row';
-    div.innerHTML = `
-      <div class="resume-row-top">
-        <input type="text" placeholder="Candidate ID" value="${id}" class="r-id">
-        <textarea placeholder="Paste resume text here…" class="r-text" rows="3">${text}</textarea>
-        <button class="rm-btn" onclick="this.closest('.resume-row').remove();updateCount()">×</button>
-      </div>
-      <div class="pdf-upload-row">
-        <input type="file" accept=".pdf" class="pdf-input" id="pdf_${uid}">
-        <button class="pdf-upload-btn" onclick="document.getElementById('pdf_${uid}').click()">📄 Upload PDF</button>
-        <div class="pdf-status" id="ps_${uid}">or paste text above</div>
-      </div>`;
-    div.querySelector(`#pdf_${uid}`).addEventListener('change', async function(e) {
-      const file = e.target.files[0]; if (!file) return;
-      const st = div.querySelector(`#ps_${uid}`);
-      st.className = 'pdf-status loading'; st.textContent = '⟳ Reading PDF…';
+  // ── Multi-PDF file handler ─────────────────────────────────────────────
+  document.getElementById('pdfInput').addEventListener('change', async function(e) {
+    const files = [...e.target.files];
+    if (!files.length) return;
+    await processFiles(files);
+    this.value = ''; // reset so same files can be re-selected
+  });
+
+  async function processFiles(files) {
+    const bar  = document.getElementById('processingBar');
+    const txt  = document.getElementById('processingText');
+    bar.classList.add('active');
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      txt.textContent = `Processing ${i + 1}/${files.length}: ${file.name}…`;
       try {
-        const txt  = await parsePDF(file);
-        const name = extractName(txt);
-        div.querySelector('.r-text').value = txt;
-        const idEl = div.querySelector('.r-id');
-        if (!idEl.value && name) { idEl.value = name; st.textContent = `✓ ID auto-set to "${name}"`; }
-        else { st.textContent = `✓ ${file.name} loaded`; }
-        st.className = 'pdf-status done';
-        updateCount();
-      } catch { st.className = 'pdf-status error'; st.textContent = '✗ Failed to read PDF'; }
+        const text = await parsePDF(file);
+        const id   = extractName(text, file.name);
+        // avoid duplicate IDs
+        let finalId = id;
+        let suffix  = 2;
+        while (candidates.find(c => c.id === finalId)) {
+          finalId = `${id}_${suffix++}`;
+        }
+        candidates.push({ id: finalId, text, filename: file.name });
+        renderCandidateCard(candidates.length - 1);
+      } catch {
+        candidates.push({ id: file.name.replace('.pdf','').toLowerCase().replace(/\s+/g,'_'), text: '', filename: file.name, error: true });
+        renderCandidateCard(candidates.length - 1);
+      }
+    }
+
+    bar.classList.remove('active');
+    updateCandCount();
+  }
+
+  // Drag and drop
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', async e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const files = [...e.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith('.pdf'));
+    if (files.length) await processFiles(files);
+  });
+
+  // ── Render a candidate card ────────────────────────────────────────────
+  function renderCandidateCard(idx) {
+    const c   = candidates[idx];
+    const list = document.getElementById('candidateList');
+    const div  = document.createElement('div');
+    div.className  = 'cand-card';
+    div.dataset.idx = idx;
+    div.style.animationDelay = `${idx * 0.06}s`;
+
+    div.innerHTML = `
+      <div class="cand-card-header">
+        <span class="cand-num">#${idx + 1}</span>
+        <input class="cand-id-input" value="${c.id}" placeholder="Candidate ID"
+          oninput="candidates[${idx}].id = this.value">
+        <span class="cand-file-tag">${c.filename}</span>
+        <button class="cand-remove" onclick="removeCandidate(${idx}, this.closest('.cand-card'))">×</button>
+      </div>
+      ${c.error
+        ? `<div class="cand-status" style="color:var(--uncertain)">⚠ Could not read PDF</div>`
+        : `<div class="cand-text" onclick="this.classList.toggle('expanded')">${c.text.slice(0, 400).replace(/\n/g, ' ')}</div>
+           <div class="cand-status">✓ ${c.text.split(/\s+/).length} words extracted</div>`
+      }`;
+    list.appendChild(div);
+  }
+
+  function removeCandidate(idx, el) {
+    candidates.splice(idx, 1);
+    el.remove();
+    // re-number remaining cards
+    document.querySelectorAll('.cand-card').forEach((card, i) => {
+      card.dataset.idx = i;
+      card.querySelector('.cand-num').textContent = `#${i + 1}`;
     });
-    document.getElementById('resumeList').appendChild(div);
-    updateCount();
+    updateCandCount();
   }
 
-  function updateCount() {
-    const n = document.querySelectorAll('.resume-row').length;
-    document.getElementById('resumeCount').textContent = n + ' added';
+  function updateCandCount() {
+    const total = candidates.length + document.querySelectorAll('.manual-row').length;
+    document.getElementById('candCount').textContent = total ? `${total} candidate${total > 1 ? 's' : ''}` : '';
   }
 
-  function clearAll() { document.getElementById('resumeList').innerHTML = ''; resumeCount = 0; updateCount(); }
-
-  function loadExample() {
-    document.getElementById('jd').value =
-      'We are hiring a Senior Machine Learning Engineer. Requirements: 4+ years ML engineering, Python, PyTorch, LLM fine-tuning (LoRA, RLHF), FAISS, AWS, Docker, Kubernetes.';
-    clearAll();
-    [
-      ['sarah_chen', 'Sarah Chen | San Francisco\nSenior ML Engineer at Scale AI. Fine-tuned LLaMA 2/3 with LoRA. Built RLHF pipelines. FAISS at 50M queries/day. MS Stanford.\nSkills: Python, PyTorch, HuggingFace, FAISS, LoRA, RLHF, AWS, Docker, Kubernetes'],
-      ['priya_nair',  'Priya Nair | New York\nNLP Researcher at Bloomberg AI. Fine-tuned BERT/GPT. RLHF experiments. RAG with FAISS. PhD Columbia.\nSkills: Python, PyTorch, FAISS, LoRA, RLHF, AWS'],
-      ['raj_patel',   'Raj Patel | Austin\nBackend Engineer at Stripe. Python APIs, PostgreSQL, Redis, AWS. No ML training experience.\nSkills: Python, Go, AWS, Kubernetes, Docker, PostgreSQL'],
-    ].forEach(([id, t]) => addResume(id, t));
-    document.getElementById('withEval').checked = true;
-    document.getElementById('evalIdsRow').style.display = 'block';
-    document.getElementById('relevantIds').value = 'sarah_chen, priya_nair';
+  // ── Manual add fallback ────────────────────────────────────────────────
+  function toggleManual() {
+    manualVisible = !manualVisible;
+    document.getElementById('manualForm').style.display = manualVisible ? 'block' : 'none';
+    if (manualVisible && document.querySelectorAll('.manual-row').length === 0) addManual();
   }
 
-  function collectResumes() {
-    return [...document.querySelectorAll('.resume-row')]
-      .map(r => ({ resume_id: r.querySelector('.r-id').value.trim(), text: r.querySelector('.r-text').value.trim() }))
-      .filter(r => r.resume_id && r.text);
+  function addManual() {
+    manualCount++;
+    const uid = 'man_' + manualCount;
+    const div = document.createElement('div');
+    div.className = 'manual-row';
+    div.innerHTML = `
+      <input type="text" placeholder="Candidate ID" class="man-id">
+      <textarea placeholder="Paste resume text here…" class="man-text" rows="3"></textarea>
+      <button class="rm-btn" onclick="this.parentElement.remove();updateCandCount()">×</button>`;
+    document.getElementById('manualList').appendChild(div);
+    updateCandCount();
   }
 
+  // ── Collect all candidates ─────────────────────────────────────────────
+  function collectAll() {
+    const all = [];
+
+    // PDF-parsed candidates
+    for (const c of candidates) {
+      if (c.text && c.id) all.push({ resume_id: c.id, text: c.text });
+    }
+
+    // Manual entries
+    for (const row of document.querySelectorAll('.manual-row')) {
+      const id   = row.querySelector('.man-id').value.trim();
+      const text = row.querySelector('.man-text').value.trim();
+      if (id && text) all.push({ resume_id: id, text });
+    }
+
+    return all;
+  }
+
+  // ── Status helpers ─────────────────────────────────────────────────────
   function setLoading(msg) {
     const el = document.getElementById('status');
     el.className = 'loading'; el.innerHTML = `<div class="spinner"></div> ${msg}`;
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('batchBtn').disabled  = true;
   }
-
   function setError(msg) {
     const el = document.getElementById('status');
     el.className = 'error'; el.innerHTML = `<span>⚠</span> ${msg}`;
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('batchBtn').disabled  = false;
   }
-
   function clearStatus() {
     document.getElementById('status').className = '';
     document.getElementById('status').innerHTML = '';
@@ -448,62 +663,18 @@
     document.getElementById('batchBtn').disabled  = false;
   }
 
-  // ── Explanation via backend ────────────────────────────────────────────
-  async function generateExplanation(jd, r, rank) {
-    const res = await fetch(`${API}/explain`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jd:              jd,
-        resume_id:       r.resume_id,
-        snippet:         r.text_snippet,
-        rank:            rank,
-        final_score:     r.final_score,
-        embedding_score: r.embedding_score,
-        rerank_score:    r.rerank_score,
-        confidence:      r.confidence?.label || 'unknown',
-      }),
-    });
-    if (!res.ok) throw new Error(`${res.status}`);
-    const data = await res.json();
-    return data.explanation;
-  }
-
-  async function generateAllExplanations(jd, results) {
-    for (let i = 0; i < results.length; i++) {
-      const r  = results[i];
-      const el = document.getElementById(`explain_${r.resume_id}`);
-      if (!el) continue;
-      el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Generating explanation…</div>`;
-      try {
-        const text = await generateExplanation(jd, r, i);
-        el.innerHTML = `<div class="explain-text typing"></div>`;
-        const tEl = el.querySelector('.explain-text');
-        let idx = 0;
-        const iv = setInterval(() => {
-          tEl.textContent = text.slice(0, idx);
-          idx += 4;
-          if (idx > text.length) { tEl.textContent = text; tEl.classList.remove('typing'); clearInterval(iv); }
-        }, 18);
-      } catch (err) {
-        el.innerHTML = `<div class="explain-error">⚠ Could not generate explanation (${err.message})</div>`;
-      }
-    }
-  }
-
   // ── Screening ──────────────────────────────────────────────────────────
   async function runScreening() {
-    const jd       = document.getElementById('jd').value.trim();
-    const resumes  = collectResumes();
-    const topN     = parseInt(document.getElementById('topN').value) || 5;
+    const jd      = document.getElementById('jd').value.trim();
+    const resumes = collectAll();
+    const topN    = parseInt(document.getElementById('topN').value) || 5;
     const withEval = document.getElementById('withEval').checked;
     const relRaw   = document.getElementById('relevantIds').value;
     const relevantIds = withEval && relRaw ? relRaw.split(',').map(s => s.trim()).filter(Boolean) : null;
 
     if (!jd)             return setError('Please enter a job description.');
-    if (!resumes.length) return setError('Please add at least one candidate.');
+    if (!resumes.length) return setError('Please upload at least one resume PDF.');
 
-    // track total candidates submitted
     totalCandidates = resumes.length;
     setLoading('Running two-stage pipeline…');
     document.getElementById('results').style.display = 'none';
@@ -532,14 +703,17 @@
 
   async function runBatch() {
     const jd      = document.getElementById('jd').value.trim();
-    const resumes = collectResumes();
+    const resumes = collectAll();
     const topN    = parseInt(document.getElementById('topN').value) || 5;
-    if (!jd || !resumes.length) return setError('Please add a job description and candidates.');
+    if (!jd || !resumes.length) return setError('Please add a job description and resumes.');
     totalCandidates = resumes.length;
     setLoading('Submitting batch job…');
     lastJD = jd;
     try {
-      const res  = await fetch(`${API}/rank/batch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries: [{ job_description: jd, resumes, top_n: topN }] }) });
+      const res  = await fetch(`${API}/rank/batch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ queries: [{ job_description: jd, resumes, top_n: topN }] }),
+      });
       const data = await res.json();
       setLoading(`Job queued (${data.job_id.slice(0,8)}…) — polling…`);
       pollJob(data.job_id);
@@ -559,13 +733,51 @@
           renderResults(result); checkHealth();
           generateAllExplanations(lastJD, result.results || []);
         } else if (data.status === 'error') { clearInterval(iv); setError('Job failed: ' + data.error); }
-        else { setLoading(`Job ${data.status} (${data.elapsed_s || 0}s)…`); }
+        else { setLoading(`Job ${data.status} (${data.elapsed_s||0}s)…`); }
       } catch {}
       if (attempts >= 120) { clearInterval(iv); setError('Job timed out.'); }
     }, 1000);
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // ── AI Explanations ────────────────────────────────────────────────────
+  async function generateExplanation(jd, r, rank) {
+    const res = await fetch(`${API}/explain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jd, resume_id: r.resume_id, snippet: r.text_snippet,
+        rank, final_score: r.final_score,
+        embedding_score: r.embedding_score,
+        rerank_score: r.rerank_score,
+        confidence: r.confidence?.label || 'unknown',
+      }),
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return (await res.json()).explanation;
+  }
+
+  async function generateAllExplanations(jd, results) {
+    for (let i = 0; i < results.length; i++) {
+      const r  = results[i];
+      const el = document.getElementById(`explain_${r.resume_id}`);
+      if (!el) continue;
+      el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Generating…</div>`;
+      try {
+        const text = await generateExplanation(jd, r, i);
+        el.innerHTML = `<div class="explain-text typing"></div>`;
+        const tEl = el.querySelector('.explain-text');
+        let idx = 0;
+        const iv = setInterval(() => {
+          tEl.textContent = text.slice(0, idx); idx += 4;
+          if (idx > text.length) { tEl.textContent = text; tEl.classList.remove('typing'); clearInterval(iv); }
+        }, 18);
+      } catch (err) {
+        el.innerHTML = `<div class="explain-error">⚠ Could not generate (${err.message})</div>`;
+      }
+    }
+  }
+
+  // ── Render results ─────────────────────────────────────────────────────
   function renderResults(data) {
     lastResults = data.results || [];
 
@@ -591,11 +803,12 @@
     const mp = document.getElementById('metricsPanel'), rep = data.metrics_report;
     if (rep) {
       mp.style.display = 'block';
-      const key = (rep.metrics || []).filter(m => ['ndcg@5','ndcg@3','precision@3','recall@3','mrr'].includes(m.name)).slice(0,5);
-      mp.innerHTML = `<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div><div class="metrics-grade"><div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div><div class="grade-verdict">${rep.verdict}</div></div><div class="metrics-grid">${key.map(m=>`<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}</div>`;
+      const key = (rep.metrics || []).filter(m => ['ndcg@5','ndcg@3','precision@3','recall@3','mrr'].includes(m.name)).slice(0, 5);
+      mp.innerHTML = `<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div>
+        <div class="metrics-grade"><div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div><div class="grade-verdict">${rep.verdict}</div></div>
+        <div class="metrics-grid">${key.map(m=>`<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}</div>`;
     } else { mp.style.display = 'none'; }
 
-    // compare bar — max = total candidates submitted
     document.getElementById('compareBar').className = 'compare-bar visible';
     document.getElementById('compareMax').textContent = totalCandidates;
     updateCompareBar();
@@ -613,7 +826,7 @@
         <div class="card-top">
           <div class="rank-col">
             <div class="rank-num">${i + 1}</div>
-            <input type="checkbox" class="compare-check" title="Select for comparison" onchange="toggleCompare('${r.resume_id}', this)">
+            <input type="checkbox" class="compare-check" onchange="toggleCompare('${r.resume_id}', this)">
           </div>
           <div class="card-main">
             <div class="card-id-row">
@@ -642,7 +855,7 @@
             <span class="explain-model-tag">Qwen3 32B</span>
           </div>
           <div id="explain_${r.resume_id}" class="explain-loading">
-            <div class="explain-spinner"></div> Waiting to generate…
+            <div class="explain-spinner"></div> Waiting…
           </div>
         </div>`;
       container.appendChild(card);
@@ -653,17 +866,14 @@
   }
 
   function sb(label, val, rank) {
-    const pct = Math.round((val || 0) * 100);
+    const pct = Math.round((val||0)*100);
     return `<div class="score-block"><div class="score-name">${label}</div><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill rank-${rank}" style="width:${pct}%"></div></div><div class="score-pct">${pct}%</div></div></div>`;
   }
 
-  // ── Compare — limit = totalCandidates ─────────────────────────────────
+  // ── Compare ────────────────────────────────────────────────────────────
   function toggleCompare(resumeId, checkbox) {
     if (checkbox.checked) {
-      if (selectedForCompare.size >= totalCandidates) {
-        checkbox.checked = false;
-        return;
-      }
+      if (selectedForCompare.size >= totalCandidates) { checkbox.checked = false; return; }
       selectedForCompare.add(resumeId);
       checkbox.closest('.result-card').classList.add('selected');
     } else {
@@ -689,26 +899,26 @@
   function closeComparison() { document.getElementById('compareModal').classList.remove('open'); }
   document.getElementById('compareModal').addEventListener('click', function(e) { if (e.target === this) closeComparison(); });
 
-  function buildCompareHTML(candidates) {
-    const n      = candidates.length;
+  function buildCompareHTML(cands) {
+    const n      = cands.length;
     const cols   = Math.min(n, 5);
-    const winner = candidates.reduce((a, b) => (a.final_score||0) >= (b.final_score||0) ? a : b);
+    const winner = cands.reduce((a, b) => (a.final_score||0) >= (b.final_score||0) ? a : b);
 
-    const colHTML = candidates.map(r => {
+    const colHTML = cands.map(r => {
       const rank    = lastResults.indexOf(r) + 1;
       const conf    = r.confidence || {};
       const kws     = r.fallback?.matched_keywords || [];
-      const explainEl = document.getElementById(`explain_${r.resume_id}`);
-      const explain   = explainEl?.querySelector('.explain-text')?.textContent || '';
-      const isWinner  = r.resume_id === winner.resume_id;
+      const explEl  = document.getElementById(`explain_${r.resume_id}`);
+      const explain = explEl?.querySelector('.explain-text')?.textContent || '';
+      const isW     = r.resume_id === winner.resume_id;
 
       const sRow = (label, val) => {
         const pct = Math.round((val||0)*100);
-        return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${isWinner ? 'score-better' : ''}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${isWinner ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
+        return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${isW ? 'score-better' : 'score-worse'}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${isW ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
       };
 
       return `<div class="compare-col">
-        <div class="compare-col-name">${r.resume_id}${isWinner ? ' ★' : ''}</div>
+        <div class="compare-col-name">${r.resume_id}${isW ? ' ★' : ''}</div>
         <div class="compare-col-rank">Rank #${rank} · ${conf.label || '—'}</div>
         <div class="compare-section-title">Scores</div>
         ${sRow('Final Score', r.final_score)}
@@ -730,7 +940,6 @@
   }
 
   checkHealth();
-  addResume(); addResume(); addResume();
   setInterval(checkHealth, 30000);
 </script>
 </body>
