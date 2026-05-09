@@ -9,6 +9,11 @@ Phase 4: Async batch jobs + status polling + rate limiting
 Confidence penalty sorting:
   Results are re-sorted after confidence scoring.
   Tier order: high → medium → low → uncertain
+
+AI endpoints:
+  /explain   — plain English ranking explanation per candidate
+  /skillgap  — required vs found skills comparison
+  /redflag   — resume red flag detection
 """
 from __future__ import annotations
 import logging
@@ -46,10 +51,10 @@ _CONFIDENCE_PENALTY = {
     "uncertain": 0.25,
 }
 
-NVIDIA_KEY         = "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"
-NVIDIA_URL         = "https://integrate.api.nvidia.com/v1/chat/completions"
-NVIDIA_MODEL       = "meta/llama-4-maverick-17b-128e-instruct"
-NVIDIA_MODEL_JSON  = "meta/llama-4-maverick-17b-128e-instruct"
+NVIDIA_KEY        = "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"
+NVIDIA_URL        = "https://integrate.api.nvidia.com/v1/chat/completions"
+NVIDIA_MODEL      = "meta/llama-4-maverick-17b-128e-instruct"
+NVIDIA_MODEL_JSON = "meta/llama-4-maverick-17b-128e-instruct"
 
 
 def get_pipeline() -> Pipeline:
@@ -178,9 +183,34 @@ class BatchEvalRequest(BaseModel):
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 def _strip_thinking(text: str) -> str:
-    """Strip Qwen3 <think>...</think> blocks from model output."""
+    """Strip Qwen3/thinking model <think>...</think> blocks."""
     import re
     return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+
+async def _call_nvidia(prompt: str, max_tokens: int = 300, temperature: float = 0.3) -> str:
+    """Shared NVIDIA NIM API caller. Returns raw text content."""
+    import httpx
+    payload = {
+        "model": NVIDIA_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "stream": False,
+    }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        res = await client.post(
+            NVIDIA_URL,
+            headers={
+                "Authorization": f"Bearer {NVIDIA_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+        res.raise_for_status()
+        data = res.json()
+        text = data["choices"][0]["message"]["content"]
+        return _strip_thinking(text)
 
 
 # ── Middleware ─────────────────────────────────────────────────────────────
@@ -599,9 +629,8 @@ async def batch_evaluate_endpoint(request: Request, body: BatchEvalRequest):
 async def explain_candidate(request: Request, body: dict):
     """
     Proxy NVIDIA NIM call server-side.
-    Generates plain English explanation for a ranked candidate.
+    Generates plain English ranking explanation per candidate.
     """
-    import httpx
     _limiter.check(request, heavy=False)
 
     jd           = body.get("jd", "")[:800]
@@ -630,30 +659,9 @@ Write ONE concise paragraph (3-4 sentences) explaining:
 
 Be specific. Mention actual skills from their resume. No bullet points. Do not start with "This candidate"."""
 
-    payload = {
-        "model": NVIDIA_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 200,
-        "temperature": 0.4,
-        "top_p": 0.9,
-        "stream": False,
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.post(
-                NVIDIA_URL,
-                headers={
-                    "Authorization": f"Bearer {NVIDIA_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
-            res.raise_for_status()
-            data = res.json()
-            text = data["choices"][0]["message"]["content"]
-            text = _strip_thinking(text)
-            return {"explanation": text}
+        text = await _call_nvidia(prompt, max_tokens=200, temperature=0.4)
+        return {"explanation": text}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -664,7 +672,7 @@ async def skill_gap(request: Request, body: dict):
     Extract required skills from JD and check which are present in resume.
     Returns structured skill match data.
     """
-    import httpx, json as _json
+    import json as _json
     _limiter.check(request, heavy=False)
 
     jd     = body.get("jd", "")[:1000]
@@ -694,33 +702,68 @@ Rules:
 - Be specific: "PyTorch" not "machine learning frameworks"
 - Return ONLY the JSON, no explanation, no markdown fences"""
 
-    payload = {
-        "model": NVIDIA_MODEL_JSON,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 500,
-        "temperature": 0.1,
-        "stream": False,
-    }
+    try:
+        raw    = await _call_nvidia(prompt, max_tokens=500, temperature=0.1)
+        raw    = raw.replace("```json", "").replace("```", "").strip()
+        parsed = _json.loads(raw)
+        return parsed
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/redflag")
+async def red_flag(request: Request, body: dict):
+    """
+    Scan resume for red flags: short tenures, employment gaps,
+    job hopping, vague titles, unverifiable employers.
+    Returns structured list of flags with severity levels.
+    """
+    import json as _json
+    _limiter.check(request, heavy=False)
+
+    resume    = body.get("resume", "")[:2000]
+    candidate = body.get("resume_id", "candidate")
+
+    prompt = f"""You are a senior technical recruiter reviewing a resume for hiring risk factors.
+
+RESUME ({candidate}):
+{resume}
+
+Analyze this resume and identify any red flags. Look specifically for:
+1. Short tenures — any role lasting less than 12 months
+2. Employment gaps — unexplained periods of 6+ months with no role
+3. Job hopping — more than 3 jobs in 4 years
+4. Vague or inflated titles — "Guru", "Ninja", "Rockstar", "Lead of everything", overly broad titles
+5. Unverifiable employers — very generic or suspicious company names with no context
+6. Inconsistent progression — unexplained drops in seniority or responsibility
+
+Return ONLY a valid JSON object in this exact format, nothing else, no markdown:
+{{
+  "flags": [
+    {{
+      "type": "short_tenure",
+      "severity": "high",
+      "description": "Role at Company X lasted only 8 months (2021-2022)"
+    }}
+  ],
+  "overall_risk": "low",
+  "summary": "One sentence overall assessment"
+}}
+
+Rules:
+- severity must be one of: "low", "medium", "high"
+- overall_risk must be one of: "low", "medium", "high"
+- type must be one of: "short_tenure", "employment_gap", "job_hopping", "vague_title", "unverifiable_employer", "inconsistent_progression"
+- If no red flags are found, return an empty flags array and overall_risk of "low"
+- Be specific in descriptions — name the company and dates where possible
+- Do NOT flag gaps that are clearly explained (education, known layoffs)
+- Return ONLY the JSON, no explanation, no markdown fences"""
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.post(
-                NVIDIA_URL,
-                headers={
-                    "Authorization": f"Bearer {NVIDIA_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
-            res.raise_for_status()
-            data = res.json()
-            raw  = data["choices"][0]["message"]["content"]
-            # strip Qwen3 thinking blocks first
-            raw  = _strip_thinking(raw)
-            # strip markdown fences
-            raw  = raw.replace("```json", "").replace("```", "").strip()
-            parsed = _json.loads(raw)
-            return parsed
+        raw    = await _call_nvidia(prompt, max_tokens=600, temperature=0.2)
+        raw    = raw.replace("```json", "").replace("```", "").strip()
+        parsed = _json.loads(raw)
+        return parsed
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
