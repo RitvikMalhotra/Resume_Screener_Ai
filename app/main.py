@@ -676,7 +676,76 @@ Be specific. Mention actual skills from their resume. No bullet points. Do not s
             return {"explanation": text}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
-    
+
+@app.post("/skillgap")
+async def skill_gap(request: Request, body: dict):
+    """
+    Extract required skills from JD and check which are present in resume.
+    Returns structured skill match data.
+    """
+    import httpx
+    _limiter.check(request, heavy=False)
+
+    NVIDIA_KEY   = "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"
+    NVIDIA_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
+    NVIDIA_MODEL = "qwen/qwen3-32b"
+
+    jd      = body.get("jd", "")[:1000]
+    resume  = body.get("resume", "")[:1500]
+
+    prompt = f"""You are a technical recruiter. Extract required skills from the job description and check if each skill is present in the resume.
+
+JOB DESCRIPTION:
+{jd}
+
+RESUME:
+{resume}
+
+Return ONLY a valid JSON object in this exact format, nothing else, no markdown:
+{{
+  "skills": [
+    {{"skill": "Python", "found": true}},
+    {{"skill": "Kubernetes", "found": false}}
+  ],
+  "matched": 5,
+  "total": 10
+}}
+
+Rules:
+- Extract 8-15 specific technical skills from the JD (languages, tools, frameworks, platforms)
+- Set found=true only if the skill clearly appears in the resume
+- Be specific: "PyTorch" not "machine learning frameworks"
+- Return ONLY the JSON, no explanation, no markdown fences"""
+
+    payload = {
+        "model": NVIDIA_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 500,
+        "temperature": 0.1,
+        "stream": False,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            res = await client.post(
+                NVIDIA_URL,
+                headers={
+                    "Authorization": f"Bearer {NVIDIA_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            res.raise_for_status()
+            data = res.json()
+            raw  = data["choices"][0]["message"]["content"].strip()
+            # strip markdown fences if model adds them
+            raw  = raw.replace("```json", "").replace("```", "").strip()
+            import json as _json
+            parsed = _json.loads(raw)
+            return parsed
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
 @app.get("/metrics/cache")
 async def cache_metrics(request: Request):
     _limiter.check(request, heavy=False)
