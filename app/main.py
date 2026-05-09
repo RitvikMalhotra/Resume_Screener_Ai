@@ -46,9 +46,10 @@ _CONFIDENCE_PENALTY = {
     "uncertain": 0.25,
 }
 
-NVIDIA_KEY   = "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"
-NVIDIA_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
-NVIDIA_MODEL = "qwen/qwen3-32b"
+NVIDIA_KEY         = "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"
+NVIDIA_URL         = "https://integrate.api.nvidia.com/v1/chat/completions"
+NVIDIA_MODEL       = "meta/llama-4-maverick-17b-128e-instruct"
+NVIDIA_MODEL_JSON  = "meta/llama-4-maverick-17b-128e-instruct"
 
 
 def get_pipeline() -> Pipeline:
@@ -694,7 +695,7 @@ Rules:
 - Return ONLY the JSON, no explanation, no markdown fences"""
 
     payload = {
-        "model": NVIDIA_MODEL,
+        "model": NVIDIA_MODEL_JSON,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 500,
         "temperature": 0.1,
