@@ -8,8 +8,7 @@ Phase 4: Async batch jobs + status polling + rate limiting
 
 Confidence penalty sorting:
   Results are re-sorted after confidence scoring.
-  Uncertain results are penalized so high-confidence
-  candidates always surface to the top.
+  Tier order: high → medium → low → uncertain
 """
 from __future__ import annotations
 import logging
@@ -40,13 +39,16 @@ _limiter  = RateLimiter(RateLimitConfig(
     requests_per_minute_light = 120,
 ))
 
-# Confidence penalty — subtracted from final_score before re-sorting
 _CONFIDENCE_PENALTY = {
     "high":      0.00,
     "medium":    0.05,
     "low":       0.15,
     "uncertain": 0.25,
 }
+
+NVIDIA_KEY   = "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"
+NVIDIA_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
+NVIDIA_MODEL = "qwen/qwen3-32b"
 
 
 def get_pipeline() -> Pipeline:
@@ -172,6 +174,14 @@ class BatchEvalRequest(BaseModel):
     k_values: list[int] = Field(default=[1, 3, 5, 10])
 
 
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+def _strip_thinking(text: str) -> str:
+    """Strip Qwen3 <think>...</think> blocks from model output."""
+    import re
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+
 # ── Middleware ─────────────────────────────────────────────────────────────
 
 @app.middleware("http")
@@ -183,7 +193,7 @@ async def add_timing_header(request: Request, call_next):
     return response
 
 
-# ── Confidence penalty re-sort ─────────────────────────────────────────────
+# ── Confidence tier sort ───────────────────────────────────────────────────
 
 def apply_confidence_penalty_and_sort(results, confidences, result_dicts):
     """
@@ -194,8 +204,8 @@ def apply_confidence_penalty_and_sort(results, confidences, result_dicts):
 
     combined = list(zip(results, confidences, result_dicts))
     combined.sort(key=lambda x: (
-        _TIER.get(x[1].level, 3),   # primary: confidence tier
-        -x[2]["final_score"],        # secondary: score descending
+        _TIER.get(x[1].level, 3),
+        -x[2]["final_score"],
     ))
 
     results_s      = [c[0] for c in combined]
@@ -208,7 +218,7 @@ def apply_confidence_penalty_and_sort(results, confidences, result_dicts):
     return results_s, confidences_s, result_dicts_s
 
 
-# ── Core ranking logic (reused by /rank and /rank/batch) ──────────────────
+# ── Core ranking logic ─────────────────────────────────────────────────────
 
 def _run_rank(
     pipeline: Pipeline,
@@ -223,7 +233,6 @@ def _run_rank(
     from app.confidence import score_confidence
     from app.fallback   import KeywordFallback, apply_fallback
 
-    # Phase 3: validate
     validation_result = None
     resumes_to_use    = resumes
 
@@ -255,28 +264,22 @@ def _run_rank(
     )
     loop.close()
 
-    # Phase 3: confidence scoring
     final_scores = [r.final_score for r in response.results]
     confidences  = score_confidence(final_scores)
-
-    # Phase 3: keyword fallback
     result_dicts = [
         {"resume_id": r.resume_id, "final_score": r.final_score, "resume_text": r.text}
         for r in response.results
     ]
     result_dicts = apply_fallback(job_description, result_dicts, KeywordFallback())
 
-    # Re-score confidences after fallback may have changed final scores
     updated_scores = [rd["final_score"] for rd in result_dicts]
     confidences    = score_confidence(updated_scores)
 
-    # Confidence penalty re-sort — high confidence bubbles to top
     results_sorted, confidences_sorted, result_dicts_sorted = \
         apply_confidence_penalty_and_sort(
             list(response.results), confidences, result_dicts
         )
 
-    # Phase 2: metrics
     metrics_raw = metrics_report = None
     if relevant_ids:
         from app.metrics import evaluate_with_report
@@ -333,13 +336,6 @@ async def health(request: Request):
 
 @app.post("/rank", response_model=RankResponse)
 async def rank_resumes(request: Request, body: RankRequest):
-    """
-    Rank resumes against a job description.
-
-    Results are sorted by confidence-penalized score:
-      High confidence → top
-      Uncertain       → bottom
-    """
     from app.validator  import InputValidator
     from app.confidence import score_confidence
     from app.fallback   import KeywordFallback, apply_fallback
@@ -347,7 +343,6 @@ async def rank_resumes(request: Request, body: RankRequest):
     headers  = _limiter.check(request, heavy=True)
     pipeline = get_pipeline()
 
-    # Phase 3: validate
     validation_result = None
     resumes_to_use    = body.resumes
 
@@ -381,7 +376,6 @@ async def rank_resumes(request: Request, body: RankRequest):
         logger.exception("Pipeline error: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
-    # Phase 3: confidence + fallback
     final_scores = [r.final_score for r in response.results]
     confidences  = score_confidence(final_scores)
     result_dicts = [
@@ -390,17 +384,14 @@ async def rank_resumes(request: Request, body: RankRequest):
     ]
     result_dicts = apply_fallback(body.job_description, result_dicts, KeywordFallback())
 
-    # Re-score after fallback
     updated_scores = [rd["final_score"] for rd in result_dicts]
     confidences    = score_confidence(updated_scores)
 
-    # Confidence penalty re-sort
     results_sorted, confidences_sorted, result_dicts_sorted = \
         apply_confidence_penalty_and_sort(
             list(response.results), confidences, result_dicts
         )
 
-    # Phase 2: metrics
     metrics_raw = metrics_report = None
     if body.relevant_ids:
         from app.metrics import evaluate_with_report
@@ -444,13 +435,8 @@ async def rank_resumes(request: Request, body: RankRequest):
 
 @app.post("/rank/batch")
 async def rank_batch(request: Request, body: BatchRankRequest):
-    """
-    Submit multiple ranking jobs at once. Returns job_id immediately.
-    Poll GET /jobs/{job_id} for status and results.
-    """
     _limiter.check(request, heavy=True)
-    pipeline = get_pipeline()
-
+    pipeline      = get_pipeline()
     total_resumes = sum(len(q.resumes) for q in body.queries)
 
     def _batch_fn():
@@ -485,7 +471,6 @@ async def rank_batch(request: Request, body: BatchRankRequest):
 
 @app.get("/jobs/{job_id}")
 async def get_job(job_id: str, request: Request):
-    """Poll job status. Returns result when status = 'done'."""
     _limiter.check(request, heavy=False)
     job = _runner.get(job_id)
     if not job:
@@ -497,7 +482,6 @@ async def get_job(job_id: str, request: Request):
 
 @app.get("/jobs")
 async def list_jobs(request: Request):
-    """List all jobs and queue stats."""
     _limiter.check(request, heavy=False)
     return {
         "queue_stats": _runner.stats(),
@@ -555,7 +539,6 @@ async def warm_cache(request: Request, body: WarmCacheRequest):
 
 @app.post("/evaluate")
 async def evaluate_endpoint(request: Request, body: EvalRequest):
-    """Evaluate ranking quality against labelled ground truth."""
     _limiter.check(request, heavy=True)
     from app.metrics import evaluate_with_report
     pipeline = get_pipeline()
@@ -586,7 +569,6 @@ async def evaluate_endpoint(request: Request, body: EvalRequest):
 
 @app.post("/evaluate/batch")
 async def batch_evaluate_endpoint(request: Request, body: BatchEvalRequest):
-    """Averaged metrics across multiple queries."""
     _limiter.check(request, heavy=True)
     from app.metrics import batch_evaluate
     pipeline    = get_pipeline()
@@ -615,15 +597,11 @@ async def batch_evaluate_endpoint(request: Request, body: BatchEvalRequest):
 @app.post("/explain")
 async def explain_candidate(request: Request, body: dict):
     """
-    Proxy NVIDIA NIM API call server-side to avoid CORS.
+    Proxy NVIDIA NIM call server-side.
     Generates plain English explanation for a ranked candidate.
     """
     import httpx
     _limiter.check(request, heavy=False)
-
-    NVIDIA_KEY   = "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"
-    NVIDIA_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
-    NVIDIA_MODEL = "meta/llama-4-maverick-17b-128e-instruct"
 
     jd           = body.get("jd", "")[:800]
     resume_id    = body.get("resume_id", "")
@@ -672,10 +650,12 @@ Be specific. Mention actual skills from their resume. No bullet points. Do not s
             )
             res.raise_for_status()
             data = res.json()
-            text = data["choices"][0]["message"]["content"].strip()
+            text = data["choices"][0]["message"]["content"]
+            text = _strip_thinking(text)
             return {"explanation": text}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
 
 @app.post("/skillgap")
 async def skill_gap(request: Request, body: dict):
@@ -683,15 +663,11 @@ async def skill_gap(request: Request, body: dict):
     Extract required skills from JD and check which are present in resume.
     Returns structured skill match data.
     """
-    import httpx
+    import httpx, json as _json
     _limiter.check(request, heavy=False)
 
-    NVIDIA_KEY   = "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"
-    NVIDIA_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
-    NVIDIA_MODEL = "qwen/qwen3-32b"
-
-    jd      = body.get("jd", "")[:1000]
-    resume  = body.get("resume", "")[:1500]
+    jd     = body.get("jd", "")[:1000]
+    resume = body.get("resume", "")[:1500]
 
     prompt = f"""You are a technical recruiter. Extract required skills from the job description and check if each skill is present in the resume.
 
@@ -737,14 +713,16 @@ Rules:
             )
             res.raise_for_status()
             data = res.json()
-            raw  = data["choices"][0]["message"]["content"].strip()
-            # strip markdown fences if model adds them
+            raw  = data["choices"][0]["message"]["content"]
+            # strip Qwen3 thinking blocks first
+            raw  = _strip_thinking(raw)
+            # strip markdown fences
             raw  = raw.replace("```json", "").replace("```", "").strip()
-            import json as _json
             parsed = _json.loads(raw)
             return parsed
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
 
 @app.get("/metrics/cache")
 async def cache_metrics(request: Request):
