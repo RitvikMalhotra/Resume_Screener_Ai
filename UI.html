@@ -59,7 +59,7 @@
   .upload-sub { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; line-height: 1.6; }
   .upload-sub span { color: var(--accent2); }
 
-  #processingBar { display: none; background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 12px; font-size: 11px; letter-spacing: 0.08em; color: var(--muted2); align-items: center; gap: 10px; }
+  #processingBar { display: none; background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 12px; font-size: 11px; color: var(--muted2); align-items: center; gap: 10px; }
   #processingBar.active { display: flex; }
   .mini-spinner { width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 
@@ -67,10 +67,9 @@
   .cand-card { background: var(--s2); border: 1px solid var(--border); animation: fadeUp 0.35s cubic-bezier(0.16,1,0.3,1) both; overflow: hidden; }
   .cand-card-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--s1); }
   .cand-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--muted); min-width: 24px; }
-  .cand-id-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 2px 4px; outline: none; transition: border-color 0.15s; }
-  .cand-id-input:focus { border-bottom-color: var(--accent); }
+  .cand-id-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 2px 4px; outline: none; }
   .cand-file-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px; white-space: nowrap; }
-  .cand-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; transition: color 0.15s; flex-shrink: 0; }
+  .cand-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; transition: color 0.15s; }
   .cand-remove:hover { color: var(--uncertain); }
   .cand-text { font-size: 11px; color: var(--muted2); line-height: 1.6; padding: 10px 14px; max-height: 80px; overflow: hidden; cursor: pointer; position: relative; }
   .cand-text::after { content: '▾ show more'; position: absolute; bottom: 0; right: 14px; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); background: var(--s2); padding-left: 8px; }
@@ -84,7 +83,7 @@
   .manual-row { display: grid; grid-template-columns: 140px 1fr 32px; gap: 8px; margin-bottom: 8px; }
   .manual-row input { font-size: 12px; padding: 8px 10px; }
   .manual-row textarea { font-size: 12px; min-height: 64px; padding: 8px 10px; }
-  .rm-btn { width: 32px; height: 32px; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .rm-btn { width: 32px; height: 32px; background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .rm-btn:hover { border-color: var(--uncertain); color: var(--uncertain); }
 
   .options-grid { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -139,6 +138,7 @@
   .metric-grade { font-size: 9px; letter-spacing: 0.1em; margin-top: 2px; }
   .grade-A { color: var(--good); } .grade-B { color: var(--accent); } .grade-C { color: var(--medium); } .grade-D { color: var(--low); } .grade-F { color: var(--uncertain); }
 
+  /* Result cards */
   .result-card { background: var(--s1); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
   .result-card:hover { border-color: var(--border2); }
   .result-card.selected { border-color: var(--accent); }
@@ -171,7 +171,7 @@
   .footer-gap { white-space: nowrap; }
   .footer-gap span { color: var(--text); }
 
-  /* ── AI Explanation ── */
+  /* AI Explanation */
   .explain-section { border-top: 1px solid var(--border); padding: 14px 20px 14px 68px; }
   .explain-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .explain-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent2); font-weight: 600; }
@@ -183,57 +183,87 @@
   .typing::after { content: '▌'; color: var(--accent2); animation: blink 0.8s step-end infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-  /* ── Skill Gap Table ── */
+  /* Skill Gap */
   .skillgap-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 68px; }
-
   .skillgap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
-
   .skillgap-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
-
-  .skillgap-score {
-    font-size: 10px; letter-spacing: 0.08em;
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  .skillgap-pct {
-    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-  }
-
+  .skillgap-score { font-size: 10px; display: flex; align-items: center; gap: 8px; }
+  .skillgap-pct { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
   .skillgap-bar-wrap { width: 80px; height: 4px; background: var(--s3); position: relative; overflow: hidden; }
   .skillgap-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; transition: width 1s cubic-bezier(0.16,1,0.3,1); }
-
   .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-
-  .skill-tag {
-    font-size: 10px; letter-spacing: 0.06em;
-    padding: 3px 8px; border: 1px solid;
-    display: flex; align-items: center; gap: 5px;
-    transition: opacity 0.2s;
-  }
-
-  .skill-tag.found {
-    border-color: rgba(71,255,140,0.4);
-    color: var(--good);
-    background: rgba(71,255,140,0.06);
-  }
-
-  .skill-tag.missing {
-    border-color: rgba(255,71,71,0.3);
-    color: var(--uncertain);
-    background: rgba(255,71,71,0.04);
-  }
-
-  .skill-tag .skill-icon { font-size: 9px; }
-
+  .skill-tag { font-size: 10px; padding: 3px 8px; border: 1px solid; display: flex; align-items: center; gap: 5px; }
+  .skill-tag.found { border-color: rgba(71,255,140,0.4); color: var(--good); background: rgba(71,255,140,0.06); }
+  .skill-tag.missing { border-color: rgba(255,71,71,0.3); color: var(--uncertain); background: rgba(255,71,71,0.04); }
+  .skill-icon { font-size: 9px; }
   .skillgap-loading { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); }
   .skillgap-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   .skillgap-error { font-size: 11px; color: var(--muted); font-style: italic; }
+
+  /* ── Red Flag Section ── */
+  .redflag-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 68px; }
+
+  .redflag-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+  }
+
+  .redflag-label {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent3); font-weight: 600;
+  }
+
+  .redflag-overall {
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 2px 8px; border: 1px solid;
+  }
+  .risk-low    { border-color: rgba(71,255,140,0.4); color: var(--good); }
+  .risk-medium { border-color: rgba(255,193,71,0.4); color: var(--medium); }
+  .risk-high   { border-color: rgba(255,71,71,0.4);  color: var(--uncertain); }
+
+  .redflag-summary {
+    font-size: 11px; color: var(--muted2); line-height: 1.6;
+    margin-bottom: 10px; font-style: italic;
+  }
+
+  .redflag-clean {
+    font-size: 11px; color: var(--good);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .flag-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .flag-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 10px; border: 1px solid;
+    font-size: 11px; line-height: 1.5;
+  }
+
+  .flag-item.sev-low    { border-color: rgba(255,193,71,0.2); background: rgba(255,193,71,0.03); }
+  .flag-item.sev-medium { border-color: rgba(255,140,71,0.3); background: rgba(255,140,71,0.04); }
+  .flag-item.sev-high   { border-color: rgba(255,71,71,0.3);  background: rgba(255,71,71,0.05); }
+
+  .flag-icon { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+
+  .flag-content { flex: 1; }
+  .flag-type {
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 2px; font-weight: 600;
+  }
+  .flag-item.sev-low    .flag-type { color: var(--medium); }
+  .flag-item.sev-medium .flag-type { color: var(--low); }
+  .flag-item.sev-high   .flag-type { color: var(--uncertain); }
+  .flag-desc { color: var(--muted2); }
+
+  .redflag-loading { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); }
+  .redflag-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent3); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  .redflag-error { font-size: 11px; color: var(--muted); font-style: italic; }
 
   #faissBar { background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: none; gap: 20px; flex-wrap: wrap; }
   .faiss-item { display: flex; gap: 6px; }
   .faiss-val { color: var(--accent2); }
 
-  /* ── Compare modal ── */
+  /* Compare modal */
   #compareModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
   #compareModal.open { display: flex; }
   .compare-box { background: var(--s1); border: 1px solid var(--border2); width: 100%; max-width: 1200px; margin: auto; animation: fadeUp 0.3s ease both; }
@@ -281,9 +311,9 @@
     <h1><span class="line1">SCREEN</span><span class="line2">SMARTER.</span></h1>
     <div class="tagline">
       <span class="tag-item">Multi-PDF Upload</span>
-      <span class="tag-item">Auto Name Detection</span>
       <span class="tag-item">AI Explanations</span>
       <span class="tag-item">Skill Gap Analysis</span>
+      <span class="tag-item">Red Flag Detection</span>
     </div>
   </header>
 
@@ -298,7 +328,7 @@
   <div class="panel" style="animation-delay:0.1s">
     <div class="panel-header"><div class="panel-title">01 — Job Description</div></div>
     <div class="panel-body">
-      <textarea id="jd" rows="7" placeholder="Paste the full job description here…&#10;&#10;Include: role title, required skills, experience level, tech stack, responsibilities."></textarea>
+      <textarea id="jd" rows="7" placeholder="Paste the full job description here…"></textarea>
     </div>
   </div>
 
@@ -387,9 +417,7 @@
   let selectedForCompare = new Set();
   let manualCount        = 0;
   let manualVisible      = false;
-
-  // store resume texts by resume_id for skill gap calls
-  const resumeTextMap = {};
+  const resumeTextMap    = {};
 
   document.getElementById('withEval').addEventListener('change', e => {
     document.getElementById('evalIdsRow').style.display = e.target.checked ? 'block' : 'none';
@@ -578,9 +606,7 @@
     if (!jd)             return setError('Please enter a job description.');
     if (!resumes.length) return setError('Please upload at least one resume.');
 
-    // store resume texts for skill gap lookups
     for (const r of resumes) resumeTextMap[r.resume_id] = r.text;
-
     totalCandidates = resumes.length;
     setLoading('Running two-stage pipeline…');
     document.getElementById('results').style.display = 'none';
@@ -602,9 +628,9 @@
       const data = await res.json();
       renderResults(data);
       checkHealth();
-      // run explanations and skill gaps in parallel per candidate
       generateAllExplanations(jd, data.results || []);
       generateAllSkillGaps(jd, data.results || []);
+      generateAllRedFlags(data.results || []);
     } catch (e) { setError(e.message || 'Could not reach API.'); }
   }
 
@@ -637,6 +663,7 @@
           renderResults(result); checkHealth();
           generateAllExplanations(lastJD, result.results || []);
           generateAllSkillGaps(lastJD, result.results || []);
+          generateAllRedFlags(result.results || []);
         } else if (data.status === 'error') { clearInterval(iv); setError('Job failed: ' + data.error); }
         else { setLoading(`Job ${data.status} (${data.elapsed_s||0}s)…`); }
       } catch {}
@@ -645,19 +672,6 @@
   }
 
   // ── AI Explanations ────────────────────────────────────────────────────
-  async function generateExplanation(jd, r, rank) {
-    const res = await fetch(`${API}/explain`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jd, resume_id: r.resume_id, snippet: r.text_snippet, rank,
-        final_score: r.final_score, embedding_score: r.embedding_score,
-        rerank_score: r.rerank_score, confidence: r.confidence?.label || 'unknown',
-      }),
-    });
-    if (!res.ok) throw new Error(`${res.status}`);
-    return (await res.json()).explanation;
-  }
-
   async function generateAllExplanations(jd, results) {
     for (let i = 0; i < results.length; i++) {
       const r  = results[i];
@@ -665,7 +679,16 @@
       if (!el) continue;
       el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Generating…</div>`;
       try {
-        const text = await generateExplanation(jd, r, i);
+        const res = await fetch(`${API}/explain`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jd, resume_id: r.resume_id, snippet: r.text_snippet, rank: i,
+            final_score: r.final_score, embedding_score: r.embedding_score,
+            rerank_score: r.rerank_score, confidence: r.confidence?.label || 'unknown',
+          }),
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const text = (await res.json()).explanation;
         el.innerHTML = `<div class="explain-text typing"></div>`;
         const tEl = el.querySelector('.explain-text');
         let idx = 0;
@@ -679,16 +702,7 @@
     }
   }
 
-  // ── Skill Gap Analysis ─────────────────────────────────────────────────
-  async function generateSkillGap(jd, resumeId, resumeText) {
-    const res = await fetch(`${API}/skillgap`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jd, resume: resumeText }),
-    });
-    if (!res.ok) throw new Error(`${res.status}`);
-    return await res.json();
-  }
-
+  // ── Skill Gap ──────────────────────────────────────────────────────────
   async function generateAllSkillGaps(jd, results) {
     for (const r of results) {
       const el = document.getElementById(`skillgap_${r.resume_id}`);
@@ -696,36 +710,103 @@
       const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
       el.innerHTML = `<div class="skillgap-loading"><div class="skillgap-spinner"></div> Analysing skills…</div>`;
       try {
-        const data   = await generateSkillGap(jd, r.resume_id, resumeText);
-        const skills = data.skills || [];
+        const res = await fetch(`${API}/skillgap`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jd, resume: resumeText }),
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data   = await res.json();
+        const skills  = data.skills || [];
         const matched = skills.filter(s => s.found).length;
         const total   = skills.length;
         const pct     = total ? Math.round((matched / total) * 100) : 0;
-
-        // pick bar color by percentage
         const barColor = pct >= 70 ? 'var(--good)' : pct >= 40 ? 'var(--medium)' : 'var(--uncertain)';
         const pctColor = pct >= 70 ? 'var(--good)' : pct >= 40 ? 'var(--medium)' : 'var(--uncertain)';
-
         el.innerHTML = `
           <div class="skillgap-header">
             <div></div>
             <div class="skillgap-score">
-              <span style="color:var(--muted);font-size:10px">${matched}/${total} skills matched</span>
-              <div class="skillgap-bar-wrap">
-                <div class="skillgap-bar-fill" style="width:${pct}%;background:${barColor}"></div>
-              </div>
+              <span style="color:var(--muted);font-size:10px">${matched}/${total} matched</span>
+              <div class="skillgap-bar-wrap"><div class="skillgap-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
               <span class="skillgap-pct" style="color:${pctColor}">${pct}%</span>
             </div>
           </div>
           <div class="skill-tags">
-            ${skills.map(s => `
-              <div class="skill-tag ${s.found ? 'found' : 'missing'}">
-                <span class="skill-icon">${s.found ? '✓' : '✗'}</span>
-                ${s.skill}
-              </div>`).join('')}
+            ${skills.map(s => `<div class="skill-tag ${s.found ? 'found' : 'missing'}"><span class="skill-icon">${s.found ? '✓' : '✗'}</span>${s.skill}</div>`).join('')}
           </div>`;
       } catch (err) {
         el.innerHTML = `<div class="skillgap-error">⚠ Skill analysis unavailable (${err.message})</div>`;
+      }
+    }
+  }
+
+  // ── Red Flag Detection ─────────────────────────────────────────────────
+  const FLAG_TYPE_LABELS = {
+    short_tenure:               'Short Tenure',
+    employment_gap:             'Employment Gap',
+    job_hopping:                'Job Hopping',
+    vague_title:                'Vague Title',
+    unverifiable_employer:      'Unverifiable Employer',
+    inconsistent_progression:   'Inconsistent Progression',
+  };
+
+  const FLAG_ICONS = {
+    short_tenure:             '⏱',
+    employment_gap:           '📅',
+    job_hopping:              '🔄',
+    vague_title:              '❓',
+    unverifiable_employer:    '🏢',
+    inconsistent_progression: '📉',
+  };
+
+  async function generateAllRedFlags(results) {
+    for (const r of results) {
+      const el = document.getElementById(`redflag_${r.resume_id}`);
+      if (!el) continue;
+      const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
+      el.innerHTML = `<div class="redflag-loading"><div class="redflag-spinner"></div> Scanning for red flags…</div>`;
+      try {
+        const res = await fetch(`${API}/redflag`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume: resumeText, resume_id: r.resume_id }),
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data  = await res.json();
+        const flags  = data.flags || [];
+        const risk   = data.overall_risk || 'low';
+        const summary = data.summary || '';
+
+        const riskClass = `risk-${risk}`;
+        const riskLabel = risk.charAt(0).toUpperCase() + risk.slice(1) + ' Risk';
+
+        // update the risk badge in header
+        const header = document.getElementById(`redflag_header_${r.resume_id}`);
+        if (header) {
+          header.innerHTML = `
+            <span class="redflag-label">⚑ Red Flag Detection</span>
+            <span class="redflag-overall ${riskClass}">${riskLabel}</span>`;
+        }
+
+        if (flags.length === 0) {
+          el.innerHTML = `
+            ${summary ? `<div class="redflag-summary">${summary}</div>` : ''}
+            <div class="redflag-clean">✓ No red flags detected</div>`;
+        } else {
+          el.innerHTML = `
+            ${summary ? `<div class="redflag-summary">${summary}</div>` : ''}
+            <div class="flag-list">
+              ${flags.map(f => `
+                <div class="flag-item sev-${f.severity}">
+                  <span class="flag-icon">${FLAG_ICONS[f.type] || '⚠'}</span>
+                  <div class="flag-content">
+                    <div class="flag-type">${FLAG_TYPE_LABELS[f.type] || f.type} · ${f.severity}</div>
+                    <div class="flag-desc">${f.description}</div>
+                  </div>
+                </div>`).join('')}
+            </div>`;
+        }
+      } catch (err) {
+        el.innerHTML = `<div class="redflag-error">⚠ Red flag scan unavailable (${err.message})</div>`;
       }
     }
   }
@@ -805,7 +886,7 @@
         <div class="explain-section">
           <div class="explain-header">
             <span class="explain-label">⚡ AI Explanation</span>
-            <span class="explain-model-tag">Qwen3 32B</span>
+            <span class="explain-model-tag">LLaMA 4 Maverick</span>
           </div>
           <div id="explain_${r.resume_id}" class="explain-loading">
             <div class="explain-spinner"></div> Waiting…
@@ -817,6 +898,14 @@
           </div>
           <div id="skillgap_${r.resume_id}" class="skillgap-loading">
             <div class="skillgap-spinner"></div> Waiting…
+          </div>
+        </div>
+        <div class="redflag-section">
+          <div class="redflag-header" id="redflag_header_${r.resume_id}">
+            <span class="redflag-label">⚑ Red Flag Detection</span>
+          </div>
+          <div id="redflag_${r.resume_id}" class="redflag-loading">
+            <div class="redflag-spinner"></div> Waiting…
           </div>
         </div>`;
       container.appendChild(card);
@@ -866,17 +955,18 @@
     const winner = cands.reduce((a, b) => (a.final_score||0) >= (b.final_score||0) ? a : b);
 
     const colHTML = cands.map(r => {
-      const rank   = lastResults.indexOf(r) + 1;
-      const conf   = r.confidence || {};
-      const kws    = r.fallback?.matched_keywords || [];
-      const explEl = document.getElementById(`explain_${r.resume_id}`);
+      const rank    = lastResults.indexOf(r) + 1;
+      const conf    = r.confidence || {};
+      const explEl  = document.getElementById(`explain_${r.resume_id}`);
       const explain = explEl?.querySelector('.explain-text')?.textContent || '';
-      const sgEl   = document.getElementById(`skillgap_${r.resume_id}`);
-      const isW    = r.resume_id === winner.resume_id;
+      const sgEl    = document.getElementById(`skillgap_${r.resume_id}`);
+      const rfEl    = document.getElementById(`redflag_${r.resume_id}`);
+      const isW     = r.resume_id === winner.resume_id;
 
-      // extract skill tags for compare view
       const foundSkills   = [...(sgEl?.querySelectorAll('.skill-tag.found')  || [])].map(el => el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
       const missingSkills = [...(sgEl?.querySelectorAll('.skill-tag.missing') || [])].map(el => el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
+      const flagItems     = [...(rfEl?.querySelectorAll('.flag-item') || [])];
+      const flagSummary   = flagItems.map(f => f.querySelector('.flag-desc')?.textContent || '').filter(Boolean).slice(0,3);
 
       const sRow = (label, val) => {
         const pct = Math.round((val||0)*100);
@@ -892,6 +982,7 @@
         ${sRow('Rerank', r.rerank_score)}
         ${foundSkills.length ? `<div class="compare-section-title">✓ Matched Skills</div><div class="compare-keywords">${foundSkills.map(k=>`<span class="kw-tag" style="color:var(--good);border-color:rgba(71,255,140,0.3)">${k}</span>`).join('')}</div>` : ''}
         ${missingSkills.length ? `<div class="compare-section-title">✗ Missing Skills</div><div class="compare-keywords">${missingSkills.map(k=>`<span class="kw-tag" style="color:var(--uncertain);border-color:rgba(255,71,71,0.3)">${k}</span>`).join('')}</div>` : ''}
+        ${flagSummary.length ? `<div class="compare-section-title">⚑ Red Flags</div><div class="compare-snippet" style="color:var(--low)">${flagSummary.join(' · ')}</div>` : '<div class="compare-section-title">⚑ Red Flags</div><div style="font-size:10px;color:var(--good)">✓ None detected</div>'}
         ${explain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${explain}</div>` : ''}
         <div class="compare-section-title">Snippet</div>
         <div class="compare-snippet">${r.text_snippet}</div>
