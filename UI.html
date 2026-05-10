@@ -51,6 +51,89 @@
   textarea:focus, input:focus { border-color: var(--accent); }
   textarea::placeholder, input::placeholder { color: var(--muted); }
 
+  /* ── JD Quality Analyser ── */
+  #jdQualityBtn {
+    margin-top: 12px; width: 100%;
+    font-family: 'Inconsolata', monospace; font-size: 11px;
+    font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 10px; cursor: pointer; border: 1px solid var(--border2);
+    background: none; color: var(--muted2); transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  #jdQualityBtn:hover { border-color: var(--accent2); color: var(--accent2); }
+  #jdQualityBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #jdQualityPanel {
+    display: none; margin-top: 12px;
+    border: 1px solid var(--border); background: var(--s2);
+    animation: fadeUp 0.3s ease both;
+  }
+  #jdQualityPanel.visible { display: block; }
+
+  .jdq-loading {
+    padding: 16px; display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--muted2);
+  }
+  .jdq-spinner { width: 12px; height: 12px; border: 1.5px solid var(--border2); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+
+  .jdq-top {
+    padding: 16px; display: flex; align-items: center; gap: 20px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+
+  .jdq-grade-box {
+    width: 64px; height: 64px; border: 2px solid;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; flex-shrink: 0;
+  }
+  .jdq-grade-letter { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; line-height: 1; }
+  .jdq-grade-lbl { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted2); margin-top: 2px; }
+
+  .jdq-summary { flex: 1; min-width: 200px; }
+  .jdq-verdict { font-size: 12px; color: var(--text); line-height: 1.6; margin-bottom: 8px; }
+
+  .jdq-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+  .jdq-stat { font-size: 10px; letter-spacing: 0.06em; }
+  .jdq-stat-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; display: block; }
+  .jdq-stat-lbl { color: var(--muted); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .restrict-low    { color: var(--good); }
+  .restrict-medium { color: var(--medium); }
+  .restrict-high   { color: var(--uncertain); }
+
+  .jdq-skills-row {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .jdq-skills-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+  .jdq-skill-tag { font-size: 10px; padding: 2px 7px; background: rgba(71,217,255,0.08); border: 1px solid rgba(71,217,255,0.2); color: var(--accent2); }
+
+  .jdq-issues { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+  .jdq-section-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent3); font-weight: 600; margin-bottom: 6px; }
+
+  .jdq-issue {
+    display: flex; gap: 8px; padding: 8px 10px;
+    font-size: 11px; line-height: 1.5; border: 1px solid;
+  }
+  .jdq-issue.sev-low    { border-color: rgba(255,193,71,0.2); background: rgba(255,193,71,0.03); }
+  .jdq-issue.sev-medium { border-color: rgba(255,140,71,0.3); background: rgba(255,140,71,0.04); }
+  .jdq-issue.sev-high   { border-color: rgba(255,71,71,0.3);  background: rgba(255,71,71,0.05); }
+  .jdq-issue-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+  .jdq-issue.sev-low    .jdq-issue-label { color: var(--medium); }
+  .jdq-issue.sev-medium .jdq-issue-label { color: var(--low); }
+  .jdq-issue.sev-high   .jdq-issue-label { color: var(--uncertain); }
+  .jdq-issue-detail { color: var(--muted2); }
+
+  .jdq-suggestions { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .jdq-suggestion {
+    display: flex; gap: 8px; align-items: flex-start;
+    font-size: 11px; color: var(--muted2); line-height: 1.5;
+    padding: 8px 10px; border: 1px solid rgba(71,255,140,0.15);
+    background: rgba(71,255,140,0.03);
+  }
+  .jdq-suggestion::before { content: '→'; color: var(--good); flex-shrink: 0; }
+
+  /* ── Upload zone ── */
   #pdfInput { display: none; }
   .upload-zone { border: 2px dashed var(--border2); padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--s2); margin-bottom: 16px; }
   .upload-zone:hover { border-color: var(--accent); background: rgba(232,255,71,0.02); }
@@ -118,94 +201,26 @@
   .results-heading { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
   .results-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-align: right; line-height: 1.8; }
 
-  /* ── Shortlist Panel ── */
-  #shortlistPanel {
-    display: none;
-    background: var(--s1);
-    border: 1px solid rgba(255,209,102,0.3);
-    margin-bottom: 20px;
-    animation: fadeUp 0.4s ease both;
-  }
-
+  /* Shortlist panel */
+  #shortlistPanel { display: none; background: var(--s1); border: 1px solid rgba(255,209,102,0.3); margin-bottom: 20px; animation: fadeUp 0.4s ease both; }
   #shortlistPanel.visible { display: block; }
-
-  .shortlist-header {
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(255,209,102,0.15);
-    display: flex; align-items: center; justify-content: space-between;
-    background: rgba(255,209,102,0.04);
-  }
-
-  .shortlist-title {
-    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--shortlist);
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  .shortlist-count {
-    background: var(--shortlist); color: #000;
-    font-size: 10px; font-weight: 700;
-    padding: 1px 6px; border-radius: 0;
-    font-family: 'Syne', sans-serif;
-  }
-
-  .shortlist-clear {
-    font-family: 'Inconsolata', monospace;
-    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-    background: none; border: 1px solid var(--border2); color: var(--muted);
-    padding: 4px 10px; cursor: pointer; transition: all 0.15s;
-  }
+  .shortlist-header { padding: 12px 20px; border-bottom: 1px solid rgba(255,209,102,0.15); display: flex; align-items: center; justify-content: space-between; background: rgba(255,209,102,0.04); }
+  .shortlist-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--shortlist); display: flex; align-items: center; gap: 8px; }
+  .shortlist-count { background: var(--shortlist); color: #000; font-size: 10px; font-weight: 700; padding: 1px 6px; font-family: 'Syne', sans-serif; }
+  .shortlist-clear { font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: none; border: 1px solid var(--border2); color: var(--muted); padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
   .shortlist-clear:hover { border-color: var(--uncertain); color: var(--uncertain); }
-
-  .shortlist-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px; padding: 16px;
-  }
-
-  .shortlist-card {
-    background: var(--s2); border: 1px solid rgba(255,209,102,0.2);
-    padding: 12px; position: relative;
-    animation: fadeUp 0.3s ease both;
-    transition: border-color 0.15s;
-  }
+  .shortlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; padding: 16px; }
+  .shortlist-card { background: var(--s2); border: 1px solid rgba(255,209,102,0.2); padding: 12px; position: relative; animation: fadeUp 0.3s ease both; transition: border-color 0.15s; }
   .shortlist-card:hover { border-color: rgba(255,209,102,0.5); }
-
-  .sl-rank {
-    font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 4px;
-  }
-
-  .sl-name {
-    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-    color: var(--shortlist); margin-bottom: 6px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
+  .sl-rank { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .sl-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--shortlist); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sl-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
-
-  .sl-score {
-    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
-    color: var(--text); line-height: 1;
-  }
-
+  .sl-score { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); line-height: 1; }
   .sl-score-label { font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-
-  .sl-snippet {
-    font-size: 10px; color: var(--muted2); line-height: 1.5;
-    margin-top: 6px; max-height: 40px; overflow: hidden;
-  }
-
-  .sl-remove {
-    position: absolute; top: 8px; right: 8px;
-    background: none; border: none; color: var(--muted);
-    cursor: pointer; font-size: 14px; transition: color 0.15s;
-    line-height: 1;
-  }
+  .sl-snippet { font-size: 10px; color: var(--muted2); line-height: 1.5; margin-top: 6px; max-height: 40px; overflow: hidden; }
+  .sl-remove { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; transition: color 0.15s; line-height: 1; }
   .sl-remove:hover { color: var(--uncertain); }
 
-  /* ── Compare + action bar ── */
   .compare-bar { display: none; background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .compare-bar.visible { display: flex; }
   .compare-info { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
@@ -227,28 +242,17 @@
   .metric-grade { font-size: 9px; letter-spacing: 0.1em; margin-top: 2px; }
   .grade-A { color: var(--good); } .grade-B { color: var(--accent); } .grade-C { color: var(--medium); } .grade-D { color: var(--low); } .grade-F { color: var(--uncertain); }
 
-  /* Result cards */
   .result-card { background: var(--s1); border: 1px solid var(--border); border-left: 3px solid transparent; margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
-  .result-card:hover { border-color: var(--border2); border-left-color: transparent; }
+  .result-card:hover { border-color: var(--border2); }
   .result-card.selected { border-color: var(--accent); border-left-color: var(--accent); }
   .result-card.shortlisted { border-left-color: var(--shortlist) !important; }
-
   .card-top { display: grid; grid-template-columns: 56px 1fr; }
   .rank-col { background: var(--s2); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding: 16px 0; flex-direction: column; gap: 6px; }
   .rank-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--muted); }
   .rank-0 .rank-num { color: var(--high); } .rank-1 .rank-num { color: var(--medium); } .rank-2 .rank-num { color: var(--low); }
-
-  /* Shortlist button in rank col */
-  .shortlist-btn {
-    background: none; border: 1px solid var(--border);
-    color: var(--muted); cursor: pointer;
-    font-size: 14px; width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; line-height: 1;
-  }
+  .shortlist-btn { background: none; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 14px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1; }
   .shortlist-btn:hover { border-color: var(--shortlist); color: var(--shortlist); }
   .shortlist-btn.active { background: rgba(255,209,102,0.12); border-color: var(--shortlist); color: var(--shortlist); }
-
   .compare-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
   .card-main { padding: 16px 20px; }
   .card-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
@@ -275,7 +279,6 @@
   .footer-gap { white-space: nowrap; }
   .footer-gap span { color: var(--text); }
 
-  /* AI Explanation */
   .explain-section { border-top: 1px solid var(--border); padding: 14px 20px 14px 76px; }
   .explain-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .explain-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent2); font-weight: 600; }
@@ -287,7 +290,6 @@
   .typing::after { content: '▌'; color: var(--accent2); animation: blink 0.8s step-end infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-  /* Skill Gap */
   .skillgap-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 76px; }
   .skillgap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
   .skillgap-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
@@ -304,7 +306,6 @@
   .skillgap-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   .skillgap-error { font-size: 11px; color: var(--muted); font-style: italic; }
 
-  /* Red Flag */
   .redflag-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 76px; }
   .redflag-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
   .redflag-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent3); font-weight: 600; }
@@ -334,7 +335,6 @@
   .faiss-item { display: flex; gap: 6px; }
   .faiss-val { color: var(--accent2); }
 
-  /* Compare modal */
   #compareModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
   #compareModal.open { display: flex; }
   .compare-box { background: var(--s1); border: 1px solid var(--border2); width: 100%; max-width: 1200px; margin: auto; animation: fadeUp 0.3s ease both; }
@@ -382,7 +382,7 @@
     <h1><span class="line1">SCREEN</span><span class="line2">SMARTER.</span></h1>
     <div class="tagline">
       <span class="tag-item">Multi-PDF Upload</span>
-      <span class="tag-item">AI Explanations</span>
+      <span class="tag-item">JD Quality Analyser</span>
       <span class="tag-item">Skill Gap Analysis</span>
       <span class="tag-item">Red Flag Detection</span>
       <span class="tag-item">Shortlist</span>
@@ -397,13 +397,19 @@
     <div class="sys-item">JOBS <span class="sys-val na" id="sysJobs">0</span></div>
   </div>
 
+  <!-- 01 Job Description -->
   <div class="panel" style="animation-delay:0.1s">
     <div class="panel-header"><div class="panel-title">01 — Job Description</div></div>
     <div class="panel-body">
       <textarea id="jd" rows="7" placeholder="Paste the full job description here…"></textarea>
+      <button id="jdQualityBtn" onclick="analyseJD()">
+        <span>◎ Analyse JD Quality</span>
+      </button>
+      <div id="jdQualityPanel"></div>
     </div>
   </div>
 
+  <!-- 02 Upload -->
   <div class="panel" style="animation-delay:0.15s">
     <div class="panel-header">
       <div class="panel-title">02 — Upload Resumes</div>
@@ -426,6 +432,7 @@
     </div>
   </div>
 
+  <!-- 03 Screen -->
   <div class="panel" style="animation-delay:0.2s">
     <div class="panel-header"><div class="panel-title">03 — Screen</div></div>
     <div class="panel-body">
@@ -456,23 +463,15 @@
       <div class="results-meta" id="resultsMeta"></div>
     </div>
     <div id="metricsPanel"></div>
-
-    <!-- Shortlist Panel -->
     <div id="shortlistPanel">
       <div class="shortlist-header">
-        <div class="shortlist-title">
-          ⭐ Shortlist
-          <span class="shortlist-count" id="shortlistCount">0</span>
-        </div>
+        <div class="shortlist-title">⭐ Shortlist <span class="shortlist-count" id="shortlistCount">0</span></div>
         <button class="shortlist-clear" onclick="clearShortlist()">Clear All</button>
       </div>
       <div class="shortlist-grid" id="shortlistGrid"></div>
     </div>
-
     <div class="compare-bar" id="compareBar">
-      <div class="compare-info">
-        <span id="compareCount">0</span> selected · select 2–<span id="compareMax">?</span> to compare
-      </div>
+      <div class="compare-info"><span id="compareCount">0</span> selected · select 2–<span id="compareMax">?</span> to compare</div>
       <button class="btn-compare" id="compareBtn" onclick="openComparison()" disabled>Compare Selected</button>
     </div>
     <div id="resultCards"></div>
@@ -495,15 +494,12 @@
 
   const API = 'https://resumescreenerai-production.up.railway.app';
 
-  let candidates         = [];
-  let lastResults        = [];
-  let lastJD             = '';
-  let totalCandidates    = 0;
-  let selectedForCompare = new Set();
-  let shortlisted        = new Set();   // stores resume_ids
-  let manualCount        = 0;
-  let manualVisible      = false;
-  const resumeTextMap    = {};
+  let candidates = [], lastResults = [], lastJD = '';
+  let totalCandidates = 0, selectedForCompare = new Set(), shortlisted = new Set();
+  let manualCount = 0, manualVisible = false;
+  const resumeTextMap = {};
+
+  const GRADE_COLORS = { A: 'var(--good)', B: 'var(--accent)', C: 'var(--medium)', D: 'var(--low)', F: 'var(--uncertain)' };
 
   document.getElementById('withEval').addEventListener('change', e => {
     document.getElementById('evalIdsRow').style.display = e.target.checked ? 'block' : 'none';
@@ -533,6 +529,87 @@
     set('sysJobs',     jobs  ? jobs.total_jobs         : '0', true);
   }
 
+  // ── JD Quality Analyser ────────────────────────────────────────────────
+  async function analyseJD() {
+    const jd  = document.getElementById('jd').value.trim();
+    if (!jd)  { alert('Please enter a job description first.'); return; }
+
+    const btn   = document.getElementById('jdQualityBtn');
+    const panel = document.getElementById('jdQualityPanel');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="jdq-spinner"></div> Analysing…';
+    panel.className = 'visible';
+    panel.innerHTML = '<div class="jdq-loading"><div class="jdq-spinner"></div> Analysing job description…</div>';
+
+    try {
+      const res = await fetch(`${API}/jdquality`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const d = await res.json();
+      renderJDQuality(d, panel);
+    } catch (err) {
+      panel.innerHTML = `<div class="jdq-loading" style="color:var(--uncertain)">⚠ Analysis failed (${err.message})</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>◎ Re-analyse JD</span>';
+    }
+  }
+
+  function renderJDQuality(d, panel) {
+    const grade      = d.grade || 'C';
+    const gradeColor = GRADE_COLORS[grade] || 'var(--medium)';
+    const rClass     = `restrict-${d.restrictiveness || 'medium'}`;
+    const skills     = d.required_skills || [];
+    const issues     = d.issues || [];
+    const suggestions = d.suggestions || [];
+
+    panel.innerHTML = `
+      <div class="jdq-top">
+        <div class="jdq-grade-box" style="border-color:${gradeColor}">
+          <div class="jdq-grade-letter" style="color:${gradeColor}">${grade}</div>
+          <div class="jdq-grade-lbl">${d.grade_label || ''}</div>
+        </div>
+        <div class="jdq-summary">
+          <div class="jdq-verdict">${d.verdict || ''}</div>
+          <div class="jdq-stats">
+            <div class="jdq-stat">
+              <span class="jdq-stat-val" style="color:${gradeColor}">${d.score || 0}</span>
+              <span class="jdq-stat-lbl">Score</span>
+            </div>
+            <div class="jdq-stat">
+              <span class="jdq-stat-val">${d.skill_count || skills.length}</span>
+              <span class="jdq-stat-lbl">Skills Required</span>
+            </div>
+            <div class="jdq-stat">
+              <span class="jdq-stat-val ${rClass}">${(d.restrictiveness || 'medium').charAt(0).toUpperCase() + (d.restrictiveness || 'medium').slice(1)}</span>
+              <span class="jdq-stat-lbl">Restrictiveness</span>
+            </div>
+          </div>
+          ${d.restrictiveness_reason ? `<div style="font-size:10px;color:var(--muted2);margin-top:6px;line-height:1.5">${d.restrictiveness_reason}</div>` : ''}
+        </div>
+      </div>
+      ${skills.length ? `
+        <div class="jdq-skills-row">
+          <span class="jdq-skills-label">Required Skills</span>
+          ${skills.map(s => `<span class="jdq-skill-tag">${s}</span>`).join('')}
+        </div>` : ''}
+      ${issues.length ? `
+        <div class="jdq-issues">
+          <div class="jdq-section-title">◈ Issues Found</div>
+          ${issues.map(i => `
+            <div class="jdq-issue sev-${i.severity}">
+              <div><div class="jdq-issue-label">${i.issue}</div><div class="jdq-issue-detail">${i.detail}</div></div>
+            </div>`).join('')}
+        </div>` : ''}
+      ${suggestions.length ? `
+        <div class="jdq-suggestions">
+          <div class="jdq-section-title">✦ Suggestions</div>
+          ${suggestions.map(s => `<div class="jdq-suggestion">${s}</div>`).join('')}
+        </div>` : ''}`;
+  }
+
   // ── PDF ────────────────────────────────────────────────────────────────
   async function parsePDF(file) {
     const buf = await file.arrayBuffer();
@@ -556,7 +633,7 @@
       if (re.test(clean) && !skip.test(clean) && words.length >= 2 && words.length <= 4)
         return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     }
-    return filename.replace(/\.pdf$/i, '').replace(/[_\-\s]+/g, '_').toLowerCase().replace(/[^a-z0-9_]/g, '') || 'candidate_' + Date.now();
+    return filename.replace(/\.pdf$/i,'').replace(/[_\-\s]+/g,'_').toLowerCase().replace(/[^a-z0-9_]/g,'') || 'candidate_'+Date.now();
   }
 
   document.getElementById('pdfInput').addEventListener('change', async function(e) {
@@ -566,21 +643,18 @@
   });
 
   async function processFiles(files) {
-    const bar = document.getElementById('processingBar');
-    const txt = document.getElementById('processingText');
+    const bar = document.getElementById('processingBar'), txt = document.getElementById('processingText');
     bar.classList.add('active');
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      txt.textContent = `Processing ${i + 1}/${files.length}: ${file.name}…`;
+      txt.textContent = `Processing ${i+1}/${files.length}: ${files[i].name}…`;
       try {
-        const text = await parsePDF(file);
-        let id = extractName(text, file.name);
-        let suffix = 2;
+        const text = await parsePDF(files[i]);
+        let id = extractName(text, files[i].name), suffix = 2;
         while (candidates.find(c => c.id === id)) id = `${id}_${suffix++}`;
-        candidates.push({ id, text, filename: file.name });
+        candidates.push({ id, text, filename: files[i].name });
         renderCandidateCard(candidates.length - 1);
       } catch {
-        candidates.push({ id: file.name.replace('.pdf','').toLowerCase().replace(/\s+/g,'_'), text: '', filename: file.name, error: true });
+        candidates.push({ id: files[i].name.replace('.pdf','').toLowerCase().replace(/\s+/g,'_'), text:'', filename:files[i].name, error:true });
         renderCandidateCard(candidates.length - 1);
       }
     }
@@ -598,36 +672,31 @@
   });
 
   function renderCandidateCard(idx) {
-    const c   = candidates[idx];
-    const div = document.createElement('div');
-    div.className = 'cand-card'; div.dataset.idx = idx;
-    div.style.animationDelay = `${idx * 0.06}s`;
+    const c = candidates[idx], div = document.createElement('div');
+    div.className = 'cand-card'; div.dataset.idx = idx; div.style.animationDelay = `${idx*0.06}s`;
     div.innerHTML = `
       <div class="cand-card-header">
-        <span class="cand-num">#${idx + 1}</span>
-        <input class="cand-id-input" value="${c.id}" placeholder="Candidate ID" oninput="candidates[${idx}].id = this.value">
+        <span class="cand-num">#${idx+1}</span>
+        <input class="cand-id-input" value="${c.id}" placeholder="Candidate ID" oninput="candidates[${idx}].id=this.value">
         <span class="cand-file-tag">${c.filename}</span>
-        <button class="cand-remove" onclick="removeCandidate(${idx}, this.closest('.cand-card'))">×</button>
+        <button class="cand-remove" onclick="removeCandidate(${idx},this.closest('.cand-card'))">×</button>
       </div>
       ${c.error
         ? `<div class="cand-status" style="color:var(--uncertain)">⚠ Could not read PDF</div>`
-        : `<div class="cand-text" onclick="this.classList.toggle('expanded')">${c.text.slice(0, 400).replace(/\n/g, ' ')}</div>
+        : `<div class="cand-text" onclick="this.classList.toggle('expanded')">${c.text.slice(0,400).replace(/\n/g,' ')}</div>
            <div class="cand-status">✓ ${c.text.split(/\s+/).length} words extracted</div>`}`;
     document.getElementById('candidateList').appendChild(div);
   }
 
   function removeCandidate(idx, el) {
-    candidates.splice(idx, 1); el.remove();
-    document.querySelectorAll('.cand-card').forEach((card, i) => {
-      card.dataset.idx = i;
-      card.querySelector('.cand-num').textContent = `#${i + 1}`;
-    });
+    candidates.splice(idx,1); el.remove();
+    document.querySelectorAll('.cand-card').forEach((card,i) => { card.dataset.idx=i; card.querySelector('.cand-num').textContent=`#${i+1}`; });
     updateCandCount();
   }
 
   function updateCandCount() {
     const total = candidates.length + document.querySelectorAll('.manual-row').length;
-    document.getElementById('candCount').textContent = total ? `${total} candidate${total > 1 ? 's' : ''}` : '';
+    document.getElementById('candCount').textContent = total ? `${total} candidate${total>1?'s':''}` : '';
   }
 
   function toggleManual() {
@@ -638,24 +707,16 @@
 
   function addManual() {
     manualCount++;
-    const div = document.createElement('div');
-    div.className = 'manual-row';
-    div.innerHTML = `
-      <input type="text" placeholder="Candidate ID" class="man-id">
-      <textarea placeholder="Paste resume text here…" class="man-text" rows="3"></textarea>
-      <button class="rm-btn" onclick="this.parentElement.remove();updateCandCount()">×</button>`;
-    document.getElementById('manualList').appendChild(div);
-    updateCandCount();
+    const div = document.createElement('div'); div.className = 'manual-row';
+    div.innerHTML = `<input type="text" placeholder="Candidate ID" class="man-id"><textarea placeholder="Paste resume text here…" class="man-text" rows="3"></textarea><button class="rm-btn" onclick="this.parentElement.remove();updateCandCount()">×</button>`;
+    document.getElementById('manualList').appendChild(div); updateCandCount();
   }
 
   function collectAll() {
     const all = [];
-    for (const c of candidates) {
-      if (c.text && c.id) all.push({ resume_id: c.id, text: c.text });
-    }
+    for (const c of candidates) if (c.text && c.id) all.push({ resume_id: c.id, text: c.text });
     for (const row of document.querySelectorAll('.manual-row')) {
-      const id = row.querySelector('.man-id').value.trim();
-      const text = row.querySelector('.man-text').value.trim();
+      const id = row.querySelector('.man-id').value.trim(), text = row.querySelector('.man-text').value.trim();
       if (id && text) all.push({ resume_id: id, text });
     }
     return all;
@@ -664,152 +725,100 @@
   function setLoading(msg) {
     const el = document.getElementById('status');
     el.className = 'loading'; el.innerHTML = `<div class="spinner"></div> ${msg}`;
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('batchBtn').disabled  = true;
+    document.getElementById('submitBtn').disabled = true; document.getElementById('batchBtn').disabled = true;
   }
   function setError(msg) {
     const el = document.getElementById('status');
     el.className = 'error'; el.innerHTML = `<span>⚠</span> ${msg}`;
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('batchBtn').disabled  = false;
+    document.getElementById('submitBtn').disabled = false; document.getElementById('batchBtn').disabled = false;
   }
   function clearStatus() {
-    document.getElementById('status').className = '';
-    document.getElementById('status').innerHTML = '';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('batchBtn').disabled  = false;
+    document.getElementById('status').className = ''; document.getElementById('status').innerHTML = '';
+    document.getElementById('submitBtn').disabled = false; document.getElementById('batchBtn').disabled = false;
   }
 
-  // ── Shortlist logic ────────────────────────────────────────────────────
+  // ── Shortlist ──────────────────────────────────────────────────────────
   function toggleShortlist(resumeId) {
-    if (shortlisted.has(resumeId)) {
-      shortlisted.delete(resumeId);
-    } else {
-      shortlisted.add(resumeId);
-    }
-    updateShortlistUI(resumeId);
-    renderShortlistPanel();
+    shortlisted.has(resumeId) ? shortlisted.delete(resumeId) : shortlisted.add(resumeId);
+    updateShortlistUI(resumeId); renderShortlistPanel();
   }
 
   function updateShortlistUI(resumeId) {
-    const card = document.querySelector(`.result-card[data-resume-id="${resumeId}"]`);
-    const btn  = document.getElementById(`sl_btn_${resumeId}`);
+    const card  = document.querySelector(`.result-card[data-resume-id="${resumeId}"]`);
+    const btn   = document.getElementById(`sl_btn_${resumeId}`);
     const badge = document.getElementById(`sl_badge_${resumeId}`);
-    const isShortlisted = shortlisted.has(resumeId);
-
-    if (card) card.classList.toggle('shortlisted', isShortlisted);
-    if (btn)  btn.classList.toggle('active', isShortlisted);
-    if (btn)  btn.title = isShortlisted ? 'Remove from shortlist' : 'Add to shortlist';
-    if (badge) badge.style.display = isShortlisted ? 'inline-flex' : 'none';
+    const isSL  = shortlisted.has(resumeId);
+    if (card)  card.classList.toggle('shortlisted', isSL);
+    if (btn)   { btn.classList.toggle('active', isSL); btn.title = isSL ? 'Remove from shortlist' : 'Add to shortlist'; }
+    if (badge) badge.style.display = isSL ? 'inline-flex' : 'none';
   }
 
   function renderShortlistPanel() {
-    const panel = document.getElementById('shortlistPanel');
-    const grid  = document.getElementById('shortlistGrid');
-    const count = document.getElementById('shortlistCount');
-
-    count.textContent = shortlisted.size;
-
-    if (shortlisted.size === 0) {
-      panel.classList.remove('visible');
-      return;
-    }
-
-    panel.classList.add('visible');
-    grid.innerHTML = '';
-
+    const panel = document.getElementById('shortlistPanel'), grid = document.getElementById('shortlistGrid');
+    document.getElementById('shortlistCount').textContent = shortlisted.size;
+    if (shortlisted.size === 0) { panel.classList.remove('visible'); return; }
+    panel.classList.add('visible'); grid.innerHTML = '';
     for (const resumeId of shortlisted) {
-      const r = lastResults.find(x => x.resume_id === resumeId);
-      if (!r) continue;
-
-      const rank    = lastResults.indexOf(r) + 1;
-      const conf    = r.confidence || {};
-      const level   = conf.level || 'uncertain';
-      const pct     = Math.round((r.final_score || 0) * 100);
-      const explEl  = document.getElementById(`explain_${resumeId}`);
-      const explain = explEl?.querySelector('.explain-text')?.textContent?.slice(0, 100) || '';
-
-      const card = document.createElement('div');
-      card.className = 'shortlist-card';
-      card.style.animationDelay = `${[...shortlisted].indexOf(resumeId) * 0.05}s`;
-      card.innerHTML = `
-        <button class="sl-remove" onclick="toggleShortlist('${resumeId}')" title="Remove">×</button>
-        <div class="sl-rank">Rank #${rank}</div>
-        <div class="sl-name">${resumeId}</div>
-        <div class="sl-badges">
-          <span class="confidence-badge conf-${level}" style="font-size:8px">${conf.label || level}</span>
-        </div>
-        <div class="sl-score">${pct}%</div>
-        <div class="sl-score-label">Final Score</div>
+      const r = lastResults.find(x => x.resume_id === resumeId); if (!r) continue;
+      const rank = lastResults.indexOf(r)+1, conf = r.confidence||{}, level = conf.level||'uncertain';
+      const pct  = Math.round((r.final_score||0)*100);
+      const explEl = document.getElementById(`explain_${resumeId}`);
+      const explain = explEl?.querySelector('.explain-text')?.textContent?.slice(0,100)||'';
+      const card = document.createElement('div'); card.className = 'shortlist-card';
+      card.style.animationDelay = `${[...shortlisted].indexOf(resumeId)*0.05}s`;
+      card.innerHTML = `<button class="sl-remove" onclick="toggleShortlist('${resumeId}')">×</button>
+        <div class="sl-rank">Rank #${rank}</div><div class="sl-name">${resumeId}</div>
+        <div class="sl-badges"><span class="confidence-badge conf-${level}" style="font-size:8px">${conf.label||level}</span></div>
+        <div class="sl-score">${pct}%</div><div class="sl-score-label">Final Score</div>
         ${explain ? `<div class="sl-snippet">${explain}…</div>` : ''}`;
       grid.appendChild(card);
     }
   }
 
   function clearShortlist() {
-    const prev = new Set(shortlisted);
-    shortlisted.clear();
-    for (const id of prev) updateShortlistUI(id);
-    renderShortlistPanel();
+    const prev = new Set(shortlisted); shortlisted.clear();
+    for (const id of prev) updateShortlistUI(id); renderShortlistPanel();
   }
 
   // ── Screening ──────────────────────────────────────────────────────────
   async function runScreening() {
-    const jd       = document.getElementById('jd').value.trim();
-    const resumes  = collectAll();
-    const topN     = parseInt(document.getElementById('topN').value) || 5;
+    const jd = document.getElementById('jd').value.trim(), resumes = collectAll();
+    const topN = parseInt(document.getElementById('topN').value)||5;
     const withEval = document.getElementById('withEval').checked;
     const relRaw   = document.getElementById('relevantIds').value;
-    const relevantIds = withEval && relRaw ? relRaw.split(',').map(s => s.trim()).filter(Boolean) : null;
-
+    const relevantIds = withEval && relRaw ? relRaw.split(',').map(s=>s.trim()).filter(Boolean) : null;
     if (!jd)             return setError('Please enter a job description.');
     if (!resumes.length) return setError('Please upload at least one resume.');
-
     for (const r of resumes) resumeTextMap[r.resume_id] = r.text;
-    totalCandidates = resumes.length;
-    shortlisted.clear();
+    totalCandidates = resumes.length; shortlisted.clear();
     setLoading('Running two-stage pipeline…');
     document.getElementById('results').style.display = 'none';
     document.getElementById('shortlistPanel').classList.remove('visible');
     document.getElementById('validationBox').style.display = 'none';
     document.getElementById('faissBar').style.display = 'none';
-    selectedForCompare.clear();
-    lastJD = jd;
-
+    selectedForCompare.clear(); lastJD = jd;
     try {
-      const res = await fetch(`${API}/rank`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          job_description: jd, resumes, top_n: topN,
-          ...(relevantIds ? { relevant_ids: relevantIds, eval_k_values: [1, 3, 5] } : {}),
-        }),
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail?.message || e.detail || `HTTP ${res.status}`); }
-      clearStatus();
-      const data = await res.json();
-      renderResults(data);
-      checkHealth();
-      generateAllExplanations(jd, data.results || []);
-      generateAllSkillGaps(jd, data.results || []);
-      generateAllRedFlags(data.results || []);
-    } catch (e) { setError(e.message || 'Could not reach API.'); }
+      const res = await fetch(`${API}/rank`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ job_description:jd, resumes, top_n:topN, ...(relevantIds?{relevant_ids:relevantIds,eval_k_values:[1,3,5]}:{}) }) });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail?.message||e.detail||`HTTP ${res.status}`); }
+      clearStatus(); const data = await res.json();
+      renderResults(data); checkHealth();
+      generateAllExplanations(jd, data.results||[]);
+      generateAllSkillGaps(jd, data.results||[]);
+      generateAllRedFlags(data.results||[]);
+    } catch (e) { setError(e.message||'Could not reach API.'); }
   }
 
   async function runBatch() {
-    const jd = document.getElementById('jd').value.trim();
-    const resumes = collectAll();
-    const topN = parseInt(document.getElementById('topN').value) || 5;
-    if (!jd || !resumes.length) return setError('Please add a job description and resumes.');
+    const jd = document.getElementById('jd').value.trim(), resumes = collectAll(), topN = parseInt(document.getElementById('topN').value)||5;
+    if (!jd||!resumes.length) return setError('Please add a job description and resumes.');
     for (const r of resumes) resumeTextMap[r.resume_id] = r.text;
-    totalCandidates = resumes.length;
-    shortlisted.clear();
-    setLoading('Submitting batch job…'); lastJD = jd;
+    totalCandidates = resumes.length; shortlisted.clear(); setLoading('Submitting batch job…'); lastJD = jd;
     try {
-      const res  = await fetch(`${API}/rank/batch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries: [{ job_description: jd, resumes, top_n: topN }] }) });
+      const res  = await fetch(`${API}/rank/batch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({queries:[{job_description:jd,resumes,top_n:topN}]})});
       const data = await res.json();
       setLoading(`Job queued (${data.job_id.slice(0,8)}…) — polling…`);
       pollJob(data.job_id);
-    } catch (e) { setError(e.message || 'Batch failed.'); }
+    } catch (e) { setError(e.message||'Batch failed.'); }
   }
 
   async function pollJob(jobId) {
@@ -817,333 +826,200 @@
     const iv = setInterval(async () => {
       attempts++;
       try {
-        const res  = await fetch(`${API}/jobs/${jobId}`);
-        const data = await res.json();
+        const res  = await fetch(`${API}/jobs/${jobId}`), data = await res.json();
         if (data.status === 'done') {
           clearInterval(iv); clearStatus();
           const result = Array.isArray(data.result) ? data.result[0] : data.result;
           renderResults(result); checkHealth();
-          generateAllExplanations(lastJD, result.results || []);
-          generateAllSkillGaps(lastJD, result.results || []);
-          generateAllRedFlags(result.results || []);
-        } else if (data.status === 'error') { clearInterval(iv); setError('Job failed: ' + data.error); }
+          generateAllExplanations(lastJD, result.results||[]);
+          generateAllSkillGaps(lastJD, result.results||[]);
+          generateAllRedFlags(result.results||[]);
+        } else if (data.status==='error') { clearInterval(iv); setError('Job failed: '+data.error); }
         else { setLoading(`Job ${data.status} (${data.elapsed_s||0}s)…`); }
       } catch {}
-      if (attempts >= 120) { clearInterval(iv); setError('Timed out.'); }
+      if (attempts>=120) { clearInterval(iv); setError('Timed out.'); }
     }, 1000);
   }
 
   // ── AI Explanations ────────────────────────────────────────────────────
   async function generateAllExplanations(jd, results) {
     for (let i = 0; i < results.length; i++) {
-      const r  = results[i];
-      const el = document.getElementById(`explain_${r.resume_id}`);
+      const r = results[i], el = document.getElementById(`explain_${r.resume_id}`);
       if (!el) continue;
       el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Generating…</div>`;
       try {
-        const res = await fetch(`${API}/explain`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jd, resume_id: r.resume_id, snippet: r.text_snippet, rank: i,
-            final_score: r.final_score, embedding_score: r.embedding_score,
-            rerank_score: r.rerank_score, confidence: r.confidence?.label || 'unknown',
-          }),
-        });
+        const res = await fetch(`${API}/explain`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jd,resume_id:r.resume_id,snippet:r.text_snippet,rank:i,final_score:r.final_score,embedding_score:r.embedding_score,rerank_score:r.rerank_score,confidence:r.confidence?.label||'unknown'})});
         if (!res.ok) throw new Error(`${res.status}`);
         const text = (await res.json()).explanation;
         el.innerHTML = `<div class="explain-text typing"></div>`;
-        const tEl = el.querySelector('.explain-text');
-        let idx = 0;
-        const iv = setInterval(() => {
-          tEl.textContent = text.slice(0, idx); idx += 4;
-          if (idx > text.length) {
-            tEl.textContent = text;
-            tEl.classList.remove('typing');
-            clearInterval(iv);
-            // update shortlist panel if this candidate is shortlisted
-            if (shortlisted.has(r.resume_id)) renderShortlistPanel();
-          }
-        }, 18);
-      } catch (err) {
-        el.innerHTML = `<div class="explain-error">⚠ Could not generate (${err.message})</div>`;
-      }
+        const tEl = el.querySelector('.explain-text'); let idx = 0;
+        const iv = setInterval(()=>{ tEl.textContent=text.slice(0,idx); idx+=4; if(idx>text.length){tEl.textContent=text;tEl.classList.remove('typing');clearInterval(iv);if(shortlisted.has(r.resume_id))renderShortlistPanel();} },18);
+      } catch (err) { el.innerHTML=`<div class="explain-error">⚠ Could not generate (${err.message})</div>`; }
     }
   }
 
   // ── Skill Gap ──────────────────────────────────────────────────────────
   async function generateAllSkillGaps(jd, results) {
     for (const r of results) {
-      const el = document.getElementById(`skillgap_${r.resume_id}`);
-      if (!el) continue;
-      const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
+      const el = document.getElementById(`skillgap_${r.resume_id}`); if (!el) continue;
+      const resumeText = resumeTextMap[r.resume_id]||r.text_snippet;
       el.innerHTML = `<div class="skillgap-loading"><div class="skillgap-spinner"></div> Analysing skills…</div>`;
       try {
-        const res = await fetch(`${API}/skillgap`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jd, resume: resumeText }),
-        });
+        const res = await fetch(`${API}/skillgap`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jd,resume:resumeText})});
         if (!res.ok) throw new Error(`${res.status}`);
-        const data    = await res.json();
-        const skills  = data.skills || [];
-        const matched = skills.filter(s => s.found).length;
-        const total   = skills.length;
-        const pct     = total ? Math.round((matched / total) * 100) : 0;
-        const barColor = pct >= 70 ? 'var(--good)' : pct >= 40 ? 'var(--medium)' : 'var(--uncertain)';
-        const pctColor = pct >= 70 ? 'var(--good)' : pct >= 40 ? 'var(--medium)' : 'var(--uncertain)';
-        el.innerHTML = `
-          <div class="skillgap-header">
-            <div></div>
-            <div class="skillgap-score">
-              <span style="color:var(--muted);font-size:10px">${matched}/${total} matched</span>
-              <div class="skillgap-bar-wrap"><div class="skillgap-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
-              <span class="skillgap-pct" style="color:${pctColor}">${pct}%</span>
-            </div>
-          </div>
-          <div class="skill-tags">
-            ${skills.map(s => `<div class="skill-tag ${s.found ? 'found' : 'missing'}"><span class="skill-icon">${s.found ? '✓' : '✗'}</span>${s.skill}</div>`).join('')}
-          </div>`;
-      } catch (err) {
-        el.innerHTML = `<div class="skillgap-error">⚠ Skill analysis unavailable (${err.message})</div>`;
-      }
+        const data = await res.json(), skills = data.skills||[];
+        const matched = skills.filter(s=>s.found).length, total = skills.length;
+        const pct = total ? Math.round((matched/total)*100) : 0;
+        const barColor = pct>=70?'var(--good)':pct>=40?'var(--medium)':'var(--uncertain)';
+        const pctColor = pct>=70?'var(--good)':pct>=40?'var(--medium)':'var(--uncertain)';
+        el.innerHTML = `<div class="skillgap-header"><div></div><div class="skillgap-score"><span style="color:var(--muted);font-size:10px">${matched}/${total} matched</span><div class="skillgap-bar-wrap"><div class="skillgap-bar-fill" style="width:${pct}%;background:${barColor}"></div></div><span class="skillgap-pct" style="color:${pctColor}">${pct}%</span></div></div><div class="skill-tags">${skills.map(s=>`<div class="skill-tag ${s.found?'found':'missing'}"><span class="skill-icon">${s.found?'✓':'✗'}</span>${s.skill}</div>`).join('')}</div>`;
+      } catch (err) { el.innerHTML=`<div class="skillgap-error">⚠ Skill analysis unavailable (${err.message})</div>`; }
     }
   }
 
-  // ── Red Flag Detection ─────────────────────────────────────────────────
-  const FLAG_TYPE_LABELS = {
-    short_tenure: 'Short Tenure', employment_gap: 'Employment Gap',
-    job_hopping: 'Job Hopping', vague_title: 'Vague Title',
-    unverifiable_employer: 'Unverifiable Employer', inconsistent_progression: 'Inconsistent Progression',
-  };
-  const FLAG_ICONS = {
-    short_tenure: '⏱', employment_gap: '📅', job_hopping: '🔄',
-    vague_title: '❓', unverifiable_employer: '🏢', inconsistent_progression: '📉',
-  };
+  // ── Red Flag ──────────────────────────────────────────────────────────
+  const FLAG_TYPE_LABELS = { short_tenure:'Short Tenure', employment_gap:'Employment Gap', job_hopping:'Job Hopping', vague_title:'Vague Title', unverifiable_employer:'Unverifiable Employer', inconsistent_progression:'Inconsistent Progression' };
+  const FLAG_ICONS = { short_tenure:'⏱', employment_gap:'📅', job_hopping:'🔄', vague_title:'❓', unverifiable_employer:'🏢', inconsistent_progression:'📉' };
 
   async function generateAllRedFlags(results) {
     for (const r of results) {
-      const el = document.getElementById(`redflag_${r.resume_id}`);
-      if (!el) continue;
-      const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
+      const el = document.getElementById(`redflag_${r.resume_id}`); if (!el) continue;
+      const resumeText = resumeTextMap[r.resume_id]||r.text_snippet;
       el.innerHTML = `<div class="redflag-loading"><div class="redflag-spinner"></div> Scanning…</div>`;
       try {
-        const res = await fetch(`${API}/redflag`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resume: resumeText, resume_id: r.resume_id }),
-        });
+        const res = await fetch(`${API}/redflag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resume:resumeText,resume_id:r.resume_id})});
         if (!res.ok) throw new Error(`${res.status}`);
-        const data   = await res.json();
-        const flags  = data.flags || [];
-        const risk   = data.overall_risk || 'low';
-        const summary = data.summary || '';
-        const riskClass = `risk-${risk}`;
-        const riskLabel = risk.charAt(0).toUpperCase() + risk.slice(1) + ' Risk';
+        const data = await res.json(), flags = data.flags||[], risk = data.overall_risk||'low', summary = data.summary||'';
         const header = document.getElementById(`redflag_header_${r.resume_id}`);
-        if (header) {
-          header.innerHTML = `<span class="redflag-label">⚑ Red Flag Detection</span><span class="redflag-overall ${riskClass}">${riskLabel}</span>`;
-        }
-        if (flags.length === 0) {
-          el.innerHTML = `${summary ? `<div class="redflag-summary">${summary}</div>` : ''}<div class="redflag-clean">✓ No red flags detected</div>`;
-        } else {
-          el.innerHTML = `${summary ? `<div class="redflag-summary">${summary}</div>` : ''}
-            <div class="flag-list">
-              ${flags.map(f => `<div class="flag-item sev-${f.severity}"><span class="flag-icon">${FLAG_ICONS[f.type]||'⚠'}</span><div class="flag-content"><div class="flag-type">${FLAG_TYPE_LABELS[f.type]||f.type} · ${f.severity}</div><div class="flag-desc">${f.description}</div></div></div>`).join('')}
-            </div>`;
-        }
-      } catch (err) {
-        el.innerHTML = `<div class="redflag-error">⚠ Red flag scan unavailable (${err.message})</div>`;
-      }
+        if (header) header.innerHTML = `<span class="redflag-label">⚑ Red Flag Detection</span><span class="redflag-overall risk-${risk}">${risk.charAt(0).toUpperCase()+risk.slice(1)} Risk</span>`;
+        el.innerHTML = flags.length===0
+          ? `${summary?`<div class="redflag-summary">${summary}</div>`:''}<div class="redflag-clean">✓ No red flags detected</div>`
+          : `${summary?`<div class="redflag-summary">${summary}</div>`:''}<div class="flag-list">${flags.map(f=>`<div class="flag-item sev-${f.severity}"><span class="flag-icon">${FLAG_ICONS[f.type]||'⚠'}</span><div class="flag-content"><div class="flag-type">${FLAG_TYPE_LABELS[f.type]||f.type} · ${f.severity}</div><div class="flag-desc">${f.description}</div></div></div>`).join('')}</div>`;
+      } catch (err) { el.innerHTML=`<div class="redflag-error">⚠ Red flag scan unavailable (${err.message})</div>`; }
     }
   }
 
   // ── Render results ─────────────────────────────────────────────────────
   function renderResults(data) {
-    lastResults = data.results || [];
-
+    lastResults = data.results||[];
     const val = data.validation;
-    if (val?.n_warnings > 0) {
-      const box = document.getElementById('validationBox');
-      box.style.display = 'block';
-      box.innerHTML = `<strong style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">${val.n_warnings} Warning${val.n_warnings > 1 ? 's' : ''}</strong><br><br>` +
-        val.warnings.map(w => `<div class="warn-item">${w.resume_id ? `[${w.resume_id}] ` : ''}${w.message}</div>`).join('');
-    }
-
+    if (val?.n_warnings>0) { const box=document.getElementById('validationBox'); box.style.display='block'; box.innerHTML=`<strong style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase">${val.n_warnings} Warning${val.n_warnings>1?'s':''}</strong><br><br>`+val.warnings.map(w=>`<div class="warn-item">${w.resume_id?`[${w.resume_id}] `:''}${w.message}</div>`).join(''); }
     const fi = data.faiss_info;
-    if (fi) {
-      const bar = document.getElementById('faissBar');
-      bar.style.display = 'flex';
-      bar.innerHTML = `<div class="faiss-item">INDEX <span class="faiss-val">${fi.index_type}</span></div><div class="faiss-item">VECTORS <span class="faiss-val">${fi.n_vectors}</span></div><div class="faiss-item">DIM <span class="faiss-val">${fi.dimension}</span></div><div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>`;
-    }
-
-    const t = data.timing || {};
-    document.getElementById('resultsMeta').innerHTML =
-      `${data.total_candidates} candidates screened<br>Total: ${t.total_s?.toFixed(2)}s · Embed: ${t.index_build_s?.toFixed(2)}s · Rerank: ${t.rerank_s?.toFixed(2)}s`;
-
-    const mp = document.getElementById('metricsPanel'), rep = data.metrics_report;
+    if (fi) { const bar=document.getElementById('faissBar'); bar.style.display='flex'; bar.innerHTML=`<div class="faiss-item">INDEX <span class="faiss-val">${fi.index_type}</span></div><div class="faiss-item">VECTORS <span class="faiss-val">${fi.n_vectors}</span></div><div class="faiss-item">DIM <span class="faiss-val">${fi.dimension}</span></div><div class="faiss-item">SIZE <span class="faiss-val">${fi.index_size_mb}MB</span></div>`; }
+    const t = data.timing||{};
+    document.getElementById('resultsMeta').innerHTML = `${data.total_candidates} candidates screened<br>Total: ${t.total_s?.toFixed(2)}s · Embed: ${t.index_build_s?.toFixed(2)}s · Rerank: ${t.rerank_s?.toFixed(2)}s`;
+    const mp=document.getElementById('metricsPanel'), rep=data.metrics_report;
     if (rep) {
-      mp.style.display = 'block';
-      const key = (rep.metrics || []).filter(m => ['ndcg@5','ndcg@3','precision@3','recall@3','mrr'].includes(m.name)).slice(0, 5);
-      mp.innerHTML = `<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div>
-        <div class="metrics-grade"><div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div><div class="grade-verdict">${rep.verdict}</div></div>
-        <div class="metrics-grid">${key.map(m=>`<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}</div>`;
-    } else { mp.style.display = 'none'; }
-
-    document.getElementById('compareBar').className = 'compare-bar visible';
-    document.getElementById('compareMax').textContent = totalCandidates;
+      mp.style.display='block';
+      const key=(rep.metrics||[]).filter(m=>['ndcg@5','ndcg@3','precision@3','recall@3','mrr'].includes(m.name)).slice(0,5);
+      mp.innerHTML=`<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">Evaluation Metrics</div><div class="metrics-grade"><div class="grade-circle"><div class="grade-letter">${rep.overall_grade}</div><div class="grade-label-text">${rep.overall_label}</div></div><div class="grade-verdict">${rep.verdict}</div></div><div class="metrics-grid">${key.map(m=>`<div class="metric-cell"><div class="metric-name">${m.name}</div><div class="metric-val grade-${m.grade}">${(m.value*100).toFixed(0)}%</div><div class="metric-grade grade-${m.grade}">${m.grade} — ${m.grade_label}</div></div>`).join('')}</div>`;
+    } else { mp.style.display='none'; }
+    document.getElementById('compareBar').className='compare-bar visible';
+    document.getElementById('compareMax').textContent=totalCandidates;
     updateCompareBar();
-
-    const container = document.getElementById('resultCards');
-    container.innerHTML = '';
-    lastResults.forEach((r, i) => {
-      const conf  = r.confidence || {};
-      const level = conf.level || 'uncertain';
-      const card  = document.createElement('div');
-      card.className = `result-card rank-${Math.min(i, 2)}`;
-      card.dataset.resumeId = r.resume_id;
-      card.style.animationDelay = `${i * 0.07}s`;
-      card.innerHTML = `
+    const container=document.getElementById('resultCards'); container.innerHTML='';
+    lastResults.forEach((r,i)=>{
+      const conf=r.confidence||{}, level=conf.level||'uncertain';
+      const card=document.createElement('div');
+      card.className=`result-card rank-${Math.min(i,2)}`; card.dataset.resumeId=r.resume_id; card.style.animationDelay=`${i*0.07}s`;
+      card.innerHTML=`
         <div class="card-top">
           <div class="rank-col">
-            <div class="rank-num">${i + 1}</div>
-            <button class="shortlist-btn" id="sl_btn_${r.resume_id}"
-              onclick="toggleShortlist('${r.resume_id}')"
-              title="Add to shortlist">⭐</button>
-            <input type="checkbox" class="compare-check" onchange="toggleCompare('${r.resume_id}', this)">
+            <div class="rank-num">${i+1}</div>
+            <button class="shortlist-btn" id="sl_btn_${r.resume_id}" onclick="toggleShortlist('${r.resume_id}')" title="Add to shortlist">⭐</button>
+            <input type="checkbox" class="compare-check" onchange="toggleCompare('${r.resume_id}',this)">
           </div>
           <div class="card-main">
             <div class="card-id-row">
               <div class="card-id">${r.resume_id}</div>
-              <div class="confidence-badge conf-${level}">${conf.label || level}</div>
-              ${conf.is_clear_winner ? '<div class="winner-badge">★ Clear Winner</div>' : ''}
+              <div class="confidence-badge conf-${level}">${conf.label||level}</div>
+              ${conf.is_clear_winner?'<div class="winner-badge">★ Clear Winner</div>':''}
               <div class="shortlisted-badge" id="sl_badge_${r.resume_id}" style="display:none">⭐ Shortlisted</div>
-              ${r.fallback_used ? '<div class="fallback-tag">⟳ Fallback Used</div>' : ''}
+              ${r.fallback_used?'<div class="fallback-tag">⟳ Fallback Used</div>':''}
             </div>
             <div class="card-snippet">${r.text_snippet}</div>
             <div class="scores-row">
-              ${sb('Final', r.final_score, Math.min(i,2))}
-              ${sb('Semantic', r.embedding_score, Math.min(i,2))}
-              ${sb('Rerank', r.rerank_score, Math.min(i,2))}
-              ${r.fallback_used ? sb('Keyword', r.fallback?.score||0, Math.min(i,2)) : ''}
+              ${sb('Final',r.final_score,Math.min(i,2))}
+              ${sb('Semantic',r.embedding_score,Math.min(i,2))}
+              ${sb('Rerank',r.rerank_score,Math.min(i,2))}
+              ${r.fallback_used?sb('Keyword',r.fallback?.score||0,Math.min(i,2)):''}
             </div>
           </div>
         </div>
         <div class="card-footer">
-          <div class="footer-reason">${conf.reason || ''}</div>
-          ${conf.score_gap > 0 ? `<div class="footer-gap">Gap to next: <span>${(conf.score_gap*100).toFixed(1)}%</span></div>` : ''}
-          ${r.fallback_used && r.fallback ? `<div class="footer-gap">Keywords: <span>${r.fallback.matched_keywords.slice(0,5).join(', ')}</span></div>` : ''}
+          <div class="footer-reason">${conf.reason||''}</div>
+          ${conf.score_gap>0?`<div class="footer-gap">Gap to next: <span>${(conf.score_gap*100).toFixed(1)}%</span></div>`:''}
+          ${r.fallback_used&&r.fallback?`<div class="footer-gap">Keywords: <span>${r.fallback.matched_keywords.slice(0,5).join(', ')}</span></div>`:''}
         </div>
         <div class="explain-section">
-          <div class="explain-header">
-            <span class="explain-label">⚡ AI Explanation</span>
-            <span class="explain-model-tag">LLaMA 4 Maverick</span>
-          </div>
-          <div id="explain_${r.resume_id}" class="explain-loading">
-            <div class="explain-spinner"></div> Waiting…
-          </div>
+          <div class="explain-header"><span class="explain-label">⚡ AI Explanation</span><span class="explain-model-tag">LLaMA 4 Maverick</span></div>
+          <div id="explain_${r.resume_id}" class="explain-loading"><div class="explain-spinner"></div> Waiting…</div>
         </div>
         <div class="skillgap-section">
-          <div class="skillgap-header">
-            <span class="skillgap-label">◈ Skill Gap Analysis</span>
-          </div>
-          <div id="skillgap_${r.resume_id}" class="skillgap-loading">
-            <div class="skillgap-spinner"></div> Waiting…
-          </div>
+          <div class="skillgap-header"><span class="skillgap-label">◈ Skill Gap Analysis</span></div>
+          <div id="skillgap_${r.resume_id}" class="skillgap-loading"><div class="skillgap-spinner"></div> Waiting…</div>
         </div>
         <div class="redflag-section">
-          <div class="redflag-header" id="redflag_header_${r.resume_id}">
-            <span class="redflag-label">⚑ Red Flag Detection</span>
-          </div>
-          <div id="redflag_${r.resume_id}" class="redflag-loading">
-            <div class="redflag-spinner"></div> Waiting…
-          </div>
+          <div class="redflag-header" id="redflag_header_${r.resume_id}"><span class="redflag-label">⚑ Red Flag Detection</span></div>
+          <div id="redflag_${r.resume_id}" class="redflag-loading"><div class="redflag-spinner"></div> Waiting…</div>
         </div>`;
       container.appendChild(card);
     });
-
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('results').style.display='block';
+    document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
-  function sb(label, val, rank) {
-    const pct = Math.round((val||0)*100);
+  function sb(label,val,rank) {
+    const pct=Math.round((val||0)*100);
     return `<div class="score-block"><div class="score-name">${label}</div><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill rank-${rank}" style="width:${pct}%"></div></div><div class="score-pct">${pct}%</div></div></div>`;
   }
 
   // ── Compare ────────────────────────────────────────────────────────────
   function toggleCompare(resumeId, checkbox) {
     if (checkbox.checked) {
-      if (selectedForCompare.size >= totalCandidates) { checkbox.checked = false; return; }
-      selectedForCompare.add(resumeId);
-      checkbox.closest('.result-card').classList.add('selected');
-    } else {
-      selectedForCompare.delete(resumeId);
-      checkbox.closest('.result-card').classList.remove('selected');
-    }
+      if (selectedForCompare.size>=totalCandidates) { checkbox.checked=false; return; }
+      selectedForCompare.add(resumeId); checkbox.closest('.result-card').classList.add('selected');
+    } else { selectedForCompare.delete(resumeId); checkbox.closest('.result-card').classList.remove('selected'); }
     updateCompareBar();
   }
-
-  function updateCompareBar() {
-    document.getElementById('compareCount').textContent = selectedForCompare.size;
-    document.getElementById('compareBtn').disabled = selectedForCompare.size < 2;
-  }
-
+  function updateCompareBar() { document.getElementById('compareCount').textContent=selectedForCompare.size; document.getElementById('compareBtn').disabled=selectedForCompare.size<2; }
   function openComparison() {
-    const ids      = [...selectedForCompare];
-    const selected = ids.map(id => lastResults.find(r => r.resume_id === id)).filter(Boolean);
-    if (selected.length < 2) return;
-    document.getElementById('compareContent').innerHTML = buildCompareHTML(selected);
+    const ids=[...selectedForCompare], selected=ids.map(id=>lastResults.find(r=>r.resume_id===id)).filter(Boolean);
+    if (selected.length<2) return;
+    document.getElementById('compareContent').innerHTML=buildCompareHTML(selected);
     document.getElementById('compareModal').classList.add('open');
   }
-
   function closeComparison() { document.getElementById('compareModal').classList.remove('open'); }
-  document.getElementById('compareModal').addEventListener('click', function(e) { if (e.target === this) closeComparison(); });
+  document.getElementById('compareModal').addEventListener('click',function(e){if(e.target===this)closeComparison();});
 
   function buildCompareHTML(cands) {
-    const n      = cands.length;
-    const cols   = Math.min(n, 5);
-    const winner = cands.reduce((a, b) => (a.final_score||0) >= (b.final_score||0) ? a : b);
-
-    const colHTML = cands.map(r => {
-      const rank    = lastResults.indexOf(r) + 1;
-      const conf    = r.confidence || {};
-      const explEl  = document.getElementById(`explain_${r.resume_id}`);
-      const explain = explEl?.querySelector('.explain-text')?.textContent || '';
-      const sgEl    = document.getElementById(`skillgap_${r.resume_id}`);
-      const rfEl    = document.getElementById(`redflag_${r.resume_id}`);
-      const isW     = r.resume_id === winner.resume_id;
-      const isSL    = shortlisted.has(r.resume_id);
-
-      const foundSkills   = [...(sgEl?.querySelectorAll('.skill-tag.found')  || [])].map(el => el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
-      const missingSkills = [...(sgEl?.querySelectorAll('.skill-tag.missing') || [])].map(el => el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
-      const flagItems     = [...(rfEl?.querySelectorAll('.flag-item') || [])];
-      const flagSummary   = flagItems.map(f => f.querySelector('.flag-desc')?.textContent || '').filter(Boolean).slice(0,3);
-
-      const sRow = (label, val) => {
-        const pct = Math.round((val||0)*100);
-        return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${isW ? 'score-better' : 'score-worse'}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${isW ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
-      };
-
-      return `<div class="compare-col" style="${isSL ? 'border-left:3px solid var(--shortlist)' : ''}">
-        <div class="compare-col-name">${r.resume_id}${isW ? ' ★' : ''}${isSL ? ' ⭐' : ''}</div>
-        <div class="compare-col-rank">Rank #${rank} · ${conf.label || '—'}</div>
-        <div class="compare-section-title">Scores</div>
-        ${sRow('Final Score', r.final_score)}
-        ${sRow('Semantic', r.embedding_score)}
-        ${sRow('Rerank', r.rerank_score)}
-        ${foundSkills.length ? `<div class="compare-section-title">✓ Matched Skills</div><div class="compare-keywords">${foundSkills.map(k=>`<span class="kw-tag" style="color:var(--good);border-color:rgba(71,255,140,0.3)">${k}</span>`).join('')}</div>` : ''}
-        ${missingSkills.length ? `<div class="compare-section-title">✗ Missing Skills</div><div class="compare-keywords">${missingSkills.map(k=>`<span class="kw-tag" style="color:var(--uncertain);border-color:rgba(255,71,71,0.3)">${k}</span>`).join('')}</div>` : ''}
-        ${flagSummary.length ? `<div class="compare-section-title">⚑ Red Flags</div><div class="compare-snippet" style="color:var(--low)">${flagSummary.join(' · ')}</div>` : '<div class="compare-section-title">⚑ Red Flags</div><div style="font-size:10px;color:var(--good)">✓ None detected</div>'}
-        ${explain ? `<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${explain}</div>` : ''}
-        <div class="compare-section-title">Snippet</div>
-        <div class="compare-snippet">${r.text_snippet}</div>
+    const n=cands.length, cols=Math.min(n,5);
+    const winner=cands.reduce((a,b)=>(a.final_score||0)>=(b.final_score||0)?a:b);
+    const colHTML=cands.map(r=>{
+      const rank=lastResults.indexOf(r)+1, conf=r.confidence||{};
+      const explEl=document.getElementById(`explain_${r.resume_id}`);
+      const explain=explEl?.querySelector('.explain-text')?.textContent||'';
+      const sgEl=document.getElementById(`skillgap_${r.resume_id}`);
+      const rfEl=document.getElementById(`redflag_${r.resume_id}`);
+      const isW=r.resume_id===winner.resume_id, isSL=shortlisted.has(r.resume_id);
+      const foundSkills=[...(sgEl?.querySelectorAll('.skill-tag.found')||[])].map(el=>el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
+      const missingSkills=[...(sgEl?.querySelectorAll('.skill-tag.missing')||[])].map(el=>el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
+      const flagItems=[...(rfEl?.querySelectorAll('.flag-item')||[])];
+      const flagSummary=flagItems.map(f=>f.querySelector('.flag-desc')?.textContent||'').filter(Boolean).slice(0,3);
+      const sRow=(label,val)=>{ const pct=Math.round((val||0)*100); return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${isW?'score-better':'score-worse'}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${isW?'var(--good)':'var(--muted)'}"></div></div>`; };
+      return `<div class="compare-col" style="${isSL?'border-left:3px solid var(--shortlist)':''}">
+        <div class="compare-col-name">${r.resume_id}${isW?' ★':''}${isSL?' ⭐':''}</div>
+        <div class="compare-col-rank">Rank #${rank} · ${conf.label||'—'}</div>
+        <div class="compare-section-title">Scores</div>${sRow('Final Score',r.final_score)}${sRow('Semantic',r.embedding_score)}${sRow('Rerank',r.rerank_score)}
+        ${foundSkills.length?`<div class="compare-section-title">✓ Matched Skills</div><div class="compare-keywords">${foundSkills.map(k=>`<span class="kw-tag" style="color:var(--good);border-color:rgba(71,255,140,0.3)">${k}</span>`).join('')}</div>`:''}
+        ${missingSkills.length?`<div class="compare-section-title">✗ Missing Skills</div><div class="compare-keywords">${missingSkills.map(k=>`<span class="kw-tag" style="color:var(--uncertain);border-color:rgba(255,71,71,0.3)">${k}</span>`).join('')}</div>`:''}
+        ${flagSummary.length?`<div class="compare-section-title">⚑ Red Flags</div><div class="compare-snippet" style="color:var(--low)">${flagSummary.join(' · ')}</div>`:'<div class="compare-section-title">⚑ Red Flags</div><div style="font-size:10px;color:var(--good)">✓ None detected</div>'}
+        ${explain?`<div class="compare-section-title">AI Explanation</div><div class="compare-snippet">${explain}</div>`:''}
+        <div class="compare-section-title">Snippet</div><div class="compare-snippet">${r.text_snippet}</div>
       </div>`;
     }).join('');
-
-    return `
-      <div class="compare-grid" style="grid-template-columns:repeat(${cols},1fr)">${colHTML}</div>
-      <div class="verdict-row">
-        <div class="verdict-winner">★ ${winner.resume_id} is the strongest candidate</div>
-        <div>Final score ${Math.round((winner.final_score||0)*100)}% across ${n} candidates compared.</div>
-      </div>`;
+    return `<div class="compare-grid" style="grid-template-columns:repeat(${cols},1fr)">${colHTML}</div>
+      <div class="verdict-row"><div class="verdict-winner">★ ${winner.resume_id} is the strongest candidate</div><div>Final score ${Math.round((winner.final_score||0)*100)}% across ${n} candidates compared.</div></div>`;
   }
 
   checkHealth();
