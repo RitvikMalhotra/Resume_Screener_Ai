@@ -14,6 +14,7 @@
     --text: #f0f0ee; --muted: #555; --muted2: #777;
     --high: #e8ff47; --medium: #ffc147; --low: #ff8c47;
     --uncertain: #ff4747; --good: #47ff8c;
+    --shortlist: #ffd166;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: 'Inconsolata', monospace; min-height: 100vh; overflow-x: hidden; }
@@ -117,7 +118,95 @@
   .results-heading { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
   .results-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-align: right; line-height: 1.8; }
 
-  .compare-bar { display: none; background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 12px; }
+  /* ── Shortlist Panel ── */
+  #shortlistPanel {
+    display: none;
+    background: var(--s1);
+    border: 1px solid rgba(255,209,102,0.3);
+    margin-bottom: 20px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  #shortlistPanel.visible { display: block; }
+
+  .shortlist-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,209,102,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,209,102,0.04);
+  }
+
+  .shortlist-title {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--shortlist);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .shortlist-count {
+    background: var(--shortlist); color: #000;
+    font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 0;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .shortlist-clear {
+    font-family: 'Inconsolata', monospace;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+  }
+  .shortlist-clear:hover { border-color: var(--uncertain); color: var(--uncertain); }
+
+  .shortlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px; padding: 16px;
+  }
+
+  .shortlist-card {
+    background: var(--s2); border: 1px solid rgba(255,209,102,0.2);
+    padding: 12px; position: relative;
+    animation: fadeUp 0.3s ease both;
+    transition: border-color 0.15s;
+  }
+  .shortlist-card:hover { border-color: rgba(255,209,102,0.5); }
+
+  .sl-rank {
+    font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 4px;
+  }
+
+  .sl-name {
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    color: var(--shortlist); margin-bottom: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .sl-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+
+  .sl-score {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    color: var(--text); line-height: 1;
+  }
+
+  .sl-score-label { font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .sl-snippet {
+    font-size: 10px; color: var(--muted2); line-height: 1.5;
+    margin-top: 6px; max-height: 40px; overflow: hidden;
+  }
+
+  .sl-remove {
+    position: absolute; top: 8px; right: 8px;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 14px; transition: color 0.15s;
+    line-height: 1;
+  }
+  .sl-remove:hover { color: var(--uncertain); }
+
+  /* ── Compare + action bar ── */
+  .compare-bar { display: none; background: var(--s1); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .compare-bar.visible { display: flex; }
   .compare-info { font-size: 11px; color: var(--muted2); letter-spacing: 0.08em; }
   .compare-info span { color: var(--accent); font-weight: 600; }
@@ -139,13 +228,27 @@
   .grade-A { color: var(--good); } .grade-B { color: var(--accent); } .grade-C { color: var(--medium); } .grade-D { color: var(--low); } .grade-F { color: var(--uncertain); }
 
   /* Result cards */
-  .result-card { background: var(--s1); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
-  .result-card:hover { border-color: var(--border2); }
-  .result-card.selected { border-color: var(--accent); }
-  .card-top { display: grid; grid-template-columns: 48px 1fr; }
-  .rank-col { background: var(--s2); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding: 20px 0; flex-direction: column; gap: 8px; }
+  .result-card { background: var(--s1); border: 1px solid var(--border); border-left: 3px solid transparent; margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; transition: border-color 0.2s; }
+  .result-card:hover { border-color: var(--border2); border-left-color: transparent; }
+  .result-card.selected { border-color: var(--accent); border-left-color: var(--accent); }
+  .result-card.shortlisted { border-left-color: var(--shortlist) !important; }
+
+  .card-top { display: grid; grid-template-columns: 56px 1fr; }
+  .rank-col { background: var(--s2); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding: 16px 0; flex-direction: column; gap: 6px; }
   .rank-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--muted); }
   .rank-0 .rank-num { color: var(--high); } .rank-1 .rank-num { color: var(--medium); } .rank-2 .rank-num { color: var(--low); }
+
+  /* Shortlist button in rank col */
+  .shortlist-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    font-size: 14px; width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; line-height: 1;
+  }
+  .shortlist-btn:hover { border-color: var(--shortlist); color: var(--shortlist); }
+  .shortlist-btn.active { background: rgba(255,209,102,0.12); border-color: var(--shortlist); color: var(--shortlist); }
+
   .compare-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
   .card-main { padding: 16px 20px; }
   .card-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
@@ -156,6 +259,7 @@
   .conf-low       { border-color: var(--low);       color: var(--low); }
   .conf-uncertain { border-color: var(--uncertain); color: var(--uncertain); }
   .winner-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; background: var(--accent); color: #000; font-weight: 700; }
+  .shortlisted-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; background: rgba(255,209,102,0.15); color: var(--shortlist); border: 1px solid rgba(255,209,102,0.3); }
   .fallback-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); border: 1px solid rgba(71,217,255,0.3); padding: 2px 6px; }
   .card-snippet { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-bottom: 14px; max-height: 48px; overflow: hidden; }
   .scores-row { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -166,13 +270,13 @@
   .score-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); transition: width 1s cubic-bezier(0.16,1,0.3,1); }
   .rank-1 .score-fill { background: var(--medium); } .rank-2 .score-fill { background: var(--low); }
   .score-pct { font-size: 11px; color: var(--text); min-width: 32px; }
-  .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 68px; font-size: 10px; color: var(--muted); line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .card-footer { border-top: 1px solid var(--border); padding: 10px 20px 10px 76px; font-size: 10px; color: var(--muted); line-height: 1.6; display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
   .footer-reason { flex: 1; min-width: 200px; }
   .footer-gap { white-space: nowrap; }
   .footer-gap span { color: var(--text); }
 
   /* AI Explanation */
-  .explain-section { border-top: 1px solid var(--border); padding: 14px 20px 14px 68px; }
+  .explain-section { border-top: 1px solid var(--border); padding: 14px 20px 14px 76px; }
   .explain-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .explain-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent2); font-weight: 600; }
   .explain-model-tag { font-size: 9px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; }
@@ -184,7 +288,7 @@
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
   /* Skill Gap */
-  .skillgap-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 68px; }
+  .skillgap-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 76px; }
   .skillgap-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
   .skillgap-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
   .skillgap-score { font-size: 10px; display: flex; align-items: center; gap: 8px; }
@@ -200,61 +304,28 @@
   .skillgap-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   .skillgap-error { font-size: 11px; color: var(--muted); font-style: italic; }
 
-  /* ── Red Flag Section ── */
-  .redflag-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 68px; }
-
-  .redflag-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
-  }
-
-  .redflag-label {
-    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--accent3); font-weight: 600;
-  }
-
-  .redflag-overall {
-    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
-    padding: 2px 8px; border: 1px solid;
-  }
+  /* Red Flag */
+  .redflag-section { border-top: 1px solid var(--border); padding: 14px 20px 16px 76px; }
+  .redflag-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .redflag-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent3); font-weight: 600; }
+  .redflag-overall { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border: 1px solid; }
   .risk-low    { border-color: rgba(71,255,140,0.4); color: var(--good); }
   .risk-medium { border-color: rgba(255,193,71,0.4); color: var(--medium); }
   .risk-high   { border-color: rgba(255,71,71,0.4);  color: var(--uncertain); }
-
-  .redflag-summary {
-    font-size: 11px; color: var(--muted2); line-height: 1.6;
-    margin-bottom: 10px; font-style: italic;
-  }
-
-  .redflag-clean {
-    font-size: 11px; color: var(--good);
-    display: flex; align-items: center; gap: 6px;
-  }
-
+  .redflag-summary { font-size: 11px; color: var(--muted2); line-height: 1.6; margin-bottom: 10px; font-style: italic; }
+  .redflag-clean { font-size: 11px; color: var(--good); display: flex; align-items: center; gap: 6px; }
   .flag-list { display: flex; flex-direction: column; gap: 6px; }
-
-  .flag-item {
-    display: flex; align-items: flex-start; gap: 8px;
-    padding: 8px 10px; border: 1px solid;
-    font-size: 11px; line-height: 1.5;
-  }
-
+  .flag-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid; font-size: 11px; line-height: 1.5; }
   .flag-item.sev-low    { border-color: rgba(255,193,71,0.2); background: rgba(255,193,71,0.03); }
   .flag-item.sev-medium { border-color: rgba(255,140,71,0.3); background: rgba(255,140,71,0.04); }
   .flag-item.sev-high   { border-color: rgba(255,71,71,0.3);  background: rgba(255,71,71,0.05); }
-
   .flag-icon { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
-
   .flag-content { flex: 1; }
-  .flag-type {
-    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
-    margin-bottom: 2px; font-weight: 600;
-  }
-  .flag-item.sev-low    .flag-type { color: var(--medium); }
+  .flag-type { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+  .flag-item.sev-low .flag-type { color: var(--medium); }
   .flag-item.sev-medium .flag-type { color: var(--low); }
-  .flag-item.sev-high   .flag-type { color: var(--uncertain); }
+  .flag-item.sev-high .flag-type { color: var(--uncertain); }
   .flag-desc { color: var(--muted2); }
-
   .redflag-loading { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted2); }
   .redflag-spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent3); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   .redflag-error { font-size: 11px; color: var(--muted); font-style: italic; }
@@ -314,6 +385,7 @@
       <span class="tag-item">AI Explanations</span>
       <span class="tag-item">Skill Gap Analysis</span>
       <span class="tag-item">Red Flag Detection</span>
+      <span class="tag-item">Shortlist</span>
     </div>
   </header>
 
@@ -384,6 +456,19 @@
       <div class="results-meta" id="resultsMeta"></div>
     </div>
     <div id="metricsPanel"></div>
+
+    <!-- Shortlist Panel -->
+    <div id="shortlistPanel">
+      <div class="shortlist-header">
+        <div class="shortlist-title">
+          ⭐ Shortlist
+          <span class="shortlist-count" id="shortlistCount">0</span>
+        </div>
+        <button class="shortlist-clear" onclick="clearShortlist()">Clear All</button>
+      </div>
+      <div class="shortlist-grid" id="shortlistGrid"></div>
+    </div>
+
     <div class="compare-bar" id="compareBar">
       <div class="compare-info">
         <span id="compareCount">0</span> selected · select 2–<span id="compareMax">?</span> to compare
@@ -415,6 +500,7 @@
   let lastJD             = '';
   let totalCandidates    = 0;
   let selectedForCompare = new Set();
+  let shortlisted        = new Set();   // stores resume_ids
   let manualCount        = 0;
   let manualVisible      = false;
   const resumeTextMap    = {};
@@ -594,6 +680,79 @@
     document.getElementById('batchBtn').disabled  = false;
   }
 
+  // ── Shortlist logic ────────────────────────────────────────────────────
+  function toggleShortlist(resumeId) {
+    if (shortlisted.has(resumeId)) {
+      shortlisted.delete(resumeId);
+    } else {
+      shortlisted.add(resumeId);
+    }
+    updateShortlistUI(resumeId);
+    renderShortlistPanel();
+  }
+
+  function updateShortlistUI(resumeId) {
+    const card = document.querySelector(`.result-card[data-resume-id="${resumeId}"]`);
+    const btn  = document.getElementById(`sl_btn_${resumeId}`);
+    const badge = document.getElementById(`sl_badge_${resumeId}`);
+    const isShortlisted = shortlisted.has(resumeId);
+
+    if (card) card.classList.toggle('shortlisted', isShortlisted);
+    if (btn)  btn.classList.toggle('active', isShortlisted);
+    if (btn)  btn.title = isShortlisted ? 'Remove from shortlist' : 'Add to shortlist';
+    if (badge) badge.style.display = isShortlisted ? 'inline-flex' : 'none';
+  }
+
+  function renderShortlistPanel() {
+    const panel = document.getElementById('shortlistPanel');
+    const grid  = document.getElementById('shortlistGrid');
+    const count = document.getElementById('shortlistCount');
+
+    count.textContent = shortlisted.size;
+
+    if (shortlisted.size === 0) {
+      panel.classList.remove('visible');
+      return;
+    }
+
+    panel.classList.add('visible');
+    grid.innerHTML = '';
+
+    for (const resumeId of shortlisted) {
+      const r = lastResults.find(x => x.resume_id === resumeId);
+      if (!r) continue;
+
+      const rank    = lastResults.indexOf(r) + 1;
+      const conf    = r.confidence || {};
+      const level   = conf.level || 'uncertain';
+      const pct     = Math.round((r.final_score || 0) * 100);
+      const explEl  = document.getElementById(`explain_${resumeId}`);
+      const explain = explEl?.querySelector('.explain-text')?.textContent?.slice(0, 100) || '';
+
+      const card = document.createElement('div');
+      card.className = 'shortlist-card';
+      card.style.animationDelay = `${[...shortlisted].indexOf(resumeId) * 0.05}s`;
+      card.innerHTML = `
+        <button class="sl-remove" onclick="toggleShortlist('${resumeId}')" title="Remove">×</button>
+        <div class="sl-rank">Rank #${rank}</div>
+        <div class="sl-name">${resumeId}</div>
+        <div class="sl-badges">
+          <span class="confidence-badge conf-${level}" style="font-size:8px">${conf.label || level}</span>
+        </div>
+        <div class="sl-score">${pct}%</div>
+        <div class="sl-score-label">Final Score</div>
+        ${explain ? `<div class="sl-snippet">${explain}…</div>` : ''}`;
+      grid.appendChild(card);
+    }
+  }
+
+  function clearShortlist() {
+    const prev = new Set(shortlisted);
+    shortlisted.clear();
+    for (const id of prev) updateShortlistUI(id);
+    renderShortlistPanel();
+  }
+
   // ── Screening ──────────────────────────────────────────────────────────
   async function runScreening() {
     const jd       = document.getElementById('jd').value.trim();
@@ -608,8 +767,10 @@
 
     for (const r of resumes) resumeTextMap[r.resume_id] = r.text;
     totalCandidates = resumes.length;
+    shortlisted.clear();
     setLoading('Running two-stage pipeline…');
     document.getElementById('results').style.display = 'none';
+    document.getElementById('shortlistPanel').classList.remove('visible');
     document.getElementById('validationBox').style.display = 'none';
     document.getElementById('faissBar').style.display = 'none';
     selectedForCompare.clear();
@@ -641,6 +802,7 @@
     if (!jd || !resumes.length) return setError('Please add a job description and resumes.');
     for (const r of resumes) resumeTextMap[r.resume_id] = r.text;
     totalCandidates = resumes.length;
+    shortlisted.clear();
     setLoading('Submitting batch job…'); lastJD = jd;
     try {
       const res  = await fetch(`${API}/rank/batch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries: [{ job_description: jd, resumes, top_n: topN }] }) });
@@ -694,7 +856,13 @@
         let idx = 0;
         const iv = setInterval(() => {
           tEl.textContent = text.slice(0, idx); idx += 4;
-          if (idx > text.length) { tEl.textContent = text; tEl.classList.remove('typing'); clearInterval(iv); }
+          if (idx > text.length) {
+            tEl.textContent = text;
+            tEl.classList.remove('typing');
+            clearInterval(iv);
+            // update shortlist panel if this candidate is shortlisted
+            if (shortlisted.has(r.resume_id)) renderShortlistPanel();
+          }
         }, 18);
       } catch (err) {
         el.innerHTML = `<div class="explain-error">⚠ Could not generate (${err.message})</div>`;
@@ -715,7 +883,7 @@
           body: JSON.stringify({ jd, resume: resumeText }),
         });
         if (!res.ok) throw new Error(`${res.status}`);
-        const data   = await res.json();
+        const data    = await res.json();
         const skills  = data.skills || [];
         const matched = skills.filter(s => s.found).length;
         const total   = skills.length;
@@ -742,21 +910,13 @@
 
   // ── Red Flag Detection ─────────────────────────────────────────────────
   const FLAG_TYPE_LABELS = {
-    short_tenure:               'Short Tenure',
-    employment_gap:             'Employment Gap',
-    job_hopping:                'Job Hopping',
-    vague_title:                'Vague Title',
-    unverifiable_employer:      'Unverifiable Employer',
-    inconsistent_progression:   'Inconsistent Progression',
+    short_tenure: 'Short Tenure', employment_gap: 'Employment Gap',
+    job_hopping: 'Job Hopping', vague_title: 'Vague Title',
+    unverifiable_employer: 'Unverifiable Employer', inconsistent_progression: 'Inconsistent Progression',
   };
-
   const FLAG_ICONS = {
-    short_tenure:             '⏱',
-    employment_gap:           '📅',
-    job_hopping:              '🔄',
-    vague_title:              '❓',
-    unverifiable_employer:    '🏢',
-    inconsistent_progression: '📉',
+    short_tenure: '⏱', employment_gap: '📅', job_hopping: '🔄',
+    vague_title: '❓', unverifiable_employer: '🏢', inconsistent_progression: '📉',
   };
 
   async function generateAllRedFlags(results) {
@@ -764,45 +924,29 @@
       const el = document.getElementById(`redflag_${r.resume_id}`);
       if (!el) continue;
       const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
-      el.innerHTML = `<div class="redflag-loading"><div class="redflag-spinner"></div> Scanning for red flags…</div>`;
+      el.innerHTML = `<div class="redflag-loading"><div class="redflag-spinner"></div> Scanning…</div>`;
       try {
         const res = await fetch(`${API}/redflag`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resume: resumeText, resume_id: r.resume_id }),
         });
         if (!res.ok) throw new Error(`${res.status}`);
-        const data  = await res.json();
+        const data   = await res.json();
         const flags  = data.flags || [];
         const risk   = data.overall_risk || 'low';
         const summary = data.summary || '';
-
         const riskClass = `risk-${risk}`;
         const riskLabel = risk.charAt(0).toUpperCase() + risk.slice(1) + ' Risk';
-
-        // update the risk badge in header
         const header = document.getElementById(`redflag_header_${r.resume_id}`);
         if (header) {
-          header.innerHTML = `
-            <span class="redflag-label">⚑ Red Flag Detection</span>
-            <span class="redflag-overall ${riskClass}">${riskLabel}</span>`;
+          header.innerHTML = `<span class="redflag-label">⚑ Red Flag Detection</span><span class="redflag-overall ${riskClass}">${riskLabel}</span>`;
         }
-
         if (flags.length === 0) {
-          el.innerHTML = `
-            ${summary ? `<div class="redflag-summary">${summary}</div>` : ''}
-            <div class="redflag-clean">✓ No red flags detected</div>`;
+          el.innerHTML = `${summary ? `<div class="redflag-summary">${summary}</div>` : ''}<div class="redflag-clean">✓ No red flags detected</div>`;
         } else {
-          el.innerHTML = `
-            ${summary ? `<div class="redflag-summary">${summary}</div>` : ''}
+          el.innerHTML = `${summary ? `<div class="redflag-summary">${summary}</div>` : ''}
             <div class="flag-list">
-              ${flags.map(f => `
-                <div class="flag-item sev-${f.severity}">
-                  <span class="flag-icon">${FLAG_ICONS[f.type] || '⚠'}</span>
-                  <div class="flag-content">
-                    <div class="flag-type">${FLAG_TYPE_LABELS[f.type] || f.type} · ${f.severity}</div>
-                    <div class="flag-desc">${f.description}</div>
-                  </div>
-                </div>`).join('')}
+              ${flags.map(f => `<div class="flag-item sev-${f.severity}"><span class="flag-icon">${FLAG_ICONS[f.type]||'⚠'}</span><div class="flag-content"><div class="flag-type">${FLAG_TYPE_LABELS[f.type]||f.type} · ${f.severity}</div><div class="flag-desc">${f.description}</div></div></div>`).join('')}
             </div>`;
         }
       } catch (err) {
@@ -860,6 +1004,9 @@
         <div class="card-top">
           <div class="rank-col">
             <div class="rank-num">${i + 1}</div>
+            <button class="shortlist-btn" id="sl_btn_${r.resume_id}"
+              onclick="toggleShortlist('${r.resume_id}')"
+              title="Add to shortlist">⭐</button>
             <input type="checkbox" class="compare-check" onchange="toggleCompare('${r.resume_id}', this)">
           </div>
           <div class="card-main">
@@ -867,6 +1014,7 @@
               <div class="card-id">${r.resume_id}</div>
               <div class="confidence-badge conf-${level}">${conf.label || level}</div>
               ${conf.is_clear_winner ? '<div class="winner-badge">★ Clear Winner</div>' : ''}
+              <div class="shortlisted-badge" id="sl_badge_${r.resume_id}" style="display:none">⭐ Shortlisted</div>
               ${r.fallback_used ? '<div class="fallback-tag">⟳ Fallback Used</div>' : ''}
             </div>
             <div class="card-snippet">${r.text_snippet}</div>
@@ -962,6 +1110,7 @@
       const sgEl    = document.getElementById(`skillgap_${r.resume_id}`);
       const rfEl    = document.getElementById(`redflag_${r.resume_id}`);
       const isW     = r.resume_id === winner.resume_id;
+      const isSL    = shortlisted.has(r.resume_id);
 
       const foundSkills   = [...(sgEl?.querySelectorAll('.skill-tag.found')  || [])].map(el => el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
       const missingSkills = [...(sgEl?.querySelectorAll('.skill-tag.missing') || [])].map(el => el.textContent.trim().replace(/^[✓✗]\s*/,'')).slice(0,6);
@@ -973,8 +1122,8 @@
         return `<div class="compare-score-row"><span class="compare-score-label">${label}</span><span class="compare-score-val ${isW ? 'score-better' : 'score-worse'}">${pct}%</span></div><div class="compare-bar-full"><div class="compare-bar-fill-full" style="width:${pct}%;background:${isW ? 'var(--good)' : 'var(--muted)'}"></div></div>`;
       };
 
-      return `<div class="compare-col">
-        <div class="compare-col-name">${r.resume_id}${isW ? ' ★' : ''}</div>
+      return `<div class="compare-col" style="${isSL ? 'border-left:3px solid var(--shortlist)' : ''}">
+        <div class="compare-col-name">${r.resume_id}${isW ? ' ★' : ''}${isSL ? ' ⭐' : ''}</div>
         <div class="compare-col-rank">Rank #${rank} · ${conf.label || '—'}</div>
         <div class="compare-section-title">Scores</div>
         ${sRow('Final Score', r.final_score)}
