@@ -1,187 +1,82 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resume Screener — Login</title>
+<title>Resume Screener - Login</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #080808;
-    color: #f0f0ee;
-    font-family: 'Inconsolata', monospace;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .container {
-    width: 100%;
-    max-width: 420px;
-    padding: 24px;
-    animation: fadeUp 0.5s ease both;
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 48px;
-  }
-
-  .logo-square {
-    width: 32px; height: 32px;
-    background: #e8ff47;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: #000;
-    flex-shrink: 0;
-  }
-
-  .logo-text {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
-    letter-spacing: 0.15em; text-transform: uppercase; color: #777;
-  }
-
-  .heading {
-    font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800;
-    line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 8px;
-  }
-  .heading .line1 { display: block; color: #f0f0ee; }
-  .heading .line2 { display: block; color: #e8ff47; }
-
-  .subheading {
-    font-size: 11px; color: #777; letter-spacing: 0.08em; margin-bottom: 36px;
-  }
-
-  .tabs { display: flex; border: 1px solid #282828; margin-bottom: 24px; }
-
-  .tab {
-    flex: 1; padding: 13px 10px;
-    font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 700;
-    letter-spacing: 0.15em; text-transform: uppercase;
-    cursor: pointer; background: transparent; border: none; color: #555;
-    transition: background 0.15s, color 0.15s;
-  }
-  .tab:hover { color: #f0f0ee; }
-  .tab.active { background: #e8ff47; color: #000; }
-
-  .form { display: none; flex-direction: column; gap: 14px; }
-  .form.active { display: flex; }
-
-  .form-label {
-    display: block; font-size: 10px; letter-spacing: 0.15em;
-    text-transform: uppercase; color: #777; margin-bottom: 6px;
-  }
-
-  .form-input {
-    display: block; width: 100%;
-    background: #181818; border: 1px solid #282828; color: #f0f0ee;
-    font-family: 'Inconsolata', monospace; font-size: 13px; padding: 12px 14px;
-    outline: none; transition: border-color 0.15s;
-  }
-  .form-input:focus { border-color: #e8ff47; }
-  .form-input::placeholder { color: #555; }
-
-  .submit-btn {
-    display: block; width: 100%; margin-top: 4px;
-    background: #e8ff47; color: #000;
-    font-family: 'Inconsolata', monospace; font-size: 12px; font-weight: 700;
-    letter-spacing: 0.15em; text-transform: uppercase; padding: 14px;
-    border: none; cursor: pointer; transition: background 0.15s;
-  }
-  .submit-btn:hover { background: #f0ff60; }
-  .submit-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
-
-  .message {
-    padding: 10px 14px; font-size: 11px; letter-spacing: 0.06em;
-    display: none; line-height: 1.5;
-  }
-  .message.error   { display: block; background: rgba(255,71,71,0.06); border: 1px solid rgba(255,71,71,0.3); color: #ff4747; }
-  .message.success { display: block; background: rgba(71,255,140,0.06); border: 1px solid rgba(71,255,140,0.3); color: #47ff8c; }
-
-  .plan-info {
-    margin-top: 28px; background: #111; border: 1px solid #282828; padding: 16px;
-  }
-  .plan-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #e8ff47; margin-bottom: 10px; }
-  .plan-row { font-size: 11px; color: #777; margin-bottom: 6px; padding-left: 14px; position: relative; }
-  .plan-row::before { content: '▸'; position: absolute; left: 0; color: #e8ff47; font-size: 9px; }
-  .plan-row:last-child { margin-bottom: 0; }
-
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #080808; color: #f0f0ee; font-family: Inconsolata, monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.container { width: 100%; max-width: 420px; padding: 24px; }
+.logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+.logo-square { width: 32px; height: 32px; background: #e8ff47; display: flex; align-items: center; justify-content: center; font-family: Syne, sans-serif; font-weight: 800; font-size: 14px; color: #000; }
+.logo-text { font-family: Syne, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #777; }
+.heading { font-family: Syne, sans-serif; font-size: 40px; font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 8px; }
+.line1 { display: block; color: #f0f0ee; }
+.line2 { display: block; color: #e8ff47; }
+.subheading { font-size: 11px; color: #777; letter-spacing: 0.08em; margin-bottom: 36px; }
+.tabs { display: flex; border: 1px solid #282828; margin-bottom: 24px; }
+.tab { flex: 1; padding: 13px 10px; font-family: Inconsolata, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; background: transparent; border: none; color: #555; }
+.tab.active { background: #e8ff47; color: #000; }
+.form { display: none; flex-direction: column; gap: 14px; }
+.form.active { display: flex; }
+.form-label { display: block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #777; margin-bottom: 6px; }
+.form-input { display: block; width: 100%; background: #181818; border: 1px solid #282828; color: #f0f0ee; font-family: Inconsolata, monospace; font-size: 13px; padding: 12px 14px; outline: none; }
+.form-input:focus { border-color: #e8ff47; }
+.form-input::placeholder { color: #555; }
+.submit-btn { display: block; width: 100%; background: #e8ff47; color: #000; font-family: Inconsolata, monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 14px; border: none; cursor: pointer; }
+.submit-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
+.message { padding: 10px 14px; font-size: 11px; display: none; margin-top: 4px; }
+.message.error { display: block; background: rgba(255,71,71,0.06); border: 1px solid rgba(255,71,71,0.3); color: #ff4747; }
+.message.success { display: block; background: rgba(71,255,140,0.06); border: 1px solid rgba(71,255,140,0.3); color: #47ff8c; }
+.plan-info { margin-top: 28px; background: #111; border: 1px solid #282828; padding: 16px; }
+.plan-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #e8ff47; margin-bottom: 10px; }
+.plan-row { font-size: 11px; color: #777; margin-bottom: 6px; padding-left: 14px; position: relative; }
+.plan-row::before { content: ""; position: absolute; left: 0; color: #e8ff47; }
 </style>
 </head>
 <body>
 <div class="container">
-
   <div class="logo">
     <div class="logo-square">RS</div>
     <div class="logo-text">Resume Screener</div>
   </div>
-
-  <div class="heading">
-    <span class="line1">SCREEN</span>
-    <span class="line2">SMARTER.</span>
-  </div>
+  <div class="heading"><span class="line1">SCREEN</span><span class="line2">SMARTER.</span></div>
   <div class="subheading">AI-powered resume screening for modern recruiters</div>
-
   <div class="tabs">
     <button class="tab active" id="loginTab" onclick="switchTab('login')">Sign In</button>
     <button class="tab" id="signupTab" onclick="switchTab('signup')">Create Account</button>
   </div>
-
   <div id="loginForm" class="form active">
-    <div>
-      <label class="form-label" for="loginEmail">Email</label>
-      <input type="email" class="form-input" id="loginEmail" placeholder="you@company.com" autocomplete="email">
-    </div>
-    <div>
-      <label class="form-label" for="loginPassword">Password</label>
-      <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="submit-btn" id="loginBtn" onclick="handleLogin()">▶ Sign In</button>
+    <div><label class="form-label" for="loginEmail">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="you@company.com"></div>
+    <div><label class="form-label" for="loginPassword">Password</label><input type="password" class="form-input" id="loginPassword" placeholder="Min 8 characters"></div>
+    <button class="submit-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
     <div class="message" id="loginMsg"></div>
   </div>
-
   <div id="signupForm" class="form">
-    <div>
-      <label class="form-label" for="signupName">Full Name</label>
-      <input type="text" class="form-input" id="signupName" placeholder="Your Name" autocomplete="name">
-    </div>
-    <div>
-      <label class="form-label" for="signupEmail">Email</label>
-      <input type="email" class="form-input" id="signupEmail" placeholder="you@company.com" autocomplete="email">
-    </div>
-    <div>
-      <label class="form-label" for="signupPassword">Password</label>
-      <input type="password" class="form-input" id="signupPassword" placeholder="Min 8 characters" autocomplete="new-password">
-    </div>
-    <button class="submit-btn" id="signupBtn" onclick="handleSignup()">▶ Create Free Account</button>
+    <div><label class="form-label" for="signupName">Full Name</label><input type="text" class="form-input" id="signupName" placeholder="Your Name"></div>
+    <div><label class="form-label" for="signupEmail">Email</label><input type="email" class="form-input" id="signupEmail" placeholder="you@company.com"></div>
+    <div><label class="form-label" for="signupPassword">Password</label><input type="password" class="form-input" id="signupPassword" placeholder="Min 8 characters"></div>
+    <button class="submit-btn" id="signupBtn" onclick="handleSignup()">Create Free Account</button>
     <div class="message" id="signupMsg"></div>
   </div>
-
   <div class="plan-info">
     <div class="plan-title">Free Plan Includes</div>
     <div class="plan-row">5 screenings per month</div>
-    <div class="plan-row">AI explanations + skill gap analysis</div>
-    <div class="plan-row">Red flag detection + JD analyser</div>
+    <div class="plan-row">AI explanations and skill gap analysis</div>
+    <div class="plan-row">Red flag detection and JD analyser</div>
     <div class="plan-row">Upgrade to Pro for unlimited screenings</div>
   </div>
-
 </div>
-
 <script>
-  // Use sbClient to avoid conflict with window.supabase global from CDN
-  const SUPABASE_URL  = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
-  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SURL = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
+  const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
+  const sb = window.supabase.createClient(SURL, SKEY);
 
-  // Redirect if already logged in
-  sbClient.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.href = 'dashboard.html';
+  sb.auth.getSession().then(function(r) {
+    if (r.data.session) window.location.href = 'dashboard.html';
   });
 
   function switchTab(tab) {
@@ -192,52 +87,36 @@
   }
 
   function showMsg(id, text, type) {
-    const el = document.getElementById(id);
+    var el = document.getElementById(id);
     el.className = 'message ' + type;
     el.textContent = text;
   }
 
-  async function handleLogin() {
-    const email    = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    if (!email || !password) return showMsg('loginMsg', 'Please fill in all fields.', 'error');
-    const btn = document.getElementById('loginBtn');
-    btn.disabled = true; btn.textContent = 'Signing in…';
-    const { error } = await sbClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      showMsg('loginMsg', error.message, 'error');
-      btn.disabled = false; btn.textContent = '▶ Sign In';
-    } else {
-      window.location.href = 'dashboard.html';
-    }
-  }
-
-  async function handleSignup() {
-    const name     = document.getElementById('signupName').value.trim();
-    const email    = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    if (!name || !email || !password) return showMsg('signupMsg', 'Please fill in all fields.', 'error');
-    if (password.length < 8) return showMsg('signupMsg', 'Password must be at least 8 characters.', 'error');
-    const btn = document.getElementById('signupBtn');
-    btn.disabled = true; btn.textContent = 'Creating account…';
-    const { error } = await sbClient.auth.signUp({
-      email, password,
-      options: { data: { full_name: name } }
+  function handleLogin() {
+    var email = document.getElementById('loginEmail').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    if (!email || !password) { showMsg('loginMsg', 'Please fill in all fields.', 'error'); return; }
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'Signing in...';
+    sb.auth.signInWithPassword({ email: email, password: password }).then(function(r) {
+      if (r.error) { showMsg('loginMsg', r.error.message, 'error'); btn.disabled = false; btn.textContent = 'Sign In'; }
+      else { window.location.href = 'dashboard.html'; }
     });
-    if (error) {
-      showMsg('signupMsg', error.message, 'error');
-      btn.disabled = false; btn.textContent = '▶ Create Free Account';
-    } else {
-      showMsg('signupMsg', '✓ Account created! Check your email to confirm, then sign in.', 'success');
-      btn.disabled = false; btn.textContent = '▶ Create Free Account';
-    }
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    if (document.getElementById('loginForm').classList.contains('active')) handleLogin();
-    else handleSignup();
-  });
+  function handleSignup() {
+    var name = document.getElementById('signupName').value.trim();
+    var email = document.getElementById('signupEmail').value.trim();
+    var password = document.getElementById('signupPassword').value;
+    if (!name || !email || !password) { showMsg('signupMsg', 'Please fill in all fields.', 'error'); return; }
+    if (password.length < 8) { showMsg('signupMsg', 'Password must be at least 8 characters.', 'error'); return; }
+    var btn = document.getElementById('signupBtn');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+    sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } }).then(function(r) {
+      if (r.error) { showMsg('signupMsg', r.error.message, 'error'); btn.disabled = false; btn.textContent = 'Create Free Account'; }
+      else { showMsg('signupMsg', 'Account created! Check your email to confirm, then sign in.', 'success'); btn.disabled = false; btn.textContent = 'Create Free Account'; }
+    });
+  }
 </script>
 </body>
 </html>
