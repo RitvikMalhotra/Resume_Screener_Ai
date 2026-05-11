@@ -6,6 +6,8 @@
 <title>Resume Screener</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #080808; --s1: #111; --s2: #181818; --s3: #222;
@@ -368,15 +370,25 @@
 <body>
 <div class="wrap">
 
+  <!-- Usage limit banner -->
+  <div id="limitBanner" style="display:none;background:rgba(255,71,71,0.08);border:1px solid rgba(255,71,71,0.3);padding:12px 16px;margin-bottom:16px;font-size:11px;letter-spacing:0.06em;color:#ff4747;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <span>⚠ You have used all <span id="limitCount">5</span> free screenings this month.</span>
+    <a href="dashboard.html" style="font-family:'Inconsolata',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:7px 16px;background:#ffd166;color:#000;text-decoration:none">⭐ Upgrade to Pro</a>
+  </div>
+
   <header>
     <div class="top-bar">
       <div class="logo-mark">
         <div class="logo-square">RS</div>
         <div class="logo-text">Resume Screener</div>
       </div>
-      <div class="status-pill">
-        <div class="status-dot" id="statusDot"></div>
-        <span id="statusText">checking…</span>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="status-pill">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">checking…</span>
+        </div>
+        <a id="userEmailNav" href="dashboard.html" style="font-family:'Inconsolata',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);text-decoration:none;border:1px solid var(--border2);padding:5px 10px">Dashboard</a>
+        <button onclick="handleLogout()" style="font-family:'Inconsolata',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;background:none;border:1px solid var(--border);color:var(--muted);padding:5px 10px;cursor:pointer">Sign Out</button>
       </div>
     </div>
     <h1><span class="line1">SCREEN</span><span class="line2">SMARTER.</span></h1>
@@ -492,7 +504,56 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  const API = 'https://resumescreenerai-production.up.railway.app';
+  const API           = 'https://resumescreenerai-production.up.railway.app';
+  const SUPABASE_URL  = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
+  const supabase      = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  let currentUser = null, currentProfile = null;
+
+  async function initAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    currentUser = session.user;
+    const navEl = document.getElementById('userEmailNav');
+    if (navEl) navEl.textContent = currentUser.email.split('@')[0] + ' · Dashboard';
+    await loadUserProfile();
+  }
+
+  async function loadUserProfile() {
+    const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!data) return;
+    currentProfile = data;
+    const used = data.screenings_used || 0;
+    const limit = data.screenings_limit || 5;
+    const isPro = data.plan === 'pro';
+    if (!isPro && used >= limit) {
+      const banner = document.getElementById('limitBanner');
+      if (banner) { document.getElementById('limitCount').textContent = limit; banner.style.display = 'flex'; }
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('batchBtn').disabled  = true;
+      document.getElementById('submitBtn').textContent = '▶ Limit Reached — Upgrade to Screen';
+    }
+  }
+
+  async function trackScreening(jd, candidateCount) {
+    if (!currentUser) return;
+    await supabase.from('screenings').insert({ user_id: currentUser.id, jd_snippet: jd.slice(0,100), candidate_count: candidateCount });
+    const used = (currentProfile?.screenings_used || 0) + 1;
+    await supabase.from('profiles').update({ screenings_used: used }).eq('id', currentUser.id);
+    if (currentProfile) currentProfile.screenings_used = used;
+    const limit = currentProfile?.screenings_limit || 5;
+    const isPro = currentProfile?.plan === 'pro';
+    if (!isPro && used >= limit) {
+      const banner = document.getElementById('limitBanner');
+      if (banner) { document.getElementById('limitCount').textContent = limit; banner.style.display = 'flex'; }
+    }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = 'login.html';
+  }
 
   let candidates = [], lastResults = [], lastJD = '';
   let totalCandidates = 0, selectedForCompare = new Set(), shortlisted = new Set();
@@ -802,6 +863,7 @@
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail?.message||e.detail||`HTTP ${res.status}`); }
       clearStatus(); const data = await res.json();
       renderResults(data); checkHealth();
+      trackScreening(jd, resumes.length);
       generateAllExplanations(jd, data.results||[]);
       generateAllSkillGaps(jd, data.results||[]);
       generateAllRedFlags(data.results||[]);
@@ -1022,6 +1084,7 @@
       <div class="verdict-row"><div class="verdict-winner">★ ${winner.resume_id} is the strongest candidate</div><div>Final score ${Math.round((winner.final_score||0)*100)}% across ${n} candidates compared.</div></div>`;
   }
 
+  initAuth();
   checkHealth();
   setInterval(checkHealth, 30000);
 </script>
