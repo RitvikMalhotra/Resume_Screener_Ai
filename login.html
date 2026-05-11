@@ -34,190 +34,87 @@
   }
 
   .logo-square {
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     background: #e8ff47;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 14px;
-    color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: #000;
     flex-shrink: 0;
   }
 
   .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: #777;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; color: #777;
   }
 
   .heading {
-    font-family: 'Syne', sans-serif;
-    font-size: 40px;
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    margin-bottom: 8px;
+    font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800;
+    line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 8px;
   }
-
   .heading .line1 { display: block; color: #f0f0ee; }
   .heading .line2 { display: block; color: #e8ff47; }
 
   .subheading {
-    font-size: 11px;
-    color: #777;
-    letter-spacing: 0.08em;
-    margin-bottom: 36px;
+    font-size: 11px; color: #777; letter-spacing: 0.08em; margin-bottom: 36px;
   }
 
-  /* Tabs */
-  .tabs {
-    display: flex;
-    border: 1px solid #282828;
-    margin-bottom: 24px;
-  }
+  .tabs { display: flex; border: 1px solid #282828; margin-bottom: 24px; }
 
   .tab {
-    flex: 1;
-    padding: 13px 10px;
-    font-family: 'Inconsolata', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    color: #555;
+    flex: 1; padding: 13px 10px;
+    font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; background: transparent; border: none; color: #555;
     transition: background 0.15s, color 0.15s;
-    display: block;
   }
-
   .tab:hover { color: #f0f0ee; }
   .tab.active { background: #e8ff47; color: #000; }
 
-  /* Forms */
-  .form {
-    display: none;
-    flex-direction: column;
-    gap: 14px;
-  }
-
+  .form { display: none; flex-direction: column; gap: 14px; }
   .form.active { display: flex; }
 
   .form-label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: #777;
-    margin-bottom: 6px;
+    display: block; font-size: 10px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: #777; margin-bottom: 6px;
   }
 
   .form-input {
-    display: block;
-    width: 100%;
-    background: #181818;
-    border: 1px solid #282828;
-    color: #f0f0ee;
-    font-family: 'Inconsolata', monospace;
-    font-size: 13px;
-    padding: 12px 14px;
-    outline: none;
-    transition: border-color 0.15s;
+    display: block; width: 100%;
+    background: #181818; border: 1px solid #282828; color: #f0f0ee;
+    font-family: 'Inconsolata', monospace; font-size: 13px; padding: 12px 14px;
+    outline: none; transition: border-color 0.15s;
   }
-
   .form-input:focus { border-color: #e8ff47; }
   .form-input::placeholder { color: #555; }
 
   .submit-btn {
-    display: block;
-    width: 100%;
-    margin-top: 4px;
-    background: #e8ff47;
-    color: #000;
-    font-family: 'Inconsolata', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 14px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.15s;
+    display: block; width: 100%; margin-top: 4px;
+    background: #e8ff47; color: #000;
+    font-family: 'Inconsolata', monospace; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; padding: 14px;
+    border: none; cursor: pointer; transition: background 0.15s;
   }
-
   .submit-btn:hover { background: #f0ff60; }
   .submit-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
 
   .message {
-    padding: 10px 14px;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    display: none;
-    line-height: 1.5;
+    padding: 10px 14px; font-size: 11px; letter-spacing: 0.06em;
+    display: none; line-height: 1.5;
   }
-
-  .message.error {
-    display: block;
-    background: rgba(255,71,71,0.06);
-    border: 1px solid rgba(255,71,71,0.3);
-    color: #ff4747;
-  }
-
-  .message.success {
-    display: block;
-    background: rgba(71,255,140,0.06);
-    border: 1px solid rgba(71,255,140,0.3);
-    color: #47ff8c;
-  }
+  .message.error   { display: block; background: rgba(255,71,71,0.06); border: 1px solid rgba(255,71,71,0.3); color: #ff4747; }
+  .message.success { display: block; background: rgba(71,255,140,0.06); border: 1px solid rgba(71,255,140,0.3); color: #47ff8c; }
 
   .plan-info {
-    margin-top: 28px;
-    background: #111;
-    border: 1px solid #282828;
-    padding: 16px;
+    margin-top: 28px; background: #111; border: 1px solid #282828; padding: 16px;
   }
-
-  .plan-title {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: #e8ff47;
-    margin-bottom: 10px;
-  }
-
-  .plan-row {
-    font-size: 11px;
-    color: #777;
-    margin-bottom: 6px;
-    padding-left: 12px;
-    position: relative;
-  }
-
-  .plan-row::before {
-    content: '▸';
-    position: absolute;
-    left: 0;
-    color: #e8ff47;
-    font-size: 9px;
-  }
-
+  .plan-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #e8ff47; margin-bottom: 10px; }
+  .plan-row { font-size: 11px; color: #777; margin-bottom: 6px; padding-left: 14px; position: relative; }
+  .plan-row::before { content: '▸'; position: absolute; left: 0; color: #e8ff47; font-size: 9px; }
   .plan-row:last-child { margin-bottom: 0; }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
-
 <div class="container">
 
   <div class="logo">
@@ -236,7 +133,6 @@
     <button class="tab" id="signupTab" onclick="switchTab('signup')">Create Account</button>
   </div>
 
-  <!-- Login -->
   <div id="loginForm" class="form active">
     <div>
       <label class="form-label" for="loginEmail">Email</label>
@@ -250,7 +146,6 @@
     <div class="message" id="loginMsg"></div>
   </div>
 
-  <!-- Signup -->
   <div id="signupForm" class="form">
     <div>
       <label class="form-label" for="signupName">Full Name</label>
@@ -279,12 +174,13 @@
 </div>
 
 <script>
+  // Use sbClient to avoid conflict with window.supabase global from CDN
   const SUPABASE_URL  = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
   // Redirect if already logged in
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  sbClient.auth.getSession().then(({ data: { session } }) => {
     if (session) window.location.href = 'dashboard.html';
   });
 
@@ -307,7 +203,7 @@
     if (!email || !password) return showMsg('loginMsg', 'Please fill in all fields.', 'error');
     const btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = 'Signing in…';
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await sbClient.auth.signInWithPassword({ email, password });
     if (error) {
       showMsg('loginMsg', error.message, 'error');
       btn.disabled = false; btn.textContent = '▶ Sign In';
@@ -324,7 +220,7 @@
     if (password.length < 8) return showMsg('signupMsg', 'Password must be at least 8 characters.', 'error');
     const btn = document.getElementById('signupBtn');
     btn.disabled = true; btn.textContent = 'Creating account…';
-    const { error } = await supabase.auth.signUp({
+    const { error } = await sbClient.auth.signUp({
       email, password,
       options: { data: { full_name: name } }
     });
@@ -343,6 +239,5 @@
     else handleSignup();
   });
 </script>
-
 </body>
 </html>
