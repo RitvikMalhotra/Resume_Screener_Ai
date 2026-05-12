@@ -512,7 +512,7 @@
   let currentUser = null, currentProfile = null;
 
   async function initAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await sbClient.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
     currentUser = session.user;
     const navEl = document.getElementById('userEmailNav');
@@ -521,7 +521,7 @@
   }
 
   async function loadUserProfile() {
-    const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    const { data } = await sbClient.from('profiles').select('*').eq('id', currentUser.id).single();
     if (!data) return;
     currentProfile = data;
     const used = data.screenings_used || 0;
@@ -538,9 +538,9 @@
 
   async function trackScreening(jd, candidateCount) {
     if (!currentUser) return;
-    await supabase.from('screenings').insert({ user_id: currentUser.id, jd_snippet: jd.slice(0,100), candidate_count: candidateCount });
+    await sbClient.from('screenings').insert({ user_id: currentUser.id, jd_snippet: jd.slice(0,100), candidate_count: candidateCount });
     const used = (currentProfile?.screenings_used || 0) + 1;
-    await supabase.from('profiles').update({ screenings_used: used }).eq('id', currentUser.id);
+    await sbClient.from('profiles').update({ screenings_used: used }).eq('id', currentUser.id);
     if (currentProfile) currentProfile.screenings_used = used;
     const limit = currentProfile?.screenings_limit || 5;
     const isPro = currentProfile?.plan === 'pro';
@@ -551,7 +551,7 @@
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await sbClient.auth.signOut();
     window.location.href = 'login.html';
   }
 
