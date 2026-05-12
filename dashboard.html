@@ -183,7 +183,7 @@
   let currentProfile = null;
 
   async function init() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await sbClient.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
     currentUser = session.user;
     document.getElementById('navEmail').textContent = currentUser.email;
@@ -276,7 +276,7 @@
       theme: { color: '#e8ff47' },
       handler: async function(response) {
         // Payment successful — upgrade plan in Supabase
-        await supabase.from('profiles').update({
+        await sbClient.from('profiles').update({
           plan:             'pro',
           screenings_limit: 999999,
         }).eq('id', currentUser.id);
@@ -299,7 +299,7 @@
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await sbClient.auth.signOut();
     window.location.href = 'login.html';
   }
 
