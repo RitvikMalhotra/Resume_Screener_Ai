@@ -507,7 +507,7 @@
   const API           = 'https://resumescreenerai-production.up.railway.app';
   const SUPABASE_URL  = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
-  const supabase      = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
   let currentUser = null, currentProfile = null;
 
