@@ -585,6 +585,144 @@ Rules:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+
+@app.post("/skillsummary")
+async def skill_summary(request: Request, body: dict):
+    """
+    Extract skills from resume with years of experience per skill.
+    Returns structured bullet-point data replacing the AI explanation.
+    """
+    import json as _json
+    _limiter.check(request, heavy=False)
+
+    resume = body.get("resume", "")[:2000]
+
+    prompt = f"""You are a technical recruiter. Analyze this resume and extract each technical skill with the candidate's years of experience in that skill.
+
+RESUME:
+{resume}
+
+Return ONLY a valid JSON object in this exact format, nothing else, no markdown:
+{{
+  "skills": [
+    {{"skill": "Kubernetes", "years": 6, "context": "EKS, GKE, self-managed clusters"}},
+    {{"skill": "Terraform", "years": 4, "context": "infrastructure-as-code across AWS and GCP"}}
+  ],
+  "total_experience_years": 9,
+  "current_role": "Staff DevOps Engineer at Stripe"
+}}
+
+Rules:
+- Extract 6-12 specific technical skills only (tools, platforms, languages — not soft skills)
+- Calculate years from job dates in the resume — be precise
+- context: one short phrase showing how they used the skill
+- total_experience_years: total years of professional experience
+- current_role: their most recent job title and company
+- Return ONLY the JSON, no explanation, no markdown fences"""
+
+    try:
+        raw = await _call_nvidia(prompt, max_tokens=600, temperature=0.1)
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        return _json.loads(raw)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/jdenhance")
+async def jd_enhance(request: Request, body: dict):
+    """
+    Enhance a job description to be clearer, more attractive,
+    and better structured while preserving all requirements.
+    """
+    _limiter.check(request, heavy=False)
+
+    jd = body.get("jd", "")[:2000]
+
+    prompt = f"""You are a senior talent acquisition expert. Enhance this job description to make it clearer, more attractive to top candidates, and better structured.
+
+ORIGINAL JD:
+{jd}
+
+Rewrite it following these rules:
+- Keep ALL technical requirements intact — do not remove any skills or experience requirements
+- Add a compelling opening sentence about the company/role impact
+- Structure into clear sections: About the Role, What You'll Do, What We're Looking For, Nice to Have
+- Remove vague filler phrases like "fast-paced environment", "team player", "self-starter"
+- Make responsibilities action-oriented and specific
+- Add salary range placeholder: [Salary: competitive, based on experience]
+- Keep it concise — no longer than 300 words
+- Return ONLY the enhanced JD text, no explanation, no markdown headers with ##"""
+
+    try:
+        text = await _call_nvidia(prompt, max_tokens=500, temperature=0.4)
+        return {"enhanced_jd": text}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/emailtemplate")
+async def email_template(request: Request, body: dict):
+    """
+    Generate a personalized acceptance or rejection email template
+    for shortlisted candidates based on the JD and candidate names.
+    """
+    import json as _json
+    _limiter.check(request, heavy=False)
+
+    email_type   = body.get("type", "acceptance")   # "acceptance" or "rejection"
+    jd_snippet   = body.get("jd", "")[:500]
+    candidates   = body.get("candidates", [])        # list of {name, role}
+    company_name = body.get("company", "our company")
+
+    if email_type == "acceptance":
+        prompt = f"""You are an HR professional. Write a warm, professional interview invitation email for shortlisted candidates.
+
+JOB: {jd_snippet}
+COMPANY: {company_name}
+CANDIDATES: {', '.join([c.get('name', 'Candidate') for c in candidates[:3]])}
+
+Write an email that:
+- Opens warmly, congratulating them on being shortlisted
+- Mentions the specific role they applied for
+- Uses {{{{name}}}} as a placeholder for the candidate's name
+- Asks them to confirm their availability for an interview
+- Provides next steps clearly
+- Is professional but not robotic — warm and human
+- 150-200 words max
+
+Return ONLY a JSON object:
+{{"subject": "email subject here", "message": "full email body here"}}
+
+No markdown, no explanation."""
+
+    else:
+        prompt = f"""You are an HR professional. Write a respectful, empathetic rejection email for candidates who were not selected.
+
+JOB: {jd_snippet}
+COMPANY: {company_name}
+
+Write an email that:
+- Uses {{{{name}}}} as a placeholder for the candidate's name
+- Thanks them genuinely for their time and interest
+- Delivers the rejection clearly but kindly
+- Encourages them to apply for future roles
+- Does NOT give specific reasons for rejection
+- Is warm and leaves a positive impression of the company
+- 100-150 words max
+
+Return ONLY a JSON object:
+{{"subject": "email subject here", "message": "full email body here"}}
+
+No markdown, no explanation."""
+
+    try:
+        raw = await _call_nvidia(prompt, max_tokens=400, temperature=0.5)
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        return _json.loads(raw)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @app.get("/metrics/cache")
 async def cache_metrics(request: Request):
     _limiter.check(request, heavy=False)

@@ -512,9 +512,24 @@
     <div class="panel-header"><div class="panel-title">01 — Job Description</div></div>
     <div class="panel-body">
       <textarea id="jd" rows="7" placeholder="Paste the full job description here…"></textarea>
-      <button id="jdQualityBtn" onclick="analyseJD()">
-        <span>◎ Analyse JD Quality</span>
-      </button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="jdQualityBtn" onclick="analyseJD()" style="flex:1;font-family:'Inconsolata',monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:10px;cursor:pointer;border:1px solid #333;background:none;color:#777;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span>◎ Analyse JD Quality</span>
+        </button>
+        <button id="jdEnhanceBtn" onclick="enhanceJD()" style="flex:1;font-family:'Inconsolata',monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:10px;cursor:pointer;border:1px solid rgba(71,217,255,0.4);background:none;color:#47d9ff;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span>✦ Enhance JD</span>
+        </button>
+      </div>
+      <div id="jdEnhancePanel" style="display:none;margin-top:12px;border:1px solid rgba(71,217,255,0.3);background:#181818;animation:fadeUp 0.3s ease both">
+        <div style="padding:12px 16px;border-bottom:1px solid #282828;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#47d9ff;font-weight:600">✦ Enhanced JD</span>
+          <div style="display:flex;gap:8px">
+            <button onclick="applyEnhancedJD()" style="font-family:'Inconsolata',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 14px;background:#e8ff47;color:#000;border:none;cursor:pointer">Apply</button>
+            <button onclick="dismissEnhancedJD()" style="font-family:'Inconsolata',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;background:none;border:1px solid #333;color:#555;cursor:pointer">Dismiss</button>
+          </div>
+        </div>
+        <div id="jdEnhanceContent" style="padding:14px 16px;font-size:12px;color:#f0f0ee;line-height:1.7;white-space:pre-wrap"></div>
+      </div>
       <div id="jdQualityPanel"></div>
     </div>
   </div>
@@ -1004,19 +1019,39 @@
     }, 1000);
   }
 
-  // ── AI Explanations ────────────────────────────────────────────────────
+  // ── Skill Experience Summary ───────────────────────────────────────────
   async function generateAllExplanations(jd, results) {
     for (let i = 0; i < results.length; i++) {
       const r = results[i], el = document.getElementById(`explain_${r.resume_id}`);
       if (!el) continue;
-      el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Generating…</div>`;
+      const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
+      el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Extracting skills…</div>`;
       try {
-        const res = await fetch(`${API}/explain`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jd,resume_id:r.resume_id,snippet:r.text_snippet,rank:i,final_score:r.final_score,embedding_score:r.embedding_score,rerank_score:r.rerank_score,confidence:r.confidence?.label||'unknown'})});
+        const res = await fetch(`${API}/skillsummary`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resume:resumeText})});
         if (!res.ok) throw new Error(`${res.status}`);
-        const text = (await res.json()).explanation;
-        el.innerHTML = `<div class="explain-text typing"></div>`;
-        const tEl = el.querySelector('.explain-text'); let idx = 0;
-        const iv = setInterval(()=>{ tEl.textContent=text.slice(0,idx); idx+=4; if(idx>text.length){tEl.textContent=text;tEl.classList.remove('typing');clearInterval(iv);if(shortlisted.has(r.resume_id))renderShortlistPanel();} },18);
+        const data = await res.json();
+        const skills = data.skills || [];
+        const role   = data.current_role || '';
+        const totalYrs = data.total_experience_years || '';
+
+        let html = '';
+        if (role) html += `<div style="font-size:11px;color:#777;margin-bottom:10px;letter-spacing:0.06em">${role}${totalYrs ? ' · ' + totalYrs + ' yrs total exp' : ''}</div>`;
+        html += '<div style="display:flex;flex-direction:column;gap:5px">';
+        for (const s of skills) {
+          const barW = Math.min((s.years / 12) * 100, 100);
+          const barColor = s.years >= 5 ? 'var(--good)' : s.years >= 3 ? 'var(--accent)' : 'var(--medium)';
+          html += `<div style="display:flex;align-items:center;gap:10px">
+            <div style="width:140px;font-size:11px;color:#f0f0ee;flex-shrink:0">${s.skill}</div>
+            <div style="flex:1;height:3px;background:#222;position:relative;overflow:hidden">
+              <div style="position:absolute;left:0;top:0;bottom:0;width:${barW}%;background:${barColor};transition:width 0.8s ease"></div>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:${barColor};min-width:40px;text-align:right">${s.years}y</div>
+            ${s.context ? `<div style="font-size:10px;color:#555;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.context}</div>` : ''}
+          </div>`;
+        }
+        html += '</div>';
+        el.innerHTML = html;
+        if (shortlisted.has(r.resume_id)) renderShortlistPanel();
       } catch (err) { el.innerHTML=`<div class="explain-error">⚠ Could not generate (${err.message})</div>`; }
     }
   }
@@ -1115,7 +1150,7 @@
           ${r.fallback_used&&r.fallback?`<div class="footer-gap">Keywords: <span>${r.fallback.matched_keywords.slice(0,5).join(', ')}</span></div>`:''}
         </div>
         <div class="explain-section">
-          <div class="explain-header"><span class="explain-label">⚡ AI Explanation</span><span class="explain-model-tag">LLaMA 4 Maverick</span></div>
+          <div class="explain-header"><span class="explain-label">⚡ Skill Experience Summary</span><span class="explain-model-tag">LLaMA 4 Maverick</span></div>
           <div id="explain_${r.resume_id}" class="explain-loading"><div class="explain-spinner"></div> Waiting…</div>
         </div>
         <div class="skillgap-section">
@@ -1293,6 +1328,74 @@
     if (e.target === this) closeEmailModal();
   });
 
+
+  // ── JD Enhancer ────────────────────────────────────────────────────────
+  let enhancedJDText = '';
+
+  async function enhanceJD() {
+    const jd = document.getElementById('jd').value.trim();
+    if (!jd) { alert('Please enter a job description first.'); return; }
+    const btn = document.getElementById('jdEnhanceBtn');
+    btn.disabled = true; btn.innerHTML = '<div class="jdq-spinner"></div> Enhancing…';
+    document.getElementById('jdEnhancePanel').style.display = 'block';
+    document.getElementById('jdEnhanceContent').textContent = 'Generating enhanced JD…';
+    try {
+      const res = await fetch(`${API}/jdenhance`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      enhancedJDText = data.enhanced_jd || '';
+      document.getElementById('jdEnhanceContent').textContent = enhancedJDText;
+    } catch (err) {
+      document.getElementById('jdEnhanceContent').textContent = '⚠ Enhancement failed (' + err.message + ')';
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<span>✦ Enhance JD</span>';
+    }
+  }
+
+  function applyEnhancedJD() {
+    if (!enhancedJDText) return;
+    document.getElementById('jd').value = enhancedJDText;
+    dismissEnhancedJD();
+  }
+
+  function dismissEnhancedJD() {
+    document.getElementById('jdEnhancePanel').style.display = 'none';
+    enhancedJDText = '';
+  }
+
+  // ── AI Email Templates ─────────────────────────────────────────────────
+  async function loadEmailTemplate(type) {
+    const statusEl = document.getElementById('templateStatus');
+    const acceptBtn = document.getElementById('acceptBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    acceptBtn.disabled = true; rejectBtn.disabled = true;
+    statusEl.textContent = 'Generating ' + type + ' template…';
+
+    const candidates = [...shortlisted].map(id => ({ name: id }));
+    const jdSnippet  = lastJD.slice(0, 400);
+
+    try {
+      const res = await fetch(`${API}/emailtemplate`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, jd: jdSnippet, candidates, company: 'our company' }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      document.getElementById('emailSubject').value = data.subject || '';
+      document.getElementById('emailMessage').value = data.message || '';
+      statusEl.textContent = '✓ Template loaded — edit before sending';
+      statusEl.style.color = '#47ff8c';
+    } catch (err) {
+      statusEl.textContent = '⚠ Failed to generate template (' + err.message + ')';
+      statusEl.style.color = '#ff4747';
+    } finally {
+      acceptBtn.disabled = false; rejectBtn.disabled = false;
+    }
+  }
+
   initAuth();
   checkHealth();
   setInterval(checkHealth, 30000);
@@ -1309,6 +1412,11 @@
       <span class="email-recipients-label">To</span>
     </div>
     <div class="email-body">
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <button onclick="loadEmailTemplate('acceptance')" id="acceptBtn" style="flex:1;font-family:'Inconsolata',monospace;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:8px;background:rgba(71,255,140,0.1);border:1px solid rgba(71,255,140,0.3);color:#47ff8c;cursor:pointer;transition:all 0.15s">✓ Acceptance Template</button>
+        <button onclick="loadEmailTemplate('rejection')" id="rejectBtn" style="flex:1;font-family:'Inconsolata',monospace;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:8px;background:rgba(255,71,71,0.06);border:1px solid rgba(255,71,71,0.2);color:#ff4747;cursor:pointer;transition:all 0.15s">✗ Rejection Template</button>
+      </div>
+      <div id="templateStatus" style="font-size:10px;color:#555;min-height:14px;letter-spacing:0.06em"></div>
       <div>
         <label class="email-field-label">Subject</label>
         <input type="text" class="email-input" id="emailSubject" placeholder="e.g. Interview Invitation — Senior DevOps Engineer">
