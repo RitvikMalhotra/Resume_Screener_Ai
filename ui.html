@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -365,6 +366,103 @@
   @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); }  to { opacity: 1; transform: translateY(0); } }
   @keyframes spin     { to { transform: rotate(360deg); } }
   @keyframes pulse    { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ── Email Modal ── */
+  #emailModal {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); background: rgba(0,0,0,0.7);
+    padding: 24px;
+  }
+  #emailModal.open { display: flex; }
+
+  .email-box {
+    background: #111; border: 1px solid #333;
+    width: 100%; max-width: 560px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .email-box-header {
+    padding: 16px 20px; border-bottom: 1px solid #282828;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .email-box-title {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase; color: #e8ff47;
+  }
+
+  .email-close {
+    background: none; border: 1px solid #333; color: #555;
+    width: 28px; height: 28px; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .email-close:hover { border-color: #ff4747; color: #ff4747; }
+
+  .email-recipients {
+    padding: 12px 20px; border-bottom: 1px solid #282828;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+
+  .email-recipients-label {
+    font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: #555; margin-right: 4px;
+  }
+
+  .recipient-tag {
+    font-size: 10px; padding: 3px 8px;
+    background: rgba(232,255,71,0.08); border: 1px solid rgba(232,255,71,0.2);
+    color: #e8ff47;
+  }
+
+  .recipient-no-email {
+    font-size: 10px; padding: 3px 8px;
+    background: rgba(255,71,71,0.06); border: 1px solid rgba(255,71,71,0.2);
+    color: #ff4747;
+  }
+
+  .email-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+  .email-field-label {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: #777; margin-bottom: 6px; display: block;
+  }
+
+  .email-input {
+    width: 100%; background: #181818; border: 1px solid #282828;
+    color: #f0f0ee; font-family: 'Inconsolata', monospace; font-size: 13px;
+    padding: 10px 14px; outline: none; transition: border-color 0.15s;
+  }
+  .email-input:focus { border-color: #e8ff47; }
+
+  .email-textarea {
+    width: 100%; background: #181818; border: 1px solid #282828;
+    color: #f0f0ee; font-family: 'Inconsolata', monospace; font-size: 13px;
+    padding: 10px 14px; outline: none; resize: vertical; min-height: 140px;
+    line-height: 1.6; transition: border-color 0.15s;
+  }
+  .email-textarea:focus { border-color: #e8ff47; }
+
+  .email-footer {
+    padding: 14px 20px; border-top: 1px solid #282828;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+
+  .email-send-btn {
+    font-family: 'Inconsolata', monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; padding: 11px 24px;
+    cursor: pointer; background: #e8ff47; color: #000; border: none;
+    transition: all 0.15s;
+  }
+  .email-send-btn:hover { background: #f0ff60; }
+  .email-send-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
+
+  .email-status { font-size: 11px; letter-spacing: 0.06em; }
+  .email-status.sending { color: #777; }
+  .email-status.success { color: #47ff8c; }
+  .email-status.error   { color: #ff4747; }
+
 </style>
 </head>
 <body>
@@ -478,7 +576,10 @@
     <div id="shortlistPanel">
       <div class="shortlist-header">
         <div class="shortlist-title">⭐ Shortlist <span class="shortlist-count" id="shortlistCount">0</span></div>
-        <button class="shortlist-clear" onclick="clearShortlist()">Clear All</button>
+        <div style="display:flex;gap:8px">
+          <button onclick="openEmailModal()" style="font-family:'Inconsolata',monospace;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:#e8ff47;color:#000;border:none;padding:5px 12px;cursor:pointer">✉ Send Email</button>
+          <button class="shortlist-clear" onclick="clearShortlist()">Clear All</button>
+        </div>
       </div>
       <div class="shortlist-grid" id="shortlistGrid"></div>
     </div>
@@ -1084,9 +1185,145 @@
       <div class="verdict-row"><div class="verdict-winner">★ ${winner.resume_id} is the strongest candidate</div><div>Final score ${Math.round((winner.final_score||0)*100)}% across ${n} candidates compared.</div></div>`;
   }
 
+
+  // ── EmailJS config ─────────────────────────────────────────────────────
+  const EMAILJS_SERVICE_ID  = 'service_oik0t8r';
+  const EMAILJS_TEMPLATE_ID = 'template_5lbm0xe';
+  const EMAILJS_PUBLIC_KEY  = 'q5vDrbXRzZgsDrAgX';
+
+  // Extract email from resume text
+  function extractEmail(text) {
+    if (!text) return null;
+    const match = text.match(/[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}/);
+    return match ? match[0] : null;
+  }
+
+  function openEmailModal() {
+    if (shortlisted.size === 0) return;
+
+    // Build recipients list
+    const recipientsEl = document.getElementById('emailRecipients');
+    recipientsEl.innerHTML = '<span class="email-recipients-label">To</span>';
+
+    for (const resumeId of shortlisted) {
+      const resumeText = resumeTextMap[resumeId] || '';
+      const email = extractEmail(resumeText);
+      const tag = document.createElement('span');
+      if (email) {
+        tag.className = 'recipient-tag';
+        tag.textContent = email;
+        tag.dataset.email = email;
+        tag.dataset.name = resumeId;
+      } else {
+        tag.className = 'recipient-no-email';
+        tag.textContent = resumeId + ' (no email found)';
+      }
+      recipientsEl.appendChild(tag);
+    }
+
+    document.getElementById('emailStatus').textContent = '';
+    document.getElementById('emailStatus').className = 'email-status';
+    document.getElementById('emailSendBtn').disabled = false;
+    document.getElementById('emailSendBtn').textContent = '▶ Send to All';
+    document.getElementById('emailModal').classList.add('open');
+  }
+
+  function closeEmailModal() {
+    document.getElementById('emailModal').classList.remove('open');
+  }
+
+  async function sendEmails() {
+    const subject = document.getElementById('emailSubject').value.trim();
+    const message = document.getElementById('emailMessage').value.trim();
+    if (!subject) { alert('Please enter a subject.'); return; }
+    if (!message) { alert('Please enter a message.'); return; }
+
+    const recipients = [...document.querySelectorAll('#emailRecipients .recipient-tag')];
+    if (recipients.length === 0) {
+      document.getElementById('emailStatus').textContent = '⚠ No valid emails found in shortlisted resumes.';
+      document.getElementById('emailStatus').className = 'email-status error';
+      return;
+    }
+
+    const btn = document.getElementById('emailSendBtn');
+    const statusEl = document.getElementById('emailStatus');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    statusEl.className = 'email-status sending';
+
+    // Init EmailJS
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    let sent = 0, failed = 0;
+    for (const tag of recipients) {
+      const toEmail = tag.dataset.email;
+      const toName  = tag.dataset.name;
+      statusEl.textContent = `Sending to ${toEmail}…`;
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          to_email: toEmail,
+          subject:  subject,
+          message:  message,
+          name:     toName,
+        });
+        sent++;
+        tag.style.background = 'rgba(71,255,140,0.1)';
+        tag.style.borderColor = 'rgba(71,255,140,0.4)';
+        tag.style.color = '#47ff8c';
+      } catch (err) {
+        failed++;
+        tag.style.background = 'rgba(255,71,71,0.08)';
+        tag.style.borderColor = 'rgba(255,71,71,0.3)';
+        tag.style.color = '#ff4747';
+      }
+    }
+
+    btn.textContent = '✓ Done';
+    if (failed === 0) {
+      statusEl.textContent = `✓ Sent to ${sent} candidate${sent > 1 ? 's' : ''} successfully.`;
+      statusEl.className = 'email-status success';
+    } else {
+      statusEl.textContent = `${sent} sent, ${failed} failed.`;
+      statusEl.className = 'email-status error';
+    }
+  }
+
+  // Close email modal on backdrop click
+  document.getElementById('emailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEmailModal();
+  });
+
   initAuth();
   checkHealth();
   setInterval(checkHealth, 30000);
 </script>
+
+<!-- Email Modal -->
+<div id="emailModal">
+  <div class="email-box">
+    <div class="email-box-header">
+      <div class="email-box-title">✉ Send Email to Shortlisted</div>
+      <button class="email-close" onclick="closeEmailModal()">×</button>
+    </div>
+    <div class="email-recipients" id="emailRecipients">
+      <span class="email-recipients-label">To</span>
+    </div>
+    <div class="email-body">
+      <div>
+        <label class="email-field-label">Subject</label>
+        <input type="text" class="email-input" id="emailSubject" placeholder="e.g. Interview Invitation — Senior DevOps Engineer">
+      </div>
+      <div>
+        <label class="email-field-label">Message</label>
+        <textarea class="email-textarea" id="emailMessage" placeholder="Dear Candidate,&#10;&#10;We are pleased to inform you that you have been shortlisted..."></textarea>
+      </div>
+    </div>
+    <div class="email-footer">
+      <div class="email-status" id="emailStatus"></div>
+      <button class="email-send-btn" id="emailSendBtn" onclick="sendEmails()">▶ Send to All</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
