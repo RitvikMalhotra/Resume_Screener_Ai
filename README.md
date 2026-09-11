@@ -2,9 +2,9 @@
 
 A production-grade, two-stage LLM-powered resume screening system with PDF upload, auto name extraction, and side-by-side candidate comparison.
 
-**Live Demo:** [resumescreen-ai.netlify.app/ui.html](https://resumescreen-ai.netlify.app/ui.html)  
-**API:** [resumescreenerai-production.up.railway.app](https://resumescreenerai-production.up.railway.app)  
-**API Docs:** [resumescreenerai-production.up.railway.app/docs](https://resumescreenerai-production.up.railway.app/docs)
+**Deployment:** Vercel serves the frontend and FastAPI backend together.  
+**API:** `/api`  
+**API Docs:** `/api/docs`
 
 ---
 
@@ -96,7 +96,7 @@ Resume_Screener_Ai/
 │   ├── benchmark.py       # 500-resume throughput test
 │   └── finetune_lora.py   # LLaMA 3 8B LoRA fine-tuning
 ├── ui.html                # Frontend UI (PDF upload + comparison)
-├── railway.toml           # Railway deployment config
+├── vercel.json             # Vercel routing config
 ├── Procfile
 └── requirements.txt
 ```
@@ -147,7 +147,7 @@ cd Resume_Screener_Ai
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 source .venv/bin/activate     # Mac/Linux
-pip install -r requirements.txt
+pip install -r requirements-local.txt
 ```
 
 ### 3. Run
@@ -160,11 +160,19 @@ API at `http://localhost:8000` — Docs at `http://localhost:8000/docs`
 
 ### 4. Open UI
 
-Open `ui.html` and update the API constant to `http://localhost:8000`:
+Open `ui.html` locally and update the API constant to `http://localhost:8000`:
 
 ```javascript
 const API = 'http://localhost:8000';
 ```
+
+### Deploy to Vercel
+
+Import this repository into Vercel with the project root set to the repository root. Vercel detects `vercel.json` and deploys `api/index.py` as the FastAPI function. No Railway service is required. The frontend is available at `/ui.html`, the health check at `/api/health`, and the interactive API docs at `/api/docs`.
+
+Set `NVIDIA_API_KEY` in the Vercel project environment variables if the AI analysis endpoints are enabled. Set `NVIDIA_MODEL` to the exact model ID shown on the NVIDIA model page if the default model is unavailable. Vercel uses a lightweight lexical ranking fallback because the full SentenceTransformer/FAISS stack exceeds Vercel's 500 MB function limit. Local installs from `requirements-local.txt` use the full embedding and cross-encoder pipeline.
+
+Vercel functions are ephemeral and have execution, memory, and deployment-size limits. Large resume batches, model cold starts, and `/rank/batch` jobs may exceed those limits. For a reliable production deployment, keep requests small or move model inference to a dedicated inference service later while retaining this Vercel frontend and API boundary.
 
 ---
 
@@ -215,7 +223,7 @@ const API = 'http://localhost:8000';
 
 **Backend:** FastAPI, SentenceTransformers, FAISS, Python  
 **Frontend:** Vanilla HTML/JS, PDF.js (client-side PDF parsing)  
-**Deployment:** Railway (backend) + Netlify (frontend)  
+**Deployment:** Vercel (frontend + FastAPI backend)  
 **Models:** `all-MiniLM-L6-v2` (embeddings), `ms-marco-MiniLM-L-6-v2` (reranker)
 
 ---

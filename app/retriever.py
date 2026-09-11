@@ -22,12 +22,16 @@ Interview talking point:
 from __future__ import annotations
 import logging
 import pickle
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +49,6 @@ except ImportError:
     _ST = False
     logger.warning("sentence-transformers not installed")
 
-from app.batch_manager import BatchEmbedder
 from utils.cache import sha256_key
 from utils.batching import chunks
 from utils.config import RetrieverConfig, get_config
@@ -108,11 +111,13 @@ class Retriever:
         self._index   = None
         self._entries: list[IndexEntry] = []
         self._dim: int = 0
+        self._lexical_mode = False
 
     # ── model + embedder ───────────────────────────────────────────────────
 
     def _get_embedder(self) -> BatchEmbedder:
         if self._embedder is None:
+            from app.batch_manager import BatchEmbedder
             if not _ST:
                 raise RuntimeError("sentence-transformers is required")
             logger.info("Loading embedding model: %s", self.cfg.model_name)
@@ -146,16 +151,22 @@ class Retriever:
     # ── index ──────────────────────────────────────────────────────────────
 
     def build_index(self, entries: list[IndexEntry]) -> None:
-        if not _FAISS:
-            raise RuntimeError("faiss-cpu is required")
         if not entries:
             raise ValueError("Cannot build index from empty entry list")
+
+        self._entries = list(entries)
+        if not _FAISS or not _ST or np is None:
+            self._lexical_mode = True
+            self._index = self._entries
+            self._dim = 0
+            self._index_type = "LexicalOverlap"
+            logger.info("Using lexical fallback index for %d entries", len(entries))
+            return
 
         logger.info("Building FAISS index for %d entries…", len(entries))
         texts      = [e.text for e in entries]
         embeddings = self.embed(texts).astype(np.float32)
         N, D       = embeddings.shape
-        self._entries = list(entries)
         self._dim     = D
 
         if N < 1000:
@@ -187,6 +198,19 @@ class Retriever:
             raise RuntimeError("Index not built. Call build_index() first.")
 
         k         = min(top_k or self.cfg.top_k, len(self._entries))
+        if self._lexical_mode:
+            query_words = set(re.findall(r"[a-z0-9+#.\-]+", query.lower()))
+            scored = []
+            for entry in self._entries:
+                words = set(re.findall(r"[a-z0-9+#.\-]+", entry.text.lower()))
+                score = len(query_words & words) / max(1, len(query_words | words))
+                scored.append((score, entry))
+            scored.sort(key=lambda item: item[0], reverse=True)
+            return [
+                RetrievalResult(entry.resume_id, entry.text, float(score), rank)
+                for rank, (score, entry) in enumerate(scored[:k])
+            ]
+
         query_vec = self.embed([query])
         scores, indices = self._index.search(query_vec, k)
         scores, indices = scores[0], indices[0]
@@ -207,7 +231,7 @@ class Retriever:
     # ── persistence ────────────────────────────────────────────────────────
 
     def save_index(self) -> None:
-        if self._index is None:
+        if self._index is None or self._lexical_mode:
             return
         idx_path  = self.cfg.faiss_index_path
         meta_path = self.cfg.faiss_meta_path
@@ -222,11 +246,14 @@ class Retriever:
         logger.info("Index saved → %s", idx_path)
 
     def load_index(self) -> bool:
+        if not _FAISS or np is None:
+            return False
         idx_path  = self.cfg.faiss_index_path
         meta_path = self.cfg.faiss_meta_path
         if not idx_path.exists() or not meta_path.exists():
             return False
         self._index = faiss.read_index(str(idx_path))
+        self._lexical_mode = False
         with open(meta_path, "rb") as f:
             meta = pickle.load(f)
         self._entries    = meta["entries"]
@@ -240,6 +267,9 @@ class Retriever:
     def add_to_index(self, entries: list[IndexEntry]) -> None:
         if self._index is None:
             return self.build_index(entries)
+        if self._lexical_mode:
+            self._entries.extend(entries)
+            return
         texts      = [e.text for e in entries]
         embeddings = self.embed(texts).astype(np.float32)
         self._index.add(embeddings)
@@ -249,7 +279,9 @@ class Retriever:
 
     @property
     def index_size(self) -> int:
-        return self._index.ntotal if self._index else 0
+        if not self._index:
+            return 0
+        return len(self._entries) if self._lexical_mode else self._index.ntotal
 
     def index_info(self) -> Optional[FAISSIndexInfo]:
         if self._index is None:
@@ -270,4 +302,6 @@ class Retriever:
         return self._embedder.stats()
 
     def warm_cache(self, texts: list[str]) -> dict:
+        if self._lexical_mode:
+            return {"warmed": 0, "already_cached": len(texts)}
         return self._get_embedder().warm_cache(texts)

@@ -14,6 +14,7 @@ AI endpoints:
 """
 from __future__ import annotations
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -41,9 +42,9 @@ _limiter  = RateLimiter(RateLimitConfig(
     requests_per_minute_light = 120,
 ))
 
-NVIDIA_KEY        = "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"
+NVIDIA_KEY        = os.getenv("NVIDIA_API_KEY", "")
 NVIDIA_URL        = "https://integrate.api.nvidia.com/v1/chat/completions"
-NVIDIA_MODEL      = "meta/llama-4-maverick-17b-128e-instruct"
+NVIDIA_MODEL      = os.getenv("NVIDIA_MODEL", "meta/muse-glimmer-30b")
 
 
 def get_pipeline() -> Pipeline:

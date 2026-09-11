@@ -22,7 +22,10 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +39,7 @@ try:
     import torch
     _TORCH = True
 except ImportError:
+    torch = None
     _TORCH = False
 
 from app.retriever import RetrievalResult
@@ -90,6 +94,20 @@ class CrossEncoderReranker:
             return []
 
         n = top_n or self.cfg.top_n
+        if not _CROSS_ENCODER or np is None:
+            ranked = sorted(candidates, key=lambda candidate: candidate.embedding_score, reverse=True)
+            return [
+                RerankResult(
+                    resume_id=c.resume_id,
+                    text=c.text,
+                    embedding_score=c.embedding_score,
+                    rerank_score=c.embedding_score,
+                    final_score=c.embedding_score,
+                    rank=rank,
+                )
+                for rank, c in enumerate(ranked[:n])
+            ]
+
         model = self._get_model()
         pairs  = [(job_description, c.text) for c in candidates]
 
@@ -217,7 +235,6 @@ class LLMReranker:
             self._yes_id, self._no_id,
         )
 
-    @torch.no_grad()
     def _score_batch(self, prompts: list[str]) -> np.ndarray:
         """Return P(Yes) for each prompt as float array."""
         import torch

@@ -13,7 +13,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Generator, TypeVar
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 logger = logging.getLogger(__name__)
 

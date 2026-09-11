@@ -22,7 +22,10 @@ import math
 import logging
 from typing import Optional
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +98,14 @@ def spearman_rho(
     common = sorted(set(gold_ranks) & set(pred_ranks))
     if len(common) < 2:
         return float("nan")
-    g    = np.array([gold_ranks[k] for k in common], dtype=float)
-    p    = np.array([pred_ranks[k] for k in common], dtype=float)
-    d_sq = (g - p) ** 2
-    n    = len(common)
-    return float(1 - (6 * d_sq.sum()) / (n * (n ** 2 - 1)))
+    gold = [float(gold_ranks[k]) for k in common]
+    pred = [float(pred_ranks[k]) for k in common]
+    gold_mean = sum(gold) / len(gold)
+    pred_mean = sum(pred) / len(pred)
+    numerator = sum((a - gold_mean) * (b - pred_mean) for a, b in zip(gold, pred))
+    gold_norm = sum((a - gold_mean) ** 2 for a in gold) ** 0.5
+    pred_norm = sum((b - pred_mean) ** 2 for b in pred) ** 0.5
+    return numerator / (gold_norm * pred_norm) if gold_norm and pred_norm else 0.0
 
 
 # ── Composite evaluation ───────────────────────────────────────────────────
@@ -157,7 +163,7 @@ def batch_evaluate(
     ]
     keys = all_metrics[0].keys()
     avg  = {
-        k: round(float(np.mean([m[k] for m in all_metrics if k in m])), 4)
+        k: round(sum(m[k] for m in all_metrics if k in m) / len([m for m in all_metrics if k in m]), 4)
         for k in keys
     }
     avg["num_queries"] = len(queries)

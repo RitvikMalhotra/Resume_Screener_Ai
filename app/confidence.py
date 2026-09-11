@@ -22,7 +22,10 @@ Interview talking point:
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 
 # ── Thresholds ─────────────────────────────────────────────────────────────
@@ -77,13 +80,16 @@ def score_confidence(final_scores: list[float]) -> list[ConfidenceResult]:
         return []
 
     n      = len(final_scores)
-    arr    = np.array(final_scores)
-    spread = float(np.std(arr)) if n > 1 else 1.0
+    if n > 1:
+        mean = sum(final_scores) / n
+        spread = (sum((score - mean) ** 2 for score in final_scores) / n) ** 0.5
+    else:
+        spread = 1.0
 
     results: list[ConfidenceResult] = []
 
     for i, score in enumerate(final_scores):
-        gap = float(arr[i] - arr[i + 1]) if i < n - 1 else 0.0
+        gap = float(final_scores[i] - final_scores[i + 1]) if i < n - 1 else 0.0
 
         # low spread → all scores similar → uncertain across the board
         if spread < _SPREAD_THRESHOLD:
