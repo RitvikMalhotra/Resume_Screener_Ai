@@ -38,10 +38,12 @@ MODEL   = os.getenv("NVIDIA_MODEL", "meta/muse-glimmer-30b")
 DEFAULT_MAX_TOKENS = 1200
 JSON_MAX_TOKENS    = 2000
 
-# Kept deliberately tight: these calls run inside a serverless function, and
-# exceeding the platform's execution limit surfaces as a gateway error rather
-# than something this app can catch and degrade from.
-REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "25"))
+# This model is slow: a ~2000-token JSON answer measured 30-45s in production.
+# The ceiling is the serverless execution limit, since overrunning that surfaces
+# as a gateway error this app can't catch and degrade from -- so prefer one long
+# attempt over several short ones (see _should_retry: timeouts aren't retried,
+# because a slow model stays slow and a second attempt just burns the budget).
+REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "45"))
 MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "2"))
 
 
@@ -270,11 +272,12 @@ async def call_llm(
             raise LLMError("The model returned an empty response. Try again or raise NVIDIA max tokens.")
 
         except httpx.TimeoutException:
-            last_error = "timed out"
-            logger.warning("LLM attempt %d/%d timed out", attempt, attempts)
-            if attempt < attempts:
-                continue
-            raise LLMError("The AI provider timed out. Try again shortly.")
+            # Not retried: the model being slow isn't transient, and a second
+            # attempt would just run out the serverless execution budget too.
+            logger.warning("LLM attempt %d/%d timed out after %.0fs", attempt, attempts, timeout)
+            raise LLMError(
+                f"The AI provider took longer than {timeout:.0f}s to respond. Try again shortly."
+            )
         except httpx.HTTPError as exc:
             last_error = str(exc)
             logger.warning("LLM attempt %d/%d transport error: %s", attempt, attempts, exc)
