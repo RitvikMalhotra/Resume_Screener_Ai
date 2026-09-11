@@ -140,4 +140,7 @@ class TestPerformance:
         response = pipeline.rank(JD_ML, large_corpus, top_n=10)
         elapsed  = time.perf_counter() - t0
         assert elapsed < 120, f"500 resumes took {elapsed:.1f}s > 120s budget"
-        assert len(response.results) == 10
+        # Reranking can only ever return what retrieval surfaced, so the result
+        # count is capped by top_k (8 in this fixture), not by top_n.
+        expected = min(10, pipeline.cfg.retriever.top_k)
+        assert len(response.results) == expected

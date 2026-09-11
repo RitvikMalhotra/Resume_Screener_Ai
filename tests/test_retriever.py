@@ -117,7 +117,7 @@ class TestRetriever:
         # second call should hit cache
         retriever.retrieve(JD_ML, top_k=3)
         stats = retriever.cache_stats()
-        assert stats["l1"]["hits"] > 0
+        assert stats["cache"]["hits"] > 0
 
     def test_top_k_bounds(self, retriever):
         # asking for more than corpus size should still work

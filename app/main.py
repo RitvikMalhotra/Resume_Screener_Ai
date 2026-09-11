@@ -14,7 +14,6 @@ AI endpoints:
 """
 from __future__ import annotations
 import logging
-import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -28,7 +27,8 @@ from pydantic import BaseModel, Field, field_validator
 from app.pipeline import Pipeline, ResumeInput
 from app.job_queue import JobRunner
 from app.rate_limiter import RateLimiter, RateLimitConfig
-from app import db
+from app import db, llm
+from app.llm import LLMError
 from app.auth import (
     auth_configured,
     create_token,
@@ -52,9 +52,7 @@ _limiter  = RateLimiter(RateLimitConfig(
     requests_per_minute_light = 120,
 ))
 
-NVIDIA_KEY        = os.getenv("NVIDIA_API_KEY", "")
-NVIDIA_URL        = "https://integrate.api.nvidia.com/v1/chat/completions"
-NVIDIA_MODEL      = os.getenv("NVIDIA_MODEL", "meta/muse-glimmer-30b")
+# LLM config lives in app/llm.py -- every AI feature routes through it.
 
 
 def get_pipeline() -> Pipeline:
@@ -189,33 +187,18 @@ class BatchEvalRequest(BaseModel):
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
-def _strip_thinking(text: str) -> str:
-    import re
-    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+def _ai_error(exc: LLMError) -> HTTPException:
+    """LLMError messages are written to be shown to a user as-is."""
+    status = 503 if not llm.is_configured() else 502
+    return HTTPException(status_code=status, detail=str(exc))
 
 
-async def _call_nvidia(prompt: str, max_tokens: int = 300, temperature: float = 0.3) -> str:
-    import httpx
-    payload = {
-        "model": NVIDIA_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "stream": False,
-    }
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        res = await client.post(
-            NVIDIA_URL,
-            headers={
-                "Authorization": f"Bearer {NVIDIA_KEY}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-        )
-        res.raise_for_status()
-        data = res.json()
-        text = data["choices"][0]["message"]["content"]
-        return _strip_thinking(text)
+async def _call_nvidia(prompt: str, max_tokens: int = llm.DEFAULT_MAX_TOKENS, temperature: float = 0.3) -> str:
+    return await llm.call_llm(prompt, max_tokens=max_tokens, temperature=temperature)
+
+
+async def _call_nvidia_json(prompt: str, max_tokens: int = llm.JSON_MAX_TOKENS, temperature: float = 0.1):
+    return await llm.call_llm_json(prompt, max_tokens=max_tokens, temperature=temperature)
 
 
 # ── Middleware ─────────────────────────────────────────────────────────────
@@ -338,7 +321,7 @@ async def health(request: Request):
     _limiter.check(request, heavy=False)
     pipeline = get_pipeline()
     info     = pipeline.retriever.index_info()
-    return {"status": "ok", "version": "4.0.0", "index": info.to_dict() if info else None, "cache": pipeline.retriever.cache_stats(), "jobs": _runner.stats(), "ratelimit": _limiter.stats(), "auth": auth_configured() and db.is_configured()}
+    return {"status": "ok", "version": "4.0.0", "index": info.to_dict() if info else None, "cache": pipeline.retriever.cache_stats(), "jobs": _runner.stats(), "ratelimit": _limiter.stats(), "auth": auth_configured() and db.is_configured(), "ai": {"configured": llm.is_configured(), "model": llm.MODEL, "reranker": type(pipeline.reranker).__name__}}
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -562,14 +545,13 @@ Write ONE concise paragraph (3-4 sentences) explaining:
 
 Be specific. Mention actual skills from their resume. No bullet points. Do not start with "This candidate"."""
     try:
-        return {"explanation": await _call_nvidia(prompt, max_tokens=200, temperature=0.4)}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return {"explanation": await _call_nvidia(prompt, max_tokens=1200, temperature=0.4)}
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 @app.post("/skillgap")
 async def skill_gap(request: Request, body: dict):
-    import json as _json
     _limiter.check(request, heavy=False)
     jd = body.get("jd","")[:1000]; resume = body.get("resume","")[:1500]
     prompt = f"""You are a technical recruiter. Extract required skills from the job description and check if each skill is present in the resume.
@@ -595,16 +577,13 @@ Rules:
 - Set found=true only if the skill clearly appears in the resume
 - Return ONLY the JSON, no explanation, no markdown fences"""
     try:
-        raw = await _call_nvidia(prompt, max_tokens=500, temperature=0.1)
-        raw = raw.replace("```json","").replace("```","").strip()
-        return _json.loads(raw)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return await _call_nvidia_json(prompt, max_tokens=2000)
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 @app.post("/redflag")
 async def red_flag(request: Request, body: dict):
-    import json as _json
     _limiter.check(request, heavy=False)
     resume = body.get("resume","")[:2000]; candidate = body.get("resume_id","candidate")
     prompt = f"""You are a senior technical recruiter reviewing a resume for hiring risk factors.
@@ -640,11 +619,9 @@ Rules:
 - If no red flags, return empty flags array and overall_risk "low"
 - Return ONLY the JSON"""
     try:
-        raw = await _call_nvidia(prompt, max_tokens=600, temperature=0.2)
-        raw = raw.replace("```json","").replace("```","").strip()
-        return _json.loads(raw)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return await _call_nvidia_json(prompt, max_tokens=2200, temperature=0.2)
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 @app.post("/jdquality")
@@ -653,7 +630,6 @@ async def jd_quality(request: Request, body: dict):
     Analyse a job description for quality issues.
     Returns score, skill count, restrictiveness, issues, and improvement suggestions.
     """
-    import json as _json
     _limiter.check(request, heavy=False)
 
     jd = body.get("jd", "")[:2000]
@@ -698,11 +674,9 @@ Rules:
 - Return ONLY the JSON, no explanation, no markdown fences"""
 
     try:
-        raw = await _call_nvidia(prompt, max_tokens=700, temperature=0.2)
-        raw = raw.replace("```json", "").replace("```", "").strip()
-        return _json.loads(raw)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return await _call_nvidia_json(prompt, max_tokens=2500, temperature=0.2)
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 
@@ -712,7 +686,6 @@ async def skill_summary(request: Request, body: dict):
     Extract skills from resume with years of experience per skill.
     Returns structured bullet-point data replacing the AI explanation.
     """
-    import json as _json
     _limiter.check(request, heavy=False)
 
     resume = body.get("resume", "")[:2000]
@@ -741,11 +714,9 @@ Rules:
 - Return ONLY the JSON, no explanation, no markdown fences"""
 
     try:
-        raw = await _call_nvidia(prompt, max_tokens=600, temperature=0.1)
-        raw = raw.replace("```json", "").replace("```", "").strip()
-        return _json.loads(raw)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return await _call_nvidia_json(prompt, max_tokens=2200)
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 @app.post("/jdenhance")
@@ -774,10 +745,9 @@ Rewrite it following these rules:
 - Return ONLY the enhanced JD text, no explanation, no markdown headers with ##"""
 
     try:
-        text = await _call_nvidia(prompt, max_tokens=500, temperature=0.4)
-        return {"enhanced_jd": text}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return {"enhanced_jd": await _call_nvidia(prompt, max_tokens=1800, temperature=0.4)}
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 @app.post("/emailtemplate")
@@ -786,7 +756,6 @@ async def email_template(request: Request, body: dict):
     Generate a personalized acceptance or rejection email template
     for shortlisted candidates based on the JD and candidate names.
     """
-    import json as _json
     _limiter.check(request, heavy=False)
 
     email_type   = body.get("type", "acceptance")   # "acceptance" or "rejection"
@@ -836,11 +805,9 @@ Return ONLY a JSON object:
 No markdown, no explanation."""
 
     try:
-        raw = await _call_nvidia(prompt, max_tokens=400, temperature=0.5)
-        raw = raw.replace("```json", "").replace("```", "").strip()
-        return _json.loads(raw)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        return await _call_nvidia_json(prompt, max_tokens=2000, temperature=0.5)
+    except LLMError as exc:
+        raise _ai_error(exc)
 
 
 @app.get("/metrics/cache")

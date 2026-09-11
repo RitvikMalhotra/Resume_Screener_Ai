@@ -627,6 +627,18 @@
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  // The API returns a human-readable `detail` for AI failures — show it
+  // rather than a bare status code.
+  async function aiError(res) {
+    try {
+      const data = await res.json();
+      const detail = data.detail?.message || data.detail;
+      return new Error(detail || `HTTP ${res.status}`);
+    } catch {
+      return new Error(`HTTP ${res.status}`);
+    }
+  }
+
   async function initAuth() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; return; }
@@ -714,7 +726,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jd }),
       });
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok) throw await aiError(res);
       const d = await res.json();
       renderJDQuality(d, panel);
     } catch (err) {
@@ -1019,7 +1031,7 @@
       el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Extracting skills…</div>`;
       try {
         const res = await fetch(`${API}/skillsummary`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resume:resumeText})});
-        if (!res.ok) throw new Error(`${res.status}`);
+        if (!res.ok) throw await aiError(res);
         const data = await res.json();
         const skills = data.skills || [];
         const role   = data.current_role || '';
@@ -1055,7 +1067,7 @@
       el.innerHTML = `<div class="skillgap-loading"><div class="skillgap-spinner"></div> Analysing skills…</div>`;
       try {
         const res = await fetch(`${API}/skillgap`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jd,resume:resumeText})});
-        if (!res.ok) throw new Error(`${res.status}`);
+        if (!res.ok) throw await aiError(res);
         const data = await res.json(), skills = data.skills||[];
         const matched = skills.filter(s=>s.found).length, total = skills.length;
         const pct = total ? Math.round((matched/total)*100) : 0;
@@ -1077,7 +1089,7 @@
       el.innerHTML = `<div class="redflag-loading"><div class="redflag-spinner"></div> Scanning…</div>`;
       try {
         const res = await fetch(`${API}/redflag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resume:resumeText,resume_id:r.resume_id})});
-        if (!res.ok) throw new Error(`${res.status}`);
+        if (!res.ok) throw await aiError(res);
         const data = await res.json(), flags = data.flags||[], risk = data.overall_risk||'low', summary = data.summary||'';
         const header = document.getElementById(`redflag_header_${r.resume_id}`);
         if (header) header.innerHTML = `<span class="redflag-label">⚑ Red Flag Detection</span><span class="redflag-overall risk-${risk}">${risk.charAt(0).toUpperCase()+risk.slice(1)} Risk</span>`;
@@ -1335,7 +1347,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jd }),
       });
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok) throw await aiError(res);
       const data = await res.json();
       enhancedJDText = data.enhanced_jd || '';
       document.getElementById('jdEnhanceContent').textContent = enhancedJDText;
@@ -1373,7 +1385,7 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, jd: jdSnippet, candidates, company: 'our company' }),
       });
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok) throw await aiError(res);
       const data = await res.json();
       document.getElementById('emailSubject').value = data.subject || '';
       document.getElementById('emailMessage').value = data.message || '';

@@ -174,6 +174,34 @@ Set `NVIDIA_API_KEY` in the Vercel project environment variables if the AI analy
 
 Vercel functions are ephemeral and have execution, memory, and deployment-size limits. Large resume batches, model cold starts, and `/rank/batch` jobs may exceed those limits. For a reliable production deployment, keep requests small or move model inference to a dedicated inference service later while retaining this Vercel frontend and API boundary.
 
+### AI features
+
+Every AI feature routes through `app/llm.py`, which calls a hosted chat-completions
+model (NVIDIA API catalog by default). Configure it with:
+
+- `NVIDIA_API_KEY` — required for any AI feature.
+- `NVIDIA_MODEL` — model id (default `meta/muse-glimmer-30b`).
+- `NVIDIA_API_URL` — override the endpoint (mainly for testing against a mock).
+- `NVIDIA_TIMEOUT` / `NVIDIA_MAX_ATTEMPTS` / `RERANK_LLM_TIMEOUT` — request budgets,
+  kept tight so a slow model degrades gracefully instead of hitting the serverless
+  execution limit.
+
+The model is used for `/explain`, `/skillgap`, `/redflag`, `/jdquality`,
+`/skillsummary`, `/jdenhance`, `/emailtemplate` — **and for ranking itself** on
+deployments where sentence-transformers can't be installed. `get_reranker()` picks,
+in order: local LLaMA (if `USE_LLM_RERANKER=true`) → local cross-encoder (if
+sentence-transformers is present) → `HostedLLMReranker` via the API → retrieval-order
+passthrough. Without the hosted reranker, serverless ranking falls back to lexical
+word overlap, which scores a perfectly matching resume around 0.2 purely because it
+doesn't reuse the JD's vocabulary.
+
+`app/llm.py` handles the response shapes that a naive
+`data["choices"][0]["message"]["content"]` breaks on: `content: null` with the answer
+in `reasoning_content`, unterminated `<think>` blocks from truncated output, markdown-
+fenced or prose-wrapped JSON, and JSON cut off mid-object. AI endpoints return a clean
+502/503 with a readable message rather than a 500, and `/rank` degrades to retrieval
+order rather than failing if the model is unavailable.
+
 ### Auth
 
 Accounts, login, and screening history are backed by a small custom auth layer in `app/main.py`/`app/auth.py`/`app/db.py` (bcrypt password hashing + JWT bearer tokens) — there is no third-party auth provider. Set two env vars for it to work:
