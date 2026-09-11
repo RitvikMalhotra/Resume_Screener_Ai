@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resume Screener - Login</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #080808; color: #f0f0ee; font-family: Inconsolata, monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -71,13 +70,9 @@ body { background: #080808; color: #f0f0ee; font-family: Inconsolata, monospace;
   </div>
 </div>
 <script>
-  const SURL = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
-  const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
-  const sb = window.supabase.createClient(SURL, SKEY);
+  const API = '';
 
-  sb.auth.getSession().then(function(r) {
-    if (r.data.session) window.location.href = 'dashboard.html';
-  });
+  if (localStorage.getItem('token')) window.location.href = 'dashboard.html';
 
   function switchTab(tab) {
     document.getElementById('loginTab').classList.toggle('active', tab === 'login');
@@ -98,10 +93,14 @@ body { background: #080808; color: #f0f0ee; font-family: Inconsolata, monospace;
     if (!email || !password) { showMsg('loginMsg', 'Please fill in all fields.', 'error'); return; }
     var btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = 'Signing in...';
-    sb.auth.signInWithPassword({ email: email, password: password }).then(function(r) {
-      if (r.error) { showMsg('loginMsg', r.error.message, 'error'); btn.disabled = false; btn.textContent = 'Sign In'; }
-      else { window.location.href = 'dashboard.html'; }
-    });
+    fetch(`${API}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password }) })
+      .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(r) {
+        if (!r.ok) { showMsg('loginMsg', r.data.detail || 'Login failed.', 'error'); btn.disabled = false; btn.textContent = 'Sign In'; return; }
+        localStorage.setItem('token', r.data.token);
+        window.location.href = 'dashboard.html';
+      })
+      .catch(function() { showMsg('loginMsg', 'Could not reach the server.', 'error'); btn.disabled = false; btn.textContent = 'Sign In'; });
   }
 
   function handleSignup() {
@@ -112,10 +111,14 @@ body { background: #080808; color: #f0f0ee; font-family: Inconsolata, monospace;
     if (password.length < 8) { showMsg('signupMsg', 'Password must be at least 8 characters.', 'error'); return; }
     var btn = document.getElementById('signupBtn');
     btn.disabled = true; btn.textContent = 'Creating account...';
-    sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } }).then(function(r) {
-      if (r.error) { showMsg('signupMsg', r.error.message, 'error'); btn.disabled = false; btn.textContent = 'Create Free Account'; }
-      else { showMsg('signupMsg', 'Account created! Check your email to confirm, then sign in.', 'success'); btn.disabled = false; btn.textContent = 'Create Free Account'; }
-    });
+    fetch(`${API}/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ full_name: name, email: email, password: password }) })
+      .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(r) {
+        if (!r.ok) { showMsg('signupMsg', r.data.detail || 'Signup failed.', 'error'); btn.disabled = false; btn.textContent = 'Create Free Account'; return; }
+        localStorage.setItem('token', r.data.token);
+        window.location.href = 'dashboard.html';
+      })
+      .catch(function() { showMsg('signupMsg', 'Could not reach the server.', 'error'); btn.disabled = false; btn.textContent = 'Create Free Account'; });
   }
 </script>
 </body>

@@ -6,9 +6,7 @@
 <title>Resume Screener</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #080808; --s1: #111; --s2: #181818; --s3: #222;
@@ -620,29 +618,36 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  const API           = '';
-  const SUPABASE_URL  = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
-  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const API = '';
 
   let currentUser = null, currentProfile = null;
 
-  async function initAuth() {
-    const { data: { session } } = await sbClient.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; return; }
-    currentUser = session.user;
-    const navEl = document.getElementById('userEmailNav');
-    if (navEl) navEl.textContent = currentUser.email.split('@')[0] + ' · Dashboard';
-    await loadUserProfile();
+  function authHeaders() {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
-  async function loadUserProfile() {
-    const { data } = await sbClient.from('profiles').select('*').eq('id', currentUser.id).single();
-    if (!data) return;
-    currentProfile = data;
-    const used = data.screenings_used || 0;
-    const limit = data.screenings_limit || 5;
-    const isPro = data.plan === 'pro';
+  async function initAuth() {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = 'login.html'; return; }
+
+    const res = await fetch(`${API}/auth/me`, { headers: authHeaders() });
+    if (!res.ok) { localStorage.removeItem('token'); window.location.href = 'login.html'; return; }
+
+    const { user } = await res.json();
+    currentUser = user;
+    currentProfile = user;
+    const navEl = document.getElementById('userEmailNav');
+    if (navEl) navEl.textContent = currentUser.email.split('@')[0] + ' · Dashboard';
+    applyUsage(user);
+  }
+
+  function applyUsage(usage) {
+    if (!usage) return;
+    currentProfile = usage;
+    const used = usage.screenings_used || 0;
+    const limit = usage.screenings_limit || 5;
+    const isPro = usage.plan === 'pro';
     if (!isPro && used >= limit) {
       const banner = document.getElementById('limitBanner');
       if (banner) { document.getElementById('limitCount').textContent = limit; banner.style.display = 'flex'; }
@@ -652,22 +657,8 @@
     }
   }
 
-  async function trackScreening(jd, candidateCount) {
-    if (!currentUser) return;
-    await sbClient.from('screenings').insert({ user_id: currentUser.id, jd_snippet: jd.slice(0,100), candidate_count: candidateCount });
-    const used = (currentProfile?.screenings_used || 0) + 1;
-    await sbClient.from('profiles').update({ screenings_used: used }).eq('id', currentUser.id);
-    if (currentProfile) currentProfile.screenings_used = used;
-    const limit = currentProfile?.screenings_limit || 5;
-    const isPro = currentProfile?.plan === 'pro';
-    if (!isPro && used >= limit) {
-      const banner = document.getElementById('limitBanner');
-      if (banner) { document.getElementById('limitCount').textContent = limit; banner.style.display = 'flex'; }
-    }
-  }
-
   async function handleLogout() {
-    await sbClient.auth.signOut();
+    localStorage.removeItem('token');
     window.location.href = 'login.html';
   }
 
@@ -975,11 +966,11 @@
     document.getElementById('faissBar').style.display = 'none';
     selectedForCompare.clear(); lastJD = jd;
     try {
-      const res = await fetch(`${API}/rank`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ job_description:jd, resumes, top_n:topN, ...(relevantIds?{relevant_ids:relevantIds,eval_k_values:[1,3,5]}:{}) }) });
+      const res = await fetch(`${API}/rank`, { method:'POST', headers:{'Content-Type':'application/json', ...authHeaders()}, body: JSON.stringify({ job_description:jd, resumes, top_n:topN, ...(relevantIds?{relevant_ids:relevantIds,eval_k_values:[1,3,5]}:{}) }) });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail?.message||e.detail||`HTTP ${res.status}`); }
       clearStatus(); const data = await res.json();
       renderResults(data); checkHealth();
-      trackScreening(jd, resumes.length);
+      applyUsage(data.usage);
       generateAllExplanations(jd, data.results||[]);
       generateAllSkillGaps(jd, data.results||[]);
       generateAllRedFlags(data.results||[]);

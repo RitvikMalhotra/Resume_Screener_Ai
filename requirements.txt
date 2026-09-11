@@ -4,3 +4,8 @@ pydantic>=2.7.0,<3
 httpx>=0.27.0,<1
 python-multipart>=0.0.9
 beautifulsoup4>=4.12.0
+
+# Auth (custom, replaces Supabase) + Neon Postgres
+psycopg[binary]>=3.1.0,<4
+bcrypt>=4.1.0,<5
+pyjwt>=2.8.0,<3

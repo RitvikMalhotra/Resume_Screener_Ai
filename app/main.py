@@ -28,6 +28,15 @@ from pydantic import BaseModel, Field, field_validator
 from app.pipeline import Pipeline, ResumeInput
 from app.job_queue import JobRunner
 from app.rate_limiter import RateLimiter, RateLimitConfig
+from app import db
+from app.auth import (
+    auth_configured,
+    create_token,
+    get_user_id_from_request,
+    hash_password,
+    require_user_id,
+    verify_password,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,6 +69,8 @@ async def lifespan(app: FastAPI):
     logger.info("Warming up pipeline…")
     get_pipeline()
     logger.info("Pipeline ready.")
+    if db.is_configured():
+        db.init_schema()
     yield
     logger.info("Shutting down.")
 
@@ -91,6 +102,17 @@ class ResumeItem(BaseModel):
         if not v.strip():
             raise ValueError("Resume text cannot be empty")
         return v
+
+
+class SignupRequest(BaseModel):
+    full_name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., min_length=3, max_length=320)
+    password: str = Field(..., min_length=8, max_length=200)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 class RankRequest(BaseModel):
@@ -134,6 +156,7 @@ class RankResponse(BaseModel):
     metrics_raw: Optional[dict] = None
     metrics_report: Optional[dict] = None
     validation: Optional[dict] = None
+    usage: Optional[dict] = None
 
 
 class IndexBuildRequest(BaseModel):
@@ -315,7 +338,59 @@ async def health(request: Request):
     _limiter.check(request, heavy=False)
     pipeline = get_pipeline()
     info     = pipeline.retriever.index_info()
-    return {"status": "ok", "version": "4.0.0", "index": info.to_dict() if info else None, "cache": pipeline.retriever.cache_stats(), "jobs": _runner.stats(), "ratelimit": _limiter.stats()}
+    return {"status": "ok", "version": "4.0.0", "index": info.to_dict() if info else None, "cache": pipeline.retriever.cache_stats(), "jobs": _runner.stats(), "ratelimit": _limiter.stats(), "auth": auth_configured() and db.is_configured()}
+
+
+# ── Auth ─────────────────────────────────────────────────────────────────────
+
+def _require_auth_backend() -> None:
+    if not auth_configured() or not db.is_configured():
+        raise HTTPException(status_code=503, detail="Auth is not configured on this deployment (missing DATABASE_URL/JWT_SECRET).")
+
+
+@app.post("/auth/signup")
+async def signup(body: SignupRequest):
+    _require_auth_backend()
+    email = body.email.strip().lower()
+    if db.get_user_by_email(email):
+        raise HTTPException(status_code=409, detail="An account with that email already exists.")
+    user = db.create_user(email=email, password_hash=hash_password(body.password), full_name=body.full_name.strip())
+    return {"token": create_token(user["id"], user["email"]), "user": user}
+
+
+@app.post("/auth/login")
+async def login(body: LoginRequest):
+    _require_auth_backend()
+    user = db.get_user_by_email(body.email.strip().lower())
+    if not user or not verify_password(body.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+    user.pop("password_hash", None)
+    return {"token": create_token(user["id"], user["email"]), "user": user}
+
+
+@app.get("/auth/me")
+async def get_me(request: Request):
+    _require_auth_backend()
+    user = db.get_user_by_id(require_user_id(request))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    return {"user": user}
+
+
+@app.get("/screenings")
+async def get_screenings(request: Request):
+    _require_auth_backend()
+    user_id = require_user_id(request)
+    return {"screenings": db.list_screenings(user_id)}
+
+
+@app.post("/auth/upgrade")
+async def upgrade_plan(request: Request):
+    """Demo-only plan upgrade with no payment verification (matches the prior
+    client-side Razorpay integration, which also trusted the success callback)."""
+    _require_auth_backend()
+    user_id = require_user_id(request)
+    return {"user": db.upgrade_to_pro(user_id)}
 
 
 @app.post("/rank", response_model=RankResponse)
@@ -328,6 +403,11 @@ async def rank_resumes(request: Request, body: RankRequest):
     pipeline = get_pipeline()
     validation_result = None
     resumes_to_use    = body.resumes
+
+    user_id = get_user_id_from_request(request)
+    user    = db.get_user_by_id(user_id) if user_id and db.is_configured() else None
+    if user and user["plan"] != "pro" and user["screenings_used"] >= user["screenings_limit"]:
+        raise HTTPException(status_code=402, detail=f"Free plan limit of {user['screenings_limit']} screenings reached. Upgrade to Pro for unlimited screenings.")
 
     if not body.skip_validation:
         validator = InputValidator()
@@ -360,12 +440,17 @@ async def rank_resumes(request: Request, body: RankRequest):
         metrics_raw    = eval_result["raw"]
         metrics_report = eval_result["report"]
 
+    usage = None
+    if user:
+        usage = db.record_screening(user_id, body.job_description, len(body.resumes))
+        usage.pop("created_at", None)  # datetime isn't JSON-serializable via the raw JSONResponse below
+
     info = pipeline.retriever.index_info()
     result = {
         "results": [{"resume_id": r.resume_id, "rank": r.rank, "embedding_score": round(r.embedding_score, 4), "rerank_score": round(r.rerank_score, 4), "final_score": round(result_dicts_sorted[i]["final_score"], 4), "text_snippet": r.text[:300], "confidence": confidences_sorted[i].to_dict(), "fallback": result_dicts_sorted[i].get("fallback"), "fallback_used": result_dicts_sorted[i].get("fallback_used", False)} for i, r in enumerate(results_sorted)],
         "total_candidates": response.total_candidates, "timing": response.timing,
         "faiss_info": info.to_dict() if info else None, "metrics_raw": metrics_raw,
-        "metrics_report": metrics_report, "validation": validation_result,
+        "metrics_report": metrics_report, "validation": validation_result, "usage": usage,
     }
     api_response = JSONResponse(content=result)
     for k, v in headers.items():

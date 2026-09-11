@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resume Screener — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
   :root {
@@ -174,33 +173,29 @@
 </div>
 
 <script>
-  const SUPABASE_URL  = 'https://yvtvzpiqemcjgxyyycde.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2dHZ6cGlxZW1jamd4eXl5Y2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjMxNTAsImV4cCI6MjA5Mzk5OTE1MH0.bcfyypurM7Jk026AsxTJLBkPGtaU2FPrRCqWsMcm5A0';
+  const API           = '';
   const RZP_KEY       = 'rzp_test_Snz0MRxNRL51pT';
-  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
   let currentUser    = null;
   let currentProfile = null;
 
-  async function init() {
-    const { data: { session } } = await sbClient.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; return; }
-    currentUser = session.user;
-    document.getElementById('navEmail').textContent = currentUser.email;
-    await loadProfile();
-    await loadHistory();
+  function authHeaders() {
+    return { Authorization: `Bearer ${localStorage.getItem('token')}` };
   }
 
-  async function loadProfile() {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', currentUser.id)
-      .single();
+  async function init() {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = 'login.html'; return; }
 
-    if (error || !data) return;
-    currentProfile = data;
-    renderProfile(data);
+    const res = await fetch(`${API}/auth/me`, { headers: authHeaders() });
+    if (!res.ok) { localStorage.removeItem('token'); window.location.href = 'login.html'; return; }
+
+    const { user } = await res.json();
+    currentUser = user;
+    document.getElementById('navEmail').textContent = currentUser.email;
+    currentProfile = user;
+    renderProfile(user);
+    await loadHistory();
   }
 
   function renderProfile(p) {
@@ -237,14 +232,10 @@
   }
 
   async function loadHistory() {
-    const { data, error } = await supabase
-      .from('screenings')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (error || !data?.length) return;
+    const res = await fetch(`${API}/screenings`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const { screenings: data } = await res.json();
+    if (!data?.length) return;
 
     document.getElementById('historyCount').textContent = `${data.length} recent`;
     const list = document.getElementById('historyList');
@@ -275,12 +266,14 @@
       },
       theme: { color: '#e8ff47' },
       handler: async function(response) {
-        // Payment successful — upgrade plan in Supabase
-        await sbClient.from('profiles').update({
-          plan:             'pro',
-          screenings_limit: 999999,
-        }).eq('id', currentUser.id);
-        await loadProfile();
+        // Payment successful — upgrade plan (demo only: no server-side payment verification,
+        // matching the level of rigor this Razorpay test-mode integration had before)
+        const res = await fetch(`${API}/auth/upgrade`, { method: 'POST', headers: authHeaders() });
+        if (res.ok) {
+          const { user } = await res.json();
+          currentProfile = user;
+          renderProfile(user);
+        }
         btn.classList.add('hidden');
       },
     };
@@ -299,7 +292,7 @@
   }
 
   async function handleLogout() {
-    await sbClient.auth.signOut();
+    localStorage.removeItem('token');
     window.location.href = 'login.html';
   }
 

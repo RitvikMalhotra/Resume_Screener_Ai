@@ -174,6 +174,15 @@ Set `NVIDIA_API_KEY` in the Vercel project environment variables if the AI analy
 
 Vercel functions are ephemeral and have execution, memory, and deployment-size limits. Large resume batches, model cold starts, and `/rank/batch` jobs may exceed those limits. For a reliable production deployment, keep requests small or move model inference to a dedicated inference service later while retaining this Vercel frontend and API boundary.
 
+### Auth
+
+Accounts, login, and screening history are backed by a small custom auth layer in `app/main.py`/`app/auth.py`/`app/db.py` (bcrypt password hashing + JWT bearer tokens) — there is no third-party auth provider. Set two env vars for it to work:
+
+- `DATABASE_URL` — a Postgres connection string. On Vercel, add a Neon Postgres database from the project's **Storage** tab (Marketplace) and it's injected automatically.
+- `JWT_SECRET` — a random secret for signing session tokens (e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"`).
+
+The `users` and `screenings` tables are created automatically on startup (`db.init_schema()`) if they don't exist. Without these two env vars set, `/health` reports `"auth": false` and the `/auth/*` and `/screenings` endpoints return `503` rather than crashing — the rest of the app (ranking, AI endpoints) works fine without them.
+
 ---
 
 ## API Endpoints
