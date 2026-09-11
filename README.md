@@ -168,7 +168,7 @@ const API = 'http://localhost:8000';
 
 ### Deploy to Vercel
 
-Import this repository into Vercel with the project root set to the repository root. Vercel detects `vercel.json` and deploys `api/index.py` as the FastAPI function. No Railway service is required. The frontend is available at `/ui.html`, the health check at `/api/health`, and the interactive API docs at `/api/docs`.
+Import this repository into Vercel with the project root set to the repository root. Vercel auto-detects `app/main.py` as a FastAPI framework preset and routes every request straight into that app — no `vercel.json` or `api/` directory needed, and none of Vercel's usual static-file hosting applies once a framework preset is active. Because of that, `app/main.py` also serves the static frontend pages itself (`/`, `/ui.html`, `/dashboard.html`, `/login.html`) via explicit `FileResponse` routes. No Railway service is required. The frontend is available at `/ui.html`, the health check at `/health`, and the interactive API docs at `/docs` — note there is no `/api` prefix; `ui.html`'s `API` constant is set to `''` for the deployed site.
 
 Set `NVIDIA_API_KEY` in the Vercel project environment variables if the AI analysis endpoints are enabled. Set `NVIDIA_MODEL` to the exact model ID shown on the NVIDIA model page if the default model is unavailable. Vercel uses a lightweight lexical ranking fallback because the full SentenceTransformer/FAISS stack exceeds Vercel's 500 MB function limit. Local installs from `requirements-local.txt` use the full embedding and cross-encoder pipeline.
 

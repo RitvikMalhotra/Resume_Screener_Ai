@@ -17,11 +17,12 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
 from app.pipeline import Pipeline, ResumeInput
@@ -272,6 +273,39 @@ def _run_rank(pipeline, job_description, resumes, top_n, relevant_ids, eval_k_va
         "faiss_info": info.to_dict() if info else None, "metrics_raw": metrics_raw,
         "metrics_report": metrics_report, "validation": validation_result,
     }
+
+
+# ── Static frontend pages ───────────────────────────────────────────────────
+# Vercel's Python framework preset routes every request straight into this
+# app (it no longer serves loose root-level HTML files as static assets), so
+# the app has to serve its own frontend pages.
+
+_STATIC_DIR = Path(__file__).resolve().parent.parent
+
+
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    return FileResponse(_STATIC_DIR / "index.html")
+
+
+@app.get("/index.html", include_in_schema=False)
+async def serve_index_html():
+    return FileResponse(_STATIC_DIR / "index.html")
+
+
+@app.get("/ui.html", include_in_schema=False)
+async def serve_ui():
+    return FileResponse(_STATIC_DIR / "ui.html")
+
+
+@app.get("/dashboard.html", include_in_schema=False)
+async def serve_dashboard():
+    return FileResponse(_STATIC_DIR / "dashboard.html")
+
+
+@app.get("/login.html", include_in_schema=False)
+async def serve_login():
+    return FileResponse(_STATIC_DIR / "login.html")
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────
