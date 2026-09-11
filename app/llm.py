@@ -150,6 +150,15 @@ def _close_truncated(snippet: str) -> Optional[str]:
     return repaired
 
 
+def _loads(text: str) -> Any:
+    """
+    Parse with strict=False so literal newlines and tabs inside strings are
+    accepted. Models routinely emit multi-line values (an email body, say) with
+    real newlines rather than \\n escapes, which strict JSON rejects outright.
+    """
+    return json.loads(text, strict=False)
+
+
 def extract_json(raw: str) -> Any:
     """Pull a JSON value out of model output that may be fenced, prefixed, or truncated."""
     if not raw or not raw.strip():
@@ -165,7 +174,7 @@ def extract_json(raw: str) -> Any:
         text = re.sub(r"^```(?:json)?\s*", "", text).strip()
 
     try:
-        return json.loads(text)
+        return _loads(text)
     except json.JSONDecodeError:
         pass
 
@@ -179,13 +188,13 @@ def extract_json(raw: str) -> Any:
     candidate = text[start:]
 
     try:
-        return json.loads(candidate)
+        return _loads(candidate)
     except json.JSONDecodeError:
         pass
 
     # Trailing prose after a complete object: decode just the first value.
     try:
-        value, _ = json.JSONDecoder().raw_decode(candidate)
+        value, _ = json.JSONDecoder(strict=False).raw_decode(candidate)
         return value
     except json.JSONDecodeError:
         pass
@@ -193,7 +202,7 @@ def extract_json(raw: str) -> Any:
     repaired = _close_truncated(candidate)
     if repaired:
         try:
-            return json.loads(repaired)
+            return _loads(repaired)
         except json.JSONDecodeError:
             pass
 
