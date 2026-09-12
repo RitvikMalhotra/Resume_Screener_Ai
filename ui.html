@@ -621,6 +621,7 @@
   const API = '';
 
   let currentUser = null, currentProfile = null;
+  let aiModelLabel = '';   // populated from /health; never hardcode a model name
 
   function authHeaders() {
     const token = localStorage.getItem('token');
@@ -692,6 +693,9 @@
       const data = await res.json();
       document.getElementById('statusDot').classList.remove('offline');
       document.getElementById('statusText').textContent = 'API Online · v' + (data.version || '4.0');
+      // Label the AI output with whatever model the server is actually using,
+      // so it can't drift out of sync with NVIDIA_MODEL.
+      aiModelLabel = (data.ai?.model || '').split('/').pop();
       updateSystemBar(data);
     } catch {
       document.getElementById('statusDot').classList.add('offline');
@@ -1153,7 +1157,7 @@
           ${r.fallback_used&&r.fallback?`<div class="footer-gap">Keywords: <span>${r.fallback.matched_keywords.slice(0,5).join(', ')}</span></div>`:''}
         </div>
         <div class="explain-section">
-          <div class="explain-header"><span class="explain-label">⚡ Skill Experience Summary</span><span class="explain-model-tag">LLaMA 4 Maverick</span></div>
+          <div class="explain-header"><span class="explain-label">⚡ Skill Experience Summary</span><span class="explain-model-tag">${aiModelLabel || 'AI'}</span></div>
           <div id="explain_${r.resume_id}" class="explain-loading"><div class="explain-spinner"></div> Waiting…</div>
         </div>
         <div class="skillgap-section">

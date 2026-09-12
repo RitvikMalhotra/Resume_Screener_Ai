@@ -174,7 +174,6 @@
 
 <script>
   const API           = '';
-  const RZP_KEY       = 'rzp_test_Snz0MRxNRL51pT';
 
   let currentUser    = null;
   let currentProfile = null;
@@ -253,12 +252,34 @@
 
   async function handleUpgrade() {
     const btn = document.getElementById('upgradeBtn');
+    const reset = (msg) => {
+      btn.disabled = false;
+      btn.textContent = msg || '⭐ Upgrade to Pro — ₹999/month';
+    };
+
     btn.disabled = true; btn.textContent = 'Opening payment…';
 
+    // The order (and its price) is created server-side; the browser never
+    // chooses what it's paying, and the key id comes from server config.
+    let order;
+    try {
+      const res = await fetch(`${API}/payments/order`, { method: 'POST', headers: authHeaders() });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        reset(data.detail ? `⚠ ${data.detail}` : '⚠ Could not start payment');
+        return;
+      }
+      order = await res.json();
+    } catch {
+      reset('⚠ Could not reach the server');
+      return;
+    }
+
     const options = {
-      key:         RZP_KEY,
-      amount:      99900,       // ₹999 in paise
-      currency:    'INR',
+      key:         order.key_id,
+      order_id:    order.order_id,
+      amount:      order.amount,
+      currency:    order.currency,
       name:        'Resume Screener',
       description: 'Pro Plan — Unlimited Screenings',
       prefill: {
@@ -266,28 +287,40 @@
       },
       theme: { color: '#e8ff47' },
       handler: async function(response) {
-        // Payment successful — upgrade plan (demo only: no server-side payment verification,
-        // matching the level of rigor this Razorpay test-mode integration had before)
-        const res = await fetch(`${API}/auth/upgrade`, { method: 'POST', headers: authHeaders() });
-        if (res.ok) {
+        // Hand Razorpay's signed receipt to the API, which verifies it before
+        // granting anything.
+        btn.textContent = 'Verifying payment…';
+        try {
+          const res = await fetch(`${API}/auth/upgrade`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+            }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            reset(data.detail ? `⚠ ${data.detail}` : '⚠ Payment verification failed');
+            return;
+          }
           const { user } = await res.json();
           currentProfile = user;
           renderProfile(user);
+          btn.classList.add('hidden');
+        } catch {
+          reset('⚠ Could not verify payment');
         }
-        btn.classList.add('hidden');
       },
     };
 
     try {
       const rzp = new Razorpay(options);
-      rzp.on('payment.failed', () => {
-        btn.disabled = false;
-        btn.textContent = '⭐ Upgrade to Pro — ₹999/month';
-      });
+      rzp.on('payment.failed', () => reset());
       rzp.open();
     } catch {
-      btn.disabled = false;
-      btn.textContent = '⭐ Upgrade to Pro — ₹999/month';
+      reset();
     }
   }
 

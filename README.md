@@ -202,6 +202,22 @@ fenced or prose-wrapped JSON, and JSON cut off mid-object. AI endpoints return a
 502/503 with a readable message rather than a 500, and `/rank` degrades to retrieval
 order rather than failing if the model is unavailable.
 
+### Payments
+
+Upgrading to Pro requires a payment Razorpay actually signed. `POST /payments/order`
+creates the order server-side (the price lives in `app/payments.py`, not the client),
+and `POST /auth/upgrade` only grants Pro when the HMAC-SHA256 signature over
+`{order_id}|{payment_id}` verifies against the key secret. Orders are recorded in
+`payment_orders` and claimed with a conditional UPDATE, so a payment can't be replayed
+or applied to a different account.
+
+- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — required for the upgrade flow. The
+  secret stays server-side; the browser only ever sees the key id.
+- `PRO_PLAN_AMOUNT_PAISE` — plan price, default `99900` (₹999).
+
+Without these set, `/payments/order` and `/auth/upgrade` return 503 and the upgrade
+button reports that payments aren't configured — nobody gets a free upgrade.
+
 ### Auth
 
 Accounts, login, and screening history are backed by a small custom auth layer in `app/main.py`/`app/auth.py`/`app/db.py` (bcrypt password hashing + JWT bearer tokens) — there is no third-party auth provider. Set two env vars for it to work:

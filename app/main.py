@@ -27,8 +27,9 @@ from pydantic import BaseModel, Field, field_validator
 from app.pipeline import Pipeline, ResumeInput
 from app.job_queue import JobRunner
 from app.rate_limiter import RateLimiter, RateLimitConfig
-from app import db, llm
+from app import db, llm, payments
 from app.llm import LLMError
+from app.payments import PaymentError
 from app.auth import (
     auth_configured,
     create_token,
@@ -111,6 +112,12 @@ class SignupRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class UpgradeRequest(BaseModel):
+    razorpay_order_id: str = Field(..., min_length=1)
+    razorpay_payment_id: str = Field(..., min_length=1)
+    razorpay_signature: str = Field(..., min_length=1)
 
 
 class RankRequest(BaseModel):
@@ -367,12 +374,48 @@ async def get_screenings(request: Request):
     return {"screenings": db.list_screenings(user_id)}
 
 
-@app.post("/auth/upgrade")
-async def upgrade_plan(request: Request):
-    """Demo-only plan upgrade with no payment verification (matches the prior
-    client-side Razorpay integration, which also trusted the success callback)."""
+@app.post("/payments/order")
+async def create_payment_order(request: Request):
+    """Create a Razorpay order for the Pro plan. The amount is set server-side."""
     _require_auth_backend()
     user_id = require_user_id(request)
+    try:
+        order = await payments.create_order(user_id)
+    except PaymentError as exc:
+        status = 503 if not payments.is_configured() else 502
+        raise HTTPException(status_code=status, detail=str(exc))
+
+    db.create_payment_order(order["id"], user_id, order["amount"])
+    return {
+        "order_id": order["id"],
+        "amount":   order["amount"],
+        "currency": order.get("currency", payments.CURRENCY),
+        "key_id":   payments.KEY_ID,
+    }
+
+
+@app.post("/auth/upgrade")
+async def upgrade_plan(request: Request, body: UpgradeRequest):
+    """
+    Upgrade to Pro, but only against a payment Razorpay actually signed.
+
+    Verifying the signature server-side is the whole point: the browser
+    reporting "payment succeeded" proves nothing on its own.
+    """
+    _require_auth_backend()
+    user_id = require_user_id(request)
+
+    if not payments.is_configured():
+        raise HTTPException(status_code=503, detail="Payments are not configured on this deployment.")
+
+    if not payments.verify_signature(body.razorpay_order_id, body.razorpay_payment_id, body.razorpay_signature):
+        logger.warning("Rejected upgrade for user %s: bad payment signature", user_id)
+        raise HTTPException(status_code=400, detail="Payment could not be verified.")
+
+    if not db.claim_payment_order(body.razorpay_order_id, user_id):
+        logger.warning("Rejected upgrade for user %s: order %s not claimable", user_id, body.razorpay_order_id)
+        raise HTTPException(status_code=409, detail="This payment has already been used, or does not belong to your account.")
+
     return {"user": db.upgrade_to_pro(user_id)}
 
 

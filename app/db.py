@@ -61,6 +61,15 @@ def init_schema() -> None:
                 created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS payment_orders (
+                order_id   TEXT PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                amount     INTEGER NOT NULL,
+                status     TEXT NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
         conn.commit()
     logger.info("Database schema ready")
 
@@ -94,6 +103,33 @@ def get_user_by_id(user_id: int) -> Optional[dict[str, Any]]:
             f"SELECT {_PUBLIC_USER_COLUMNS} FROM users WHERE id = %s",
             (user_id,),
         ).fetchone()
+
+
+def create_payment_order(order_id: str, user_id: int, amount: int) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO payment_orders (order_id, user_id, amount) VALUES (%s, %s, %s)",
+            (order_id, user_id, amount),
+        )
+        conn.commit()
+
+
+def claim_payment_order(order_id: str, user_id: int) -> bool:
+    """
+    Mark an order paid, but only if it belongs to this user and is still
+    pending. The conditional UPDATE is what makes this safe: a replayed
+    payment (or one pointed at someone else's account) matches no row and
+    returns False rather than granting a second upgrade.
+    """
+    with get_connection() as conn:
+        row = conn.execute(
+            "UPDATE payment_orders SET status = 'paid' "
+            "WHERE order_id = %s AND user_id = %s AND status = 'pending' "
+            "RETURNING order_id",
+            (order_id, user_id),
+        ).fetchone()
+        conn.commit()
+    return row is not None
 
 
 def upgrade_to_pro(user_id: int) -> dict[str, Any]:
