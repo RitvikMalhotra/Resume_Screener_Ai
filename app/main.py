@@ -332,10 +332,13 @@ async def health(request: Request):
 
 
 @app.get("/health/ai")
-async def health_ai(request: Request, max_tokens: int = 400):
+async def health_ai(request: Request, max_tokens: int = 400, prompt: Optional[str] = None):
     """Self-test the AI dependency and report latency + token usage."""
     _limiter.check(request, heavy=False)
-    return await llm.diagnose(max_tokens=max(1, min(max_tokens, 4096)))
+    kwargs = {"max_tokens": max(1, min(max_tokens, 4096))}
+    if prompt:
+        kwargs["prompt"] = prompt[:2000]
+    return await llm.diagnose(**kwargs)
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
