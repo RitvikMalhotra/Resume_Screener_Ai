@@ -32,7 +32,20 @@ logger = logging.getLogger(__name__)
 
 API_KEY = os.getenv("NVIDIA_API_KEY", "")
 API_URL = os.getenv("NVIDIA_API_URL", "https://integrate.api.nvidia.com/v1/chat/completions")
-MODEL   = os.getenv("NVIDIA_MODEL", "meta/muse-glimmer-30b")
+
+# Default chosen by benchmarking the provider's catalogue on this app's own
+# prompts: it answers a skill-extraction prompt in ~4s where meta/muse-glimmer-30b
+# needed ~108s for the identical answer, mostly because it honours the
+# thinking toggle below and muse-glimmer ignores it.
+MODEL = os.getenv("NVIDIA_MODEL", "deepseek-ai/deepseek-v4-flash-0731")
+
+# These models reason before answering, and the reasoning is ~85% of everything
+# they generate: 1011 completion tokens versus a 230-character answer. Turning it
+# off returned the same answer from 67 tokens. Latency here is dominated by token
+# count, so this is the single biggest lever on how fast the AI features feel.
+# Models that don't support the flag ignore it; the few that reject it outright
+# are handled by retrying without it.
+DISABLE_THINKING = os.getenv("NVIDIA_DISABLE_THINKING", "true").lower() == "true"
 
 # Reasoning models spend most of their budget inside <think>. Starving them is
 # what makes `content` come back null, so these are deliberately generous.
@@ -244,6 +257,8 @@ async def call_llm(
         "temperature": temperature,
         "stream": False,
     }
+    if DISABLE_THINKING:
+        payload["chat_template_kwargs"] = {"thinking": False}
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
@@ -274,6 +289,15 @@ async def call_llm(
                     continue
                 raise LLMError(f"The AI provider is unavailable right now ({res.status_code}). Try again shortly.")
             if res.status_code >= 400:
+                # Some models reject the thinking toggle rather than ignoring
+                # it; drop it and try once more before giving up.
+                if "chat_template_kwargs" in payload:
+                    last_error = f"provider returned {res.status_code} for the thinking toggle"
+                    logger.warning(
+                        "Provider returned %s; retrying without the thinking toggle", res.status_code
+                    )
+                    payload.pop("chat_template_kwargs")
+                    continue
                 raise LLMError(f"The AI provider rejected the request ({res.status_code}).")
 
             text = strip_thinking(_extract_message_text(res.json()))
