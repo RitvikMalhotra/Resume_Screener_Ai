@@ -798,24 +798,38 @@
   async function parsePDF(file) {
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    let text = '';
+    const lines = [];
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const c    = await page.getTextContent();
-      text += c.items.map(x => x.str).join(' ') + '\n';
+      // Rebuild visual lines by y-position: PDFs carry no newlines, so without
+      // this the whole page collapses into one line and extractName never matches.
+      let buf2 = [], lastY = null;
+      for (const item of c.items) {
+        if (!item.str) continue;
+        const y = item.transform[5];
+        if (lastY !== null && Math.abs(y - lastY) > 2) { lines.push(buf2.join(' ')); buf2 = []; }
+        buf2.push(item.str);
+        lastY = y;
+      }
+      if (buf2.length) lines.push(buf2.join(' '));
     }
-    return text.trim();
+    return lines.map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
   }
+
+  const NAME_WORD = /^(?:[A-Z]\.?|[A-Z][a-zA-Z'’\-]{1,19}\.?)$/;
+  const NAME_SKIP = /@|http|linkedin|github|\d|resume|curriculum|vitae|\bcv\b|summary|objective|profile|contact|experience|education|skills|projects|portfolio|references|certification|achievement|engineer|developer|manager|analyst|designer|consultant|architect|scientist|specialist|administrator|intern|senior|junior|lead|director|officer|executive|street|road|avenue/i;
 
   function extractName(text, filename) {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const re    = /^[A-Z][a-z]+([\s\-][A-Z][a-z]+){1,3}$/;
-    const skip  = /@|http|linkedin|github|\d{3}|\+\d|resume|cv|summary|experience|education|skills/i;
-    for (const line of lines.slice(0, 8)) {
-      const clean = line.replace(/[|,·•]/g, ' ').trim();
-      const words = clean.split(/\s+/);
-      if (re.test(clean) && !skip.test(clean) && words.length >= 2 && words.length <= 4)
-        return clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    for (const line of lines.slice(0, 12)) {
+      const clean = line.replace(/[|,·•_]+/g, ' ').replace(/\s+/g, ' ').trim();
+      if (clean.length > 40 || NAME_SKIP.test(clean)) continue;
+      const words = clean.split(' ');
+      if (words.length < 2 || words.length > 4) continue;
+      if (!words.every(w => NAME_WORD.test(w))) continue;
+      const id = clean.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      if (id) return id;
     }
     return filename.replace(/\.pdf$/i,'').replace(/[_\-\s]+/g,'_').toLowerCase().replace(/[^a-z0-9_]/g,'') || 'candidate_'+Date.now();
   }
@@ -1330,9 +1344,12 @@
     }
   }
 
-  // Close email modal on backdrop click
-  document.getElementById('emailModal').addEventListener('click', function(e) {
-    if (e.target === this) closeEmailModal();
+  // Close email modal on backdrop click.
+  // #emailModal is declared *after* this script block, so it does not exist yet.
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('emailModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEmailModal();
+    });
   });
 
 
