@@ -39,16 +39,17 @@ MODEL   = os.getenv("NVIDIA_MODEL", "meta/muse-glimmer-30b")
 DEFAULT_MAX_TOKENS = 1200
 JSON_MAX_TOKENS    = 2000
 
-# This model generates at roughly 10 tokens/sec with ~5s of fixed overhead, and
-# it reasons before answering, so a few-hundred-token answer realistically takes
-# 30-90s. Measured against the deployment, the serverless execution ceiling is
-# well above 120s, so the timeout is sized for how slow the model actually is
-# rather than kept artificially short -- a too-tight limit just turns a working
-# (if slow) answer into an error. TOTAL_BUDGET_S bounds retries so several
-# attempts can't stack up past the platform limit.
-REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "110"))
-MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "2"))
-TOTAL_BUDGET_S    = float(os.getenv("NVIDIA_TOTAL_BUDGET", "150"))
+# This provider's latency is wildly variable rather than uniformly slow:
+# three identical requests measured 4.3s, 8.7s and 52.9s, with the same token
+# counts and no rate-limit headers, and some runs exceed two minutes. Since a
+# slow response is bad luck in the queue rather than a property of the request,
+# several short attempts beat one long one -- a retry re-draws and usually
+# lands fast, where a single long wait just rides out the bad draw.
+# TOTAL_BUDGET_S caps the whole thing so retries can't stack past the
+# serverless execution limit (measured to be well above 120s).
+REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "40"))
+MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "3"))
+TOTAL_BUDGET_S    = float(os.getenv("NVIDIA_TOTAL_BUDGET", "130"))
 
 
 class LLMError(RuntimeError):
@@ -291,11 +292,14 @@ async def call_llm(
             raise LLMError("The model returned an empty response. Try again or raise NVIDIA max tokens.")
 
         except httpx.TimeoutException:
-            # Not retried: the model being slow isn't transient, and a second
-            # attempt would just run out the serverless execution budget too.
+            # Retried on purpose: latency here is queue luck, not a property of
+            # the request, so a fresh attempt usually draws a much faster one.
+            last_error = "timed out"
             logger.warning("LLM attempt %d/%d timed out after %.0fs", attempt, attempts, timeout)
+            if attempt < attempts:
+                continue
             raise LLMError(
-                f"The AI provider took longer than {timeout:.0f}s to respond. Try again shortly."
+                "The AI provider is responding too slowly right now. Try again in a moment."
             )
         except httpx.HTTPError as exc:
             last_error = str(exc)

@@ -365,15 +365,17 @@ Return ONLY a JSON array with one object per candidate, no markdown, no explanat
         """Returns {candidate_index: score in [0,1]}. Raises LLMError on failure."""
         from app import llm
 
-        # Single attempt on a short leash: /rank has a whole pipeline to get
-        # through, so it's better to fall back to retrieval order quickly than
-        # to retry and risk the serverless execution limit.
+        # Retries matter more than a long single wait here: falling back to
+        # retrieval order means lexical scores, which is exactly the
+        # "perfect match scores 0.2" behaviour the hosted reranker exists to
+        # avoid. Short attempts re-draw against this provider's variable
+        # latency instead of riding out one bad draw.
         raw = _run_coroutine(llm.call_llm_json(
             self._build_prompt(job_description, candidates),
             max_tokens=2000,
             temperature=0.1,
-            timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "90")),
-            attempts=1,
+            timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "35")),
+            attempts=int(os.getenv("RERANK_LLM_ATTEMPTS", "3")),
         ))
 
         # Accept either a bare array or {"scores": [...]} / {"results": [...]}.
