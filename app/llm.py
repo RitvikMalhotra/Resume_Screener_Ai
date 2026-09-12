@@ -307,7 +307,12 @@ async def call_llm(
     raise LLMError(f"The AI request failed: {last_error}.")
 
 
-async def diagnose(prompt: str = "Reply with the single word: ok", max_tokens: int = 400) -> dict:
+async def diagnose(
+    prompt: str = "Reply with the single word: ok",
+    max_tokens: int = 400,
+    system: Optional[str] = None,
+    no_think: bool = False,
+) -> dict:
     """
     Self-test for the AI dependency: does one controlled call and reports what
     came back, including token usage and finish_reason. Exists because latency
@@ -317,13 +322,18 @@ async def diagnose(prompt: str = "Reply with the single word: ok", max_tokens: i
     if not is_configured():
         return {"ok": False, "error": "NVIDIA_API_KEY is not set"}
 
+    messages = ([{"role": "system", "content": system}] if system else []) + \
+               [{"role": "user", "content": prompt}]
     payload = {
         "model": MODEL,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "max_tokens": max_tokens,
         "temperature": 0.1,
         "stream": False,
     }
+    if no_think:
+        # Some NIM reasoning models expose a toggle for the thinking phase.
+        payload["chat_template_kwargs"] = {"thinking": False}
     headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
     t0 = time.perf_counter()
