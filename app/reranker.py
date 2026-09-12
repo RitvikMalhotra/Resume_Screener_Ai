@@ -374,7 +374,11 @@ Return ONLY a JSON array with one object per candidate, no markdown, no explanat
             self._build_prompt(job_description, candidates),
             max_tokens=2000,
             temperature=0.1,
-            timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "35")),
+            # Longer per attempt than the single-answer endpoints because this
+            # scores every candidate in one call, but capped so that even a full
+            # set of failures leaves room to fall back and still return a
+            # response inside the serverless limit.
+            timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "28")),
             attempts=int(os.getenv("RERANK_LLM_ATTEMPTS", "3")),
         ))
 

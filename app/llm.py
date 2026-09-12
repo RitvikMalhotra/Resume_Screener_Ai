@@ -58,11 +58,15 @@ JSON_MAX_TOKENS    = 2000
 # slow response is bad luck in the queue rather than a property of the request,
 # several short attempts beat one long one -- a retry re-draws and usually
 # lands fast, where a single long wait just rides out the bad draw.
-# TOTAL_BUDGET_S caps the whole thing so retries can't stack past the
-# serverless execution limit (measured to be well above 120s).
-REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "40"))
-MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "3"))
-TOTAL_BUDGET_S    = float(os.getenv("NVIDIA_TOTAL_BUDGET", "130"))
+# Measured successful responses land at 0.9s, 1.4s, 5.6s and 16.2s, so 18s is
+# past the point where waiting longer is still likely to pay off -- a request
+# still open then has drawn a bad queue slot and is usually minutes away.
+# 5 x 18s = 90s of draws instead of 3 x 40s, which spent the entire serverless
+# budget riding out two bad draws. TOTAL_BUDGET_S stays under the ~120s
+# execution limit so a total failure returns our own message, not a 502.
+REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "18"))
+MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "5"))
+TOTAL_BUDGET_S    = float(os.getenv("NVIDIA_TOTAL_BUDGET", "95"))
 
 
 class LLMError(RuntimeError):
