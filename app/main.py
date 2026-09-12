@@ -331,6 +331,13 @@ async def health(request: Request):
     return {"status": "ok", "version": "4.0.0", "index": info.to_dict() if info else None, "cache": pipeline.retriever.cache_stats(), "jobs": _runner.stats(), "ratelimit": _limiter.stats(), "auth": auth_configured() and db.is_configured(), "ai": {"configured": llm.is_configured(), "model": llm.MODEL, "reranker": type(pipeline.reranker).__name__}}
 
 
+@app.get("/health/ai")
+async def health_ai(request: Request, max_tokens: int = 400):
+    """Self-test the AI dependency and report latency + token usage."""
+    _limiter.check(request, heavy=False)
+    return await llm.diagnose(max_tokens=max(1, min(max_tokens, 4096)))
+
+
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 def _require_auth_backend() -> None:

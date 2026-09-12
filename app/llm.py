@@ -23,6 +23,7 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Any, Optional
 
 import httpx
@@ -295,6 +296,58 @@ async def call_llm(
             raise LLMError("Could not reach the AI provider.")
 
     raise LLMError(f"The AI request failed: {last_error}.")
+
+
+async def diagnose(prompt: str = "Reply with the single word: ok", max_tokens: int = 400) -> dict:
+    """
+    Self-test for the AI dependency: does one controlled call and reports what
+    came back, including token usage and finish_reason. Exists because latency
+    on a reasoning model is dominated by how many tokens it generates before
+    answering, which is otherwise invisible from the outside.
+    """
+    if not is_configured():
+        return {"ok": False, "error": "NVIDIA_API_KEY is not set"}
+
+    payload = {
+        "model": MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+        "temperature": 0.1,
+        "stream": False,
+    }
+    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+
+    t0 = time.perf_counter()
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            res = await client.post(API_URL, headers=headers, json=payload)
+    except Exception as exc:
+        return {"ok": False, "elapsed_s": round(time.perf_counter() - t0, 1),
+                "error": f"{type(exc).__name__}: {exc}"}
+
+    elapsed = round(time.perf_counter() - t0, 1)
+    if res.status_code != 200:
+        return {"ok": False, "elapsed_s": elapsed, "http_status": res.status_code,
+                "error": res.text[:300]}
+
+    data = res.json()
+    choice  = (data.get("choices") or [{}])[0]
+    message = choice.get("message") or {}
+    content   = _content_to_text(message.get("content"))
+    reasoning = _content_to_text(message.get("reasoning_content"))
+    answer    = strip_thinking(content or reasoning)
+
+    return {
+        "ok": bool(answer),
+        "elapsed_s": elapsed,
+        "model": MODEL,
+        "max_tokens_requested": max_tokens,
+        "finish_reason": choice.get("finish_reason"),
+        "usage": data.get("usage"),
+        "content_chars": len(content),
+        "reasoning_chars": len(reasoning),
+        "answer_preview": answer[:200],
+    }
 
 
 async def call_llm_json(
