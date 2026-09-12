@@ -339,6 +339,7 @@ async def health_ai(
     system: Optional[str] = None,
     no_think: bool = False,
     timeout: float = 120.0,
+    model: Optional[str] = None,
 ):
     """Self-test the AI dependency and report latency + token usage."""
     _limiter.check(request, heavy=False)
@@ -347,6 +348,8 @@ async def health_ai(
         kwargs["prompt"] = prompt[:4000]
     if system:
         kwargs["system"] = system[:2000]
+    if model:
+        kwargs["model"] = model[:120]
     return await llm.diagnose(**kwargs)
 
 

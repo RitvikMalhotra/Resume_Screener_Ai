@@ -317,6 +317,7 @@ async def diagnose(
     system: Optional[str] = None,
     no_think: bool = False,
     timeout: float = 120.0,
+    model: Optional[str] = None,
 ) -> dict:
     """
     Self-test for the AI dependency: does one controlled call and reports what
@@ -330,7 +331,7 @@ async def diagnose(
     messages = ([{"role": "system", "content": system}] if system else []) + \
                [{"role": "user", "content": prompt}]
     payload = {
-        "model": MODEL,
+        "model": model or MODEL,
         "messages": messages,
         "max_tokens": max_tokens,
         "temperature": 0.1,
@@ -371,7 +372,7 @@ async def diagnose(
     return {
         "ok": bool(answer),
         "elapsed_s": elapsed,
-        "model": MODEL,
+        "model": model or MODEL,
         "max_tokens_requested": max_tokens,
         "finish_reason": choice.get("finish_reason"),
         "usage": data.get("usage"),
