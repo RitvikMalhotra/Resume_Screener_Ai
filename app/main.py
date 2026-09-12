@@ -338,10 +338,11 @@ async def health_ai(
     prompt: Optional[str] = None,
     system: Optional[str] = None,
     no_think: bool = False,
+    timeout: float = 120.0,
 ):
     """Self-test the AI dependency and report latency + token usage."""
     _limiter.check(request, heavy=False)
-    kwargs = {"max_tokens": max(1, min(max_tokens, 4096)), "no_think": no_think}
+    kwargs = {"max_tokens": max(1, min(max_tokens, 4096)), "no_think": no_think, "timeout": timeout}
     if prompt:
         kwargs["prompt"] = prompt[:4000]
     if system:

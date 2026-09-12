@@ -316,6 +316,7 @@ async def diagnose(
     max_tokens: int = 400,
     system: Optional[str] = None,
     no_think: bool = False,
+    timeout: float = 120.0,
 ) -> dict:
     """
     Self-test for the AI dependency: does one controlled call and reports what
@@ -342,7 +343,7 @@ async def diagnose(
 
     t0 = time.perf_counter()
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             res = await client.post(API_URL, headers=headers, json=payload)
     except Exception as exc:
         return {"ok": False, "elapsed_s": round(time.perf_counter() - t0, 1),
