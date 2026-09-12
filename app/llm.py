@@ -349,6 +349,13 @@ async def diagnose(
         return {"ok": False, "elapsed_s": elapsed, "http_status": res.status_code,
                 "error": res.text[:300]}
 
+    # Provider-side throttling shows up here long before it's obvious from
+    # latency alone.
+    rate_headers = {
+        k: v for k, v in res.headers.items()
+        if "ratelimit" in k.lower() or "retry-after" in k.lower() or "x-request-id" == k.lower()
+    }
+
     data = res.json()
     choice  = (data.get("choices") or [{}])[0]
     message = choice.get("message") or {}
@@ -365,6 +372,7 @@ async def diagnose(
         "usage": data.get("usage"),
         "content_chars": len(content),
         "reasoning_chars": len(reasoning),
+        "rate_headers": rate_headers,
         "answer_preview": answer[:200],
     }
 
