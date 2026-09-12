@@ -39,13 +39,16 @@ MODEL   = os.getenv("NVIDIA_MODEL", "meta/muse-glimmer-30b")
 DEFAULT_MAX_TOKENS = 1200
 JSON_MAX_TOKENS    = 2000
 
-# This model is slow: a ~2000-token JSON answer measured 30-45s in production.
-# The ceiling is the serverless execution limit, since overrunning that surfaces
-# as a gateway error this app can't catch and degrade from -- so prefer one long
-# attempt over several short ones (see _should_retry: timeouts aren't retried,
-# because a slow model stays slow and a second attempt just burns the budget).
-REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "45"))
+# This model generates at roughly 10 tokens/sec with ~5s of fixed overhead, and
+# it reasons before answering, so a few-hundred-token answer realistically takes
+# 30-90s. Measured against the deployment, the serverless execution ceiling is
+# well above 120s, so the timeout is sized for how slow the model actually is
+# rather than kept artificially short -- a too-tight limit just turns a working
+# (if slow) answer into an error. TOTAL_BUDGET_S bounds retries so several
+# attempts can't stack up past the platform limit.
+REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "110"))
 MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "2"))
+TOTAL_BUDGET_S    = float(os.getenv("NVIDIA_TOTAL_BUDGET", "150"))
 
 
 class LLMError(RuntimeError):
@@ -246,10 +249,16 @@ async def call_llm(
     }
 
     last_error = "unknown error"
+    deadline = time.monotonic() + min(timeout * attempts, TOTAL_BUDGET_S)
 
     for attempt in range(1, attempts + 1):
+        remaining = deadline - time.monotonic()
+        if attempt > 1 and remaining < 10:
+            logger.warning("LLM giving up: %.0fs left of the total budget", remaining)
+            break
+
         try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
+            async with httpx.AsyncClient(timeout=min(timeout, max(remaining, 5))) as client:
                 res = await client.post(API_URL, headers=headers, json=payload)
 
             if res.status_code == 401:

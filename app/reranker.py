@@ -372,7 +372,7 @@ Return ONLY a JSON array with one object per candidate, no markdown, no explanat
             self._build_prompt(job_description, candidates),
             max_tokens=2000,
             temperature=0.1,
-            timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "20")),
+            timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "90")),
             attempts=1,
         ))
 
