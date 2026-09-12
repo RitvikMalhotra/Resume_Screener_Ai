@@ -383,6 +383,26 @@ async def diagnose(
     }
 
 
+async def list_models() -> dict:
+    """Ask the provider which models this key can actually use."""
+    if not is_configured():
+        return {"ok": False, "error": "NVIDIA_API_KEY is not set"}
+
+    url = API_URL.split("/chat/completions")[0].rstrip("/") + "/models"
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            res = await client.get(url, headers={"Authorization": f"Bearer {API_KEY}"})
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    if res.status_code != 200:
+        return {"ok": False, "http_status": res.status_code, "error": res.text[:300], "url": url}
+
+    data = res.json()
+    ids = sorted(m.get("id", "") for m in data.get("data", []))
+    return {"ok": True, "count": len(ids), "models": ids, "current": MODEL}
+
+
 async def call_llm_json(
     prompt: str,
     *,

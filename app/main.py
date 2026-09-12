@@ -353,6 +353,13 @@ async def health_ai(
     return await llm.diagnose(**kwargs)
 
 
+@app.get("/health/ai/models")
+async def health_ai_models(request: Request):
+    """List the models this deployment's API key can use."""
+    _limiter.check(request, heavy=False)
+    return await llm.list_models()
+
+
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 def _require_auth_backend() -> None:
