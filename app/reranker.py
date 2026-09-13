@@ -382,16 +382,13 @@ Return ONLY a JSON array with one object per candidate, no markdown, no explanat
             attempts=int(os.getenv("RERANK_LLM_ATTEMPTS", "3")),
             # One score object per candidate, so healthy latency grows with the list.
             hedge_after=6 + 0.4 * len(candidates),
+            # Re-screening the same resumes against the same JD skips the model.
+            cache=True,
+            valid=lambda r: bool(_score_list(r)),
         ))
 
-        # Accept either a bare array or {"scores": [...]} / {"results": [...]}.
-        if isinstance(raw, dict):
-            for key in ("scores", "results", "candidates"):
-                if isinstance(raw.get(key), list):
-                    raw = raw[key]
-                    break
-
-        if not isinstance(raw, list):
+        raw = _score_list(raw)
+        if raw is None:
             raise llm.LLMError("The model did not return a list of scores.")
 
         scores: dict[int, float] = {}
@@ -468,6 +465,15 @@ Return ONLY a JSON array with one object per candidate, no markdown, no explanat
         for rank, result in enumerate(combined):
             result.rank = rank
         return combined[:n]
+
+
+def _score_list(raw) -> Optional[list]:
+    """Accept either a bare array or {"scores": [...]} / {"results": [...]}."""
+    if isinstance(raw, dict):
+        for key in ("scores", "results", "candidates"):
+            if isinstance(raw.get(key), list):
+                return raw[key]
+    return raw if isinstance(raw, list) else None
 
 
 def _passthrough(candidates: list[RetrievalResult], n: int) -> list[RerankResult]:

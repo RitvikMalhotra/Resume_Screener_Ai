@@ -1202,9 +1202,7 @@
       clearStatus(); const data = await res.json();
       renderResults(data); checkHealth();
       applyUsage(data.usage);
-      generateAllExplanations(jd, data.results||[]);
-      generateAllSkillGaps(jd, data.results||[]);
-      generateAllRedFlags(data.results||[]);
+      generateAllAnalyses(jd, data.results||[]);
     } catch (e) { setError(e.message||'Could not reach API.'); }
   }
 
@@ -1231,9 +1229,7 @@
           clearInterval(iv); clearStatus();
           const result = Array.isArray(data.result) ? data.result[0] : data.result;
           renderResults(result); checkHealth();
-          generateAllExplanations(lastJD, result.results||[]);
-          generateAllSkillGaps(lastJD, result.results||[]);
-          generateAllRedFlags(result.results||[]);
+          generateAllAnalyses(lastJD, result.results||[]);
         } else if (data.status==='error') { clearInterval(iv); setError('Job failed: '+data.error); }
         else { setLoading(`Job ${data.status} (${data.elapsed_s||0}s)…`); }
       } catch {}
@@ -1241,82 +1237,102 @@
     }, 1000);
   }
 
-  // ── Skill Experience Summary ───────────────────────────────────────────
-  async function generateAllExplanations(jd, results) {
-    for (let i = 0; i < results.length; i++) {
-      const r = results[i], el = document.getElementById(`explain_${r.resume_id}`);
-      if (!el) continue;
-      const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
-      el.innerHTML = `<div class="explain-loading"><div class="explain-spinner"></div> Extracting skills…</div>`;
-      try {
-        const res = await fetch(`${API}/skillsummary`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resume:resumeText})});
-        if (!res.ok) throw await aiError(res);
-        const data = await res.json();
-        const skills = data.skills || [];
-        const role   = data.current_role || '';
-        const totalYrs = data.total_experience_years || '';
+  // ── Per-candidate AI analysis ──────────────────────────────────────────
+  // One /analyze call per candidate fills all three sections. Two candidates
+  // run at a time: the provider throttles concurrent requests per key, and
+  // firing every call at once measured slower than walking them in order.
+  const ANALYSIS_CONCURRENCY = 2;
 
-        let html = '';
-        if (role) html += `<div style="font-size:11px;color:#777;margin-bottom:10px;letter-spacing:0.06em">${role}${totalYrs ? ' · ' + totalYrs + ' yrs total exp' : ''}</div>`;
-        html += '<div style="display:flex;flex-direction:column;gap:5px">';
-        for (const s of skills) {
-          const barW = Math.min((s.years / 12) * 100, 100);
-          const barColor = s.years >= 5 ? 'var(--good)' : s.years >= 3 ? 'var(--accent)' : 'var(--medium)';
-          html += `<div style="display:flex;align-items:center;gap:10px">
-            <div style="width:140px;font-size:11px;color:#f0f0ee;flex-shrink:0">${s.skill}</div>
-            <div style="flex:1;height:3px;background:#222;position:relative;overflow:hidden">
-              <div style="position:absolute;left:0;top:0;bottom:0;width:${barW}%;background:${barColor}"></div>
-            </div>
-            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:${barColor};min-width:40px;text-align:right">${s.years}y</div>
-            ${s.context ? `<div style="font-size:11px;color:var(--muted2);flex:2;min-width:150px;line-height:1.5">${s.context}</div>` : ''}
-          </div>`;
-        }
-        html += '</div>';
-        el.innerHTML = html;
-        if (shortlisted.has(r.resume_id)) renderShortlistPanel();
-      } catch (err) { el.innerHTML=`<div class="explain-error">⚠ Could not generate (${err.message})</div>`; }
+  async function generateAllAnalyses(jd, results) {
+    const loading = {
+      explain:  `<div class="explain-spinner"></div> Extracting skills…`,
+      skillgap: `<div class="skillgap-spinner"></div> Analysing skills…`,
+      redflag:  `<div class="redflag-spinner"></div> Scanning…`,
+    };
+    for (const r of results) {
+      for (const part in loading) {
+        const el = document.getElementById(`${part}_${r.resume_id}`);
+        if (el) el.innerHTML = loading[part];
+      }
     }
+    const queue = [...results];
+    const worker = async () => { while (queue.length) await analyseCandidate(jd, queue.shift()); };
+    await Promise.all(Array.from({ length: Math.min(ANALYSIS_CONCURRENCY, queue.length) }, worker));
+  }
+
+  async function analyseCandidate(jd, r) {
+    const resumeText = resumeTextMap[r.resume_id] || r.text_snippet;
+    let data = null, error = null;
+    try {
+      const res = await fetch(`${API}/analyze`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jd, resume: resumeText, resume_id: r.resume_id }),
+      });
+      if (!res.ok) throw await aiError(res);
+      data = await res.json();
+    } catch (err) { error = err; }
+    const why = error ? error.message : 'missing from the model answer';
+    renderSkillSummary(r, data?.skill_summary, why);
+    renderSkillGap(r, data?.skill_gap, why);
+    renderRedFlags(r, data?.red_flags, why);
+  }
+
+  // ── Skill Experience Summary ───────────────────────────────────────────
+  function renderSkillSummary(r, data, why) {
+    const el = document.getElementById(`explain_${r.resume_id}`); if (!el) return;
+    el.classList.remove('explain-loading');
+    if (!data) { el.innerHTML = `<div class="explain-error">⚠ Could not generate (${why})</div>`; return; }
+    const skills = data.skills || [];
+    const role   = data.current_role || '';
+    const totalYrs = data.total_experience_years || '';
+
+    let html = '';
+    if (role) html += `<div style="font-size:11px;color:#777;margin-bottom:10px;letter-spacing:0.06em">${role}${totalYrs ? ' · ' + totalYrs + ' yrs total exp' : ''}</div>`;
+    html += '<div style="display:flex;flex-direction:column;gap:5px">';
+    for (const s of skills) {
+      const barW = Math.min((s.years / 12) * 100, 100);
+      const barColor = s.years >= 5 ? 'var(--good)' : s.years >= 3 ? 'var(--accent)' : 'var(--medium)';
+      html += `<div style="display:flex;align-items:center;gap:10px">
+        <div style="width:140px;font-size:11px;color:#f0f0ee;flex-shrink:0">${s.skill}</div>
+        <div style="flex:1;height:3px;background:#222;position:relative;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:${barW}%;background:${barColor}"></div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:${barColor};min-width:40px;text-align:right">${s.years}y</div>
+        ${s.context ? `<div style="font-size:11px;color:var(--muted2);flex:2;min-width:150px;line-height:1.5">${s.context}</div>` : ''}
+      </div>`;
+    }
+    html += '</div>';
+    el.innerHTML = html;
+    if (shortlisted.has(r.resume_id)) renderShortlistPanel();
   }
 
   // ── Skill Gap ──────────────────────────────────────────────────────────
-  async function generateAllSkillGaps(jd, results) {
-    for (const r of results) {
-      const el = document.getElementById(`skillgap_${r.resume_id}`); if (!el) continue;
-      const resumeText = resumeTextMap[r.resume_id]||r.text_snippet;
-      el.innerHTML = `<div class="skillgap-loading"><div class="skillgap-spinner"></div> Analysing skills…</div>`;
-      try {
-        const res = await fetch(`${API}/skillgap`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jd,resume:resumeText})});
-        if (!res.ok) throw await aiError(res);
-        const data = await res.json(), skills = data.skills||[];
-        const matched = skills.filter(s=>s.found).length, total = skills.length;
-        const pct = total ? Math.round((matched/total)*100) : 0;
-        const barColor = pct>=70?'var(--good)':pct>=40?'var(--medium)':'var(--uncertain)';
-        const pctColor = pct>=70?'var(--good)':pct>=40?'var(--medium)':'var(--uncertain)';
-        el.innerHTML = `<div class="skillgap-header"><div></div><div class="skillgap-score"><span style="color:var(--muted);font-size:10px">${matched}/${total} matched</span><div class="skillgap-bar-wrap"><div class="skillgap-bar-fill" style="width:${pct}%;background:${barColor}"></div></div><span class="skillgap-pct" style="color:${pctColor}">${pct}%</span></div></div><div class="skill-tags">${skills.map(s=>`<div class="skill-tag ${s.found?'found':'missing'}"><span class="skill-icon">${s.found?'✓':'✗'}</span>${s.skill}</div>`).join('')}</div>`;
-      } catch (err) { el.innerHTML=`<div class="skillgap-error">⚠ Skill analysis unavailable (${err.message})</div>`; }
-    }
+  function renderSkillGap(r, data, why) {
+    const el = document.getElementById(`skillgap_${r.resume_id}`); if (!el) return;
+    el.classList.remove('skillgap-loading');
+    if (!data) { el.innerHTML = `<div class="skillgap-error">⚠ Skill analysis unavailable (${why})</div>`; return; }
+    const skills = data.skills||[];
+    const matched = skills.filter(s=>s.found).length, total = skills.length;
+    const pct = total ? Math.round((matched/total)*100) : 0;
+    const barColor = pct>=70?'var(--good)':pct>=40?'var(--medium)':'var(--uncertain)';
+    const pctColor = pct>=70?'var(--good)':pct>=40?'var(--medium)':'var(--uncertain)';
+    el.innerHTML = `<div class="skillgap-header"><div></div><div class="skillgap-score"><span style="color:var(--muted);font-size:10px">${matched}/${total} matched</span><div class="skillgap-bar-wrap"><div class="skillgap-bar-fill" style="width:${pct}%;background:${barColor}"></div></div><span class="skillgap-pct" style="color:${pctColor}">${pct}%</span></div></div><div class="skill-tags">${skills.map(s=>`<div class="skill-tag ${s.found?'found':'missing'}"><span class="skill-icon">${s.found?'✓':'✗'}</span>${s.skill}</div>`).join('')}</div>`;
   }
 
   // ── Red Flag ──────────────────────────────────────────────────────────
   const FLAG_TYPE_LABELS = { short_tenure:'Short Tenure', employment_gap:'Employment Gap', job_hopping:'Job Hopping', vague_title:'Vague Title', unverifiable_employer:'Unverifiable Employer', inconsistent_progression:'Inconsistent Progression' };
   const FLAG_ICONS = { short_tenure:'⏱', employment_gap:'📅', job_hopping:'🔄', vague_title:'❓', unverifiable_employer:'🏢', inconsistent_progression:'📉' };
 
-  async function generateAllRedFlags(results) {
-    for (const r of results) {
-      const el = document.getElementById(`redflag_${r.resume_id}`); if (!el) continue;
-      const resumeText = resumeTextMap[r.resume_id]||r.text_snippet;
-      el.innerHTML = `<div class="redflag-loading"><div class="redflag-spinner"></div> Scanning…</div>`;
-      try {
-        const res = await fetch(`${API}/redflag`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resume:resumeText,resume_id:r.resume_id})});
-        if (!res.ok) throw await aiError(res);
-        const data = await res.json(), flags = data.flags||[], risk = data.overall_risk||'low', summary = data.summary||'';
-        const header = document.getElementById(`redflag_header_${r.resume_id}`);
-        if (header) header.innerHTML = `<span class="redflag-label">${ico('flag')} Red Flag Detection</span><span class="redflag-overall risk-${risk}">${risk.charAt(0).toUpperCase()+risk.slice(1)} Risk</span>`;
-        el.innerHTML = flags.length===0
-          ? `${summary?`<div class="redflag-summary">${summary}</div>`:''}<div class="redflag-clean">✓ No red flags detected</div>`
-          : `${summary?`<div class="redflag-summary">${summary}</div>`:''}<div class="flag-list">${flags.map(f=>`<div class="flag-item sev-${f.severity}"><span class="flag-icon">${FLAG_ICONS[f.type]||'⚠'}</span><div class="flag-content"><div class="flag-type">${FLAG_TYPE_LABELS[f.type]||f.type} · ${f.severity}</div><div class="flag-desc">${f.description}</div></div></div>`).join('')}</div>`;
-      } catch (err) { el.innerHTML=`<div class="redflag-error">⚠ Red flag scan unavailable (${err.message})</div>`; }
-    }
+  function renderRedFlags(r, data, why) {
+    const el = document.getElementById(`redflag_${r.resume_id}`); if (!el) return;
+    el.classList.remove('redflag-loading');
+    if (!data) { el.innerHTML = `<div class="redflag-error">⚠ Red flag scan unavailable (${why})</div>`; return; }
+    const flags = data.flags||[], risk = data.overall_risk||'low', summary = data.summary||'';
+    const header = document.getElementById(`redflag_header_${r.resume_id}`);
+    if (header) header.innerHTML = `<span class="redflag-label">${ico('flag')} Red Flag Detection</span><span class="redflag-overall risk-${risk}">${risk.charAt(0).toUpperCase()+risk.slice(1)} Risk</span>`;
+    el.innerHTML = flags.length===0
+      ? `${summary?`<div class="redflag-summary">${summary}</div>`:''}<div class="redflag-clean">✓ No red flags detected</div>`
+      : `${summary?`<div class="redflag-summary">${summary}</div>`:''}<div class="flag-list">${flags.map(f=>`<div class="flag-item sev-${f.severity}"><span class="flag-icon">${FLAG_ICONS[f.type]||'⚠'}</span><div class="flag-content"><div class="flag-type">${FLAG_TYPE_LABELS[f.type]||f.type} · ${f.severity}</div><div class="flag-desc">${f.description}</div></div></div>`).join('')}</div>`;
   }
 
   // ── Render results ─────────────────────────────────────────────────────

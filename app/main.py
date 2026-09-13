@@ -7,6 +7,7 @@ Phase 3: Confidence scoring + keyword fallback + input validation
 Phase 4: Async batch jobs + status polling + rate limiting
 
 AI endpoints:
+  /analyze    — skill summary, skill gap and red flags for one candidate in one call (used by the UI)
   /explain    — plain English ranking explanation per candidate
   /skillgap   — required vs found skills comparison
   /redflag    — resume red flag detection
@@ -205,8 +206,8 @@ async def _call_nvidia(prompt: str, max_tokens: int = llm.DEFAULT_MAX_TOKENS, te
     return await llm.call_llm(prompt, max_tokens=max_tokens, temperature=temperature, hedge_after=hedge_after)
 
 
-async def _call_nvidia_json(prompt: str, max_tokens: int = llm.JSON_MAX_TOKENS, temperature: float = 0.1):
-    return await llm.call_llm_json(prompt, max_tokens=max_tokens, temperature=temperature)
+async def _call_nvidia_json(prompt: str, max_tokens: int = llm.JSON_MAX_TOKENS, temperature: float = 0.1, **kw):
+    return await llm.call_llm_json(prompt, max_tokens=max_tokens, temperature=temperature, **kw)
 
 
 # ── Middleware ─────────────────────────────────────────────────────────────
@@ -790,6 +791,94 @@ Rules:
         return await _call_nvidia_json(prompt, max_tokens=2200)
     except LLMError as exc:
         raise _ai_error(exc)
+
+
+_ANALYSIS_PARTS = ("skill_summary", "skill_gap", "red_flags")
+
+
+@app.post("/analyze")
+async def analyze_candidate(request: Request, body: dict):
+    """
+    Skill summary, skill gap and red flags for one candidate in a single model
+    call, cached per identical resume and JD. The UI used to make three calls
+    per candidate; under the provider's per-key throttling, the number of
+    requests drove the wait far more than the length of any one answer.
+    """
+    _limiter.check(request, heavy=False)
+
+    jd        = body.get("jd", "")[:2000]
+    resume    = body.get("resume", "")[:2000]
+    candidate = body.get("resume_id", "candidate")
+
+    prompt = f"""You are a senior technical recruiter. Read this resume against the job description and produce three analyses in one answer.
+
+JOB DESCRIPTION:
+{jd}
+
+RESUME ({candidate}):
+{resume}
+
+Return ONLY one valid JSON object with exactly these three keys, nothing else, no markdown:
+{{
+  "skill_summary": {{
+    "skills": [
+      {{"skill": "Kubernetes", "years": 6, "context": "EKS, GKE, self-managed clusters"}}
+    ],
+    "total_experience_years": 9,
+    "current_role": "Staff DevOps Engineer at Stripe"
+  }},
+  "skill_gap": {{
+    "skills": [
+      {{"skill": "Python", "found": true}},
+      {{"skill": "Kubernetes", "found": false}}
+    ],
+    "matched": 5,
+    "total": 10
+  }},
+  "red_flags": {{
+    "flags": [
+      {{"type": "short_tenure", "severity": "high", "description": "Role at Company X lasted only 8 months (2021-2022)"}}
+    ],
+    "overall_risk": "low",
+    "summary": "One sentence overall assessment"
+  }}
+}}
+
+Rules for skill_summary:
+- Extract 6-12 specific technical skills from the RESUME only (tools, platforms, languages — not soft skills)
+- Calculate years from job dates in the resume — be precise
+- context: one short phrase showing how they used the skill
+- total_experience_years: total years of professional experience
+- current_role: their most recent job title and company
+
+Rules for skill_gap:
+- Extract 8-15 specific technical skills from the JOB DESCRIPTION
+- Set found=true only if the skill clearly appears in the resume
+
+Rules for red_flags:
+- Look for: short tenures (any role under 12 months), employment gaps (unexplained 6+ months), job hopping (more than 3 jobs in 4 years), vague or inflated titles ("Guru", "Ninja", "Rockstar"), unverifiable employers, inconsistent progression (unexplained drops in seniority)
+- severity: "low", "medium", or "high"; overall_risk: "low", "medium", or "high"
+- type: "short_tenure", "employment_gap", "job_hopping", "vague_title", "unverifiable_employer", "inconsistent_progression"
+- If no red flags, return an empty flags array and overall_risk "low"
+
+Return ONLY the JSON, no explanation, no markdown fences"""
+
+    def complete(r) -> bool:
+        return isinstance(r, dict) and all(isinstance(r.get(k), dict) for k in _ANALYSIS_PARTS)
+
+    try:
+        data = await _call_nvidia_json(
+            prompt, max_tokens=3000, temperature=0.1,
+            # Roughly three answers' worth of output, so it runs past the single-answer hedge point.
+            hedge_after=8, cache=True, valid=complete,
+        )
+    except LLMError as exc:
+        raise _ai_error(exc)
+
+    if not isinstance(data, dict):
+        raise _ai_error(LLMError("The model did not return the expected analysis."))
+    # A missing section is reported as null so the UI fails that section alone.
+    return {k: data.get(k) if isinstance(data.get(k), dict) else None for k in _ANALYSIS_PARTS}
 
 
 @app.post("/jdenhance")

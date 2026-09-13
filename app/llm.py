@@ -19,12 +19,13 @@ to show a user -- callers should never surface a raw Python exception.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
 import re
 import time
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import httpx
 
@@ -496,8 +497,22 @@ async def call_llm_json(
     timeout: Optional[float] = None,
     attempts: Optional[int] = None,
     hedge_after: Optional[float] = None,
+    cache: bool = False,
+    valid: Optional[Callable[[Any], bool]] = None,
 ) -> Any:
-    """Run a prompt that must return JSON, and parse it defensively."""
+    """
+    Run a prompt that must return JSON, and parse it defensively.
+
+    cache=True reuses a stored answer for an identical model+prompt. Only for
+    analysis, where the same resume and JD should give the same answer anyway.
+    `valid` gates what is stored, so one malformed answer can't be replayed forever.
+    """
+    key = _cache_key(system, prompt) if cache else None
+    if key:
+        hit = await _cache_get(key)
+        if hit is not None and (valid is None or valid(hit)):
+            return hit
+
     raw = await call_llm(
         prompt,
         max_tokens=max_tokens,
@@ -507,4 +522,32 @@ async def call_llm_json(
         attempts=attempts,
         hedge_after=hedge_after,
     )
-    return extract_json(raw)
+    result = extract_json(raw)
+    if key and (valid is None or valid(result)):
+        await _cache_put(key, result)
+    return result
+
+
+def _cache_key(system: Optional[str], prompt: str) -> Optional[str]:
+    from app import db
+    if not db.is_configured():
+        return None
+    return hashlib.sha256(f"{MODEL}\x00{system or ''}\x00{prompt}".encode()).hexdigest()
+
+
+# The cache is an optimisation: a database problem must never fail the AI call.
+async def _cache_get(key: str) -> Any:
+    from app import db
+    try:
+        return await asyncio.to_thread(db.get_ai_cache, key)
+    except Exception as exc:
+        logger.warning("AI cache read failed: %s", exc)
+        return None
+
+
+async def _cache_put(key: str, value: Any) -> None:
+    from app import db
+    try:
+        await asyncio.to_thread(db.put_ai_cache, key, value)
+    except Exception as exc:
+        logger.warning("AI cache write failed: %s", exc)

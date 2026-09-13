@@ -19,6 +19,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 try:
     import psycopg
     from psycopg.rows import dict_row
+    from psycopg.types.json import Jsonb
     _PSYCOPG = True
 except ImportError:
     _PSYCOPG = False
@@ -67,6 +68,13 @@ def init_schema() -> None:
                 user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 amount     INTEGER NOT NULL,
                 status     TEXT NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ai_cache (
+                key        TEXT PRIMARY KEY,
+                value      JSONB NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now()
             )
         """)
@@ -157,6 +165,21 @@ def record_screening(user_id: int, jd_snippet: str, candidate_count: int) -> dic
         ).fetchone()
         conn.commit()
     return row
+
+
+def get_ai_cache(key: str) -> Optional[Any]:
+    with get_connection() as conn:
+        row = conn.execute("SELECT value FROM ai_cache WHERE key = %s", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def put_ai_cache(key: str, value: Any) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO ai_cache (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
+            (key, Jsonb(value)),
+        )
+        conn.commit()
 
 
 def list_screenings(user_id: int, limit: int = 10) -> list[dict[str, Any]]:
