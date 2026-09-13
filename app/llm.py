@@ -68,6 +68,14 @@ REQUEST_TIMEOUT_S = float(os.getenv("NVIDIA_TIMEOUT", "18"))
 MAX_ATTEMPTS      = int(os.getenv("NVIDIA_MAX_ATTEMPTS", "5"))
 TOTAL_BUDGET_S    = float(os.getenv("NVIDIA_TOTAL_BUDGET", "95"))
 
+# Slow calls here are not slow, they are stuck: measured on the live site,
+# the long waits were 18s+2s and 18s+18s+1s -- a request that never answered,
+# the full timeout, then a retry that answered in a second or two. Healthy
+# short-JSON calls land in 0.8-3s. So once a call has run past this point, a
+# duplicate is sent and whichever answers first wins, instead of sitting out
+# the rest of the timeout.
+HEDGE_AFTER_S = float(os.getenv("NVIDIA_HEDGE_AFTER", "5"))
+
 
 class LLMError(RuntimeError):
     """Raised with a user-safe message when the model can't produce a usable answer."""
@@ -233,6 +241,53 @@ def extract_json(raw: str) -> Any:
 
 # ── Calling ─────────────────────────────────────────────────────────────────
 
+async def _post_once(payload: dict, headers: dict, timeout: float) -> httpx.Response:
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        return await client.post(API_URL, headers=headers, json=payload)
+
+
+async def _post_hedged(payload: dict, headers: dict, timeout: float, hedge_after: float) -> httpx.Response:
+    """
+    Send the request; if it hasn't answered after `hedge_after` seconds, send one
+    duplicate and return the first 200. At most two copies are ever in flight:
+    the provider throttles concurrency per key, and firing more measured slower.
+    """
+    first = asyncio.create_task(_post_once(dict(payload), headers, timeout))
+    if hedge_after <= 0 or hedge_after >= timeout:
+        return await first
+
+    done, _ = await asyncio.wait({first}, timeout=hedge_after)
+    if done:
+        return first.result()
+
+    logger.info("LLM call still open after %.1fs; sending a hedge request", hedge_after)
+    # Only the rest of the original window, so an attempt where both copies
+    # hang ends exactly when it would have without hedging.
+    second = asyncio.create_task(_post_once(dict(payload), headers, timeout - hedge_after))
+    pending = {first, second}
+    last_res: Optional[httpx.Response] = None
+    last_exc: Optional[BaseException] = None
+    try:
+        while pending:
+            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                try:
+                    res = task.result()
+                except Exception as exc:
+                    last_exc = exc
+                    continue
+                if res.status_code == 200:
+                    return res
+                last_res = res
+        if last_res is not None:
+            return last_res
+        raise last_exc
+    finally:
+        for task in (first, second):
+            if not task.done():
+                task.cancel()
+
+
 async def call_llm(
     prompt: str,
     *,
@@ -241,13 +296,15 @@ async def call_llm(
     system: Optional[str] = None,
     timeout: Optional[float] = None,
     attempts: Optional[int] = None,
+    hedge_after: Optional[float] = None,
 ) -> str:
     """Run a prompt and return non-empty text, or raise LLMError."""
     if not is_configured():
         raise LLMError("AI features are not configured on this deployment (missing NVIDIA_API_KEY).")
 
-    timeout  = REQUEST_TIMEOUT_S if timeout is None else timeout
-    attempts = MAX_ATTEMPTS if attempts is None else attempts
+    timeout     = REQUEST_TIMEOUT_S if timeout is None else timeout
+    attempts    = MAX_ATTEMPTS if attempts is None else attempts
+    hedge_after = HEDGE_AFTER_S if hedge_after is None else hedge_after
 
     messages = []
     if system:
@@ -278,8 +335,7 @@ async def call_llm(
             break
 
         try:
-            async with httpx.AsyncClient(timeout=min(timeout, max(remaining, 5))) as client:
-                res = await client.post(API_URL, headers=headers, json=payload)
+            res = await _post_hedged(payload, headers, min(timeout, max(remaining, 5)), hedge_after)
 
             if res.status_code == 401:
                 raise LLMError("The AI provider rejected the API key (401). Check NVIDIA_API_KEY.")
@@ -439,6 +495,7 @@ async def call_llm_json(
     system: Optional[str] = None,
     timeout: Optional[float] = None,
     attempts: Optional[int] = None,
+    hedge_after: Optional[float] = None,
 ) -> Any:
     """Run a prompt that must return JSON, and parse it defensively."""
     raw = await call_llm(
@@ -448,5 +505,6 @@ async def call_llm_json(
         system=system,
         timeout=timeout,
         attempts=attempts,
+        hedge_after=hedge_after,
     )
     return extract_json(raw)

@@ -380,6 +380,8 @@ Return ONLY a JSON array with one object per candidate, no markdown, no explanat
             # response inside the serverless limit.
             timeout=float(os.getenv("RERANK_LLM_TIMEOUT", "28")),
             attempts=int(os.getenv("RERANK_LLM_ATTEMPTS", "3")),
+            # One score object per candidate, so healthy latency grows with the list.
+            hedge_after=6 + 0.4 * len(candidates),
         ))
 
         # Accept either a bare array or {"scores": [...]} / {"results": [...]}.

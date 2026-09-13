@@ -200,8 +200,9 @@ def _ai_error(exc: LLMError) -> HTTPException:
     return HTTPException(status_code=status, detail=str(exc))
 
 
-async def _call_nvidia(prompt: str, max_tokens: int = llm.DEFAULT_MAX_TOKENS, temperature: float = 0.3) -> str:
-    return await llm.call_llm(prompt, max_tokens=max_tokens, temperature=temperature)
+async def _call_nvidia(prompt: str, max_tokens: int = llm.DEFAULT_MAX_TOKENS, temperature: float = 0.3,
+                       hedge_after: Optional[float] = None) -> str:
+    return await llm.call_llm(prompt, max_tokens=max_tokens, temperature=temperature, hedge_after=hedge_after)
 
 
 async def _call_nvidia_json(prompt: str, max_tokens: int = llm.JSON_MAX_TOKENS, temperature: float = 0.1):
@@ -817,7 +818,8 @@ Rewrite it following these rules:
 - Return ONLY the enhanced JD text, no explanation, no markdown headers with ##"""
 
     try:
-        return {"enhanced_jd": await _call_nvidia(prompt, max_tokens=1800, temperature=0.4)}
+        # A 300-word rewrite legitimately runs past the short-JSON hedge point.
+        return {"enhanced_jd": await _call_nvidia(prompt, max_tokens=1800, temperature=0.4, hedge_after=12)}
     except LLMError as exc:
         raise _ai_error(exc)
 
