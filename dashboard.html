@@ -22,7 +22,7 @@
     --shadow-2: 0 8px 24px -8px rgba(4,6,10,0.85);
     --shadow-3: 0 24px 64px -16px rgba(4,6,10,0.95);
     --ease-out: cubic-bezier(0.16,1,0.3,1);
-    --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+    --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-io: cubic-bezier(0.65,0,0.35,1);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -78,7 +78,7 @@
 
   /* Usage bar */
   .usage-bar-wrap { height: 4px; background: var(--s3); margin-top: 12px; position: relative; overflow: hidden; }
-  .usage-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; transition: width 1s cubic-bezier(0.16,1,0.3,1); }
+  .usage-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; }
 
   /* Plan card */
   .plan-card { background: var(--s1); border: 1px solid var(--border); padding: 20px; margin-bottom: 12px; animation: fadeUp 0.5s ease 0.2s both; }
@@ -131,14 +131,14 @@
   @keyframes fadeUp   { from { opacity: 0; transform: translateY(14px); }  to { opacity: 1; transform: translateY(0); } }
 
   /* ── Shared surface + motion language with ui.html ── */
-  .logo-square { border-radius: 7px; box-shadow: 0 0 22px var(--glow); color: #0a0b0e; transition: transform 0.4s var(--ease-spring); }
+  .logo-square { border-radius: 7px; box-shadow: 0 6px 18px -6px rgba(4,6,10,0.9); color: #0a0b0e; transition: transform 0.4s var(--ease-snap); }
   .logo:hover .logo-square { transform: rotate(-8deg) scale(1.08); }
 
   .page-heading .line2 {
     color: transparent; -webkit-text-stroke: 1.2px var(--accent);
     animation: fillIn 1s var(--ease-out) 0.5s forwards;
   }
-  @keyframes fillIn { to { color: var(--accent); -webkit-text-stroke-color: transparent; text-shadow: 0 0 44px var(--glow); } }
+  @keyframes fillIn { to { color: var(--accent); -webkit-text-stroke-color: transparent; } }
 
   .card, .plan-card {
     background: linear-gradient(180deg, rgba(255,255,255,0.026), rgba(255,255,255,0.006)), var(--s1);
@@ -151,12 +151,12 @@
   .card-value { font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
 
   .usage-bar-wrap { height: 5px; border-radius: 999px; }
-  .usage-bar-fill { border-radius: 999px; box-shadow: 0 0 12px var(--glow); }
+  .usage-bar-fill { border-radius: 999px; }
 
-  .nav-btn { border-radius: 8px; transition: border-color 0.25s var(--ease-out), color 0.25s var(--ease-out), background 0.25s var(--ease-out), transform 0.2s var(--ease-spring), box-shadow 0.3s var(--ease-out); }
+  .nav-btn { border-radius: 8px; transition: border-color 0.25s var(--ease-out), color 0.25s var(--ease-out), background 0.25s var(--ease-out), transform 0.2s var(--ease-snap), box-shadow 0.3s var(--ease-out); }
   .nav-btn:hover { transform: translateY(-1px); }
   .nav-btn.primary { color: #0a0b0e; }
-  .nav-btn.primary:hover { background: var(--accent); box-shadow: 0 6px 22px -8px var(--glow); }
+  .nav-btn.primary:hover { background: var(--accent); box-shadow: 0 6px 18px -8px rgba(4,6,10,0.95); }
   .nav-btn:active { transform: scale(0.975); }
 
   .plan-badge { border-radius: 999px; font-weight: 600; }
@@ -217,8 +217,8 @@
       <div class="plan-feature">Red flag detection</div>
       <div class="plan-feature">JD quality analyser</div>
     </div>
-    <button class="upgrade-btn" id="upgradeBtn" onclick="handleUpgrade()">⭐ Upgrade to Pro — ₹999/month</button>
-    <div class="pro-active" id="proActive">⭐ You're on Pro — Unlimited screenings active</div>
+    <button class="upgrade-btn" id="upgradeBtn" onclick="handleUpgrade()">Upgrade to Pro · ₹999/month</button>
+    <div class="pro-active" id="proActive">You're on Pro. Unlimited screenings active.</div>
   </div>
 
   <div class="history-card">
@@ -226,7 +226,7 @@
       <div class="history-title">Screening History</div>
       <span style="font-size:10px;color:var(--muted)" id="historyCount"></span>
     </div>
-    <div id="historyList"><div class="history-empty">No screenings yet — start your first one above</div></div>
+    <div id="historyList"><div class="history-empty">No screenings yet. Start your first one above.</div></div>
   </div>
 
   <div class="cta">
@@ -272,7 +272,7 @@
     const barColor = pct >= 90 ? 'var(--uncertain)' : pct >= 60 ? 'var(--medium)' : 'var(--good)';
 
     document.getElementById('screeningsUsed').textContent  = used;
-    document.getElementById('screeningsLimit').textContent = isPro ? 'Unlimited — Pro plan' : `of ${limit} used this month`;
+    document.getElementById('screeningsLimit').textContent = isPro ? 'Unlimited on Pro' : `of ${limit} used this month`;
     document.getElementById('usageBar').style.width        = isPro ? '0%' : `${pct}%`;
     document.getElementById('usageBar').style.background   = barColor;
     document.getElementById('planValue').textContent       = isPro ? 'Pro' : 'Free';
@@ -320,7 +320,7 @@
     const btn = document.getElementById('upgradeBtn');
     const reset = (msg) => {
       btn.disabled = false;
-      btn.textContent = msg || '⭐ Upgrade to Pro — ₹999/month';
+      btn.textContent = msg || 'Upgrade to Pro · ₹999/month';
     };
 
     btn.disabled = true; btn.textContent = 'Opening payment…';
@@ -347,7 +347,7 @@
       amount:      order.amount,
       currency:    order.currency,
       name:        'Resume Screener',
-      description: 'Pro Plan — Unlimited Screenings',
+      description: 'Pro Plan: unlimited screenings',
       prefill: {
         email: currentUser?.email || '',
       },
