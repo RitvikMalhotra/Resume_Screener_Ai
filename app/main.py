@@ -36,6 +36,7 @@ from app.auth import (
     create_token,
     get_user_id_from_request,
     hash_password,
+    is_admin,
     require_user_id,
     verify_password,
 )
@@ -376,7 +377,7 @@ async def signup(body: SignupRequest):
     if db.get_user_by_email(email):
         raise HTTPException(status_code=409, detail="An account with that email already exists.")
     user = db.create_user(email=email, password_hash=hash_password(body.password), full_name=body.full_name.strip())
-    return {"token": create_token(user["id"], user["email"]), "user": user}
+    return {"token": create_token(user["id"], user["email"]), "user": _with_role(user)}
 
 
 @app.post("/auth/login")
@@ -386,7 +387,7 @@ async def login(body: LoginRequest):
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
     user.pop("password_hash", None)
-    return {"token": create_token(user["id"], user["email"]), "user": user}
+    return {"token": create_token(user["id"], user["email"]), "user": _with_role(user)}
 
 
 @app.get("/auth/me")
@@ -395,7 +396,11 @@ async def get_me(request: Request):
     user = db.get_user_by_id(require_user_id(request))
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
-    return {"user": user}
+    return {"user": _with_role(user)}
+
+
+def _with_role(user: dict) -> dict:
+    return {**user, "is_admin": is_admin(user)}
 
 
 @app.get("/screenings")
@@ -447,7 +452,7 @@ async def upgrade_plan(request: Request, body: UpgradeRequest):
         logger.warning("Rejected upgrade for user %s: order %s not claimable", user_id, body.razorpay_order_id)
         raise HTTPException(status_code=409, detail="This payment has already been used, or does not belong to your account.")
 
-    return {"user": db.upgrade_to_pro(user_id)}
+    return {"user": _with_role(db.upgrade_to_pro(user_id))}
 
 
 @app.post("/rank", response_model=RankResponse)
@@ -463,7 +468,7 @@ async def rank_resumes(request: Request, body: RankRequest):
 
     user_id = get_user_id_from_request(request)
     user    = db.get_user_by_id(user_id) if user_id and db.is_configured() else None
-    if user and user["plan"] != "pro" and user["screenings_used"] >= user["screenings_limit"]:
+    if user and not is_admin(user) and user["plan"] != "pro" and user["screenings_used"] >= user["screenings_limit"]:
         raise HTTPException(status_code=402, detail=f"Free plan limit of {user['screenings_limit']} screenings reached. Upgrade to Pro for unlimited screenings.")
 
     if not body.skip_validation:
@@ -499,7 +504,7 @@ async def rank_resumes(request: Request, body: RankRequest):
 
     usage = None
     if user:
-        usage = db.record_screening(user_id, body.job_description, len(body.resumes))
+        usage = _with_role(db.record_screening(user_id, body.job_description, len(body.resumes)))
         usage.pop("created_at", None)  # datetime isn't JSON-serializable via the raw JSONResponse below
 
     info = pipeline.retriever.index_info()

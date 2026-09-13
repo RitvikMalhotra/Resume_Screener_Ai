@@ -846,8 +846,8 @@
     currentProfile = usage;
     const used = usage.screenings_used || 0;
     const limit = usage.screenings_limit || 5;
-    const isPro = usage.plan === 'pro';
-    if (!isPro && used >= limit) {
+    const unlimited = usage.plan === 'pro' || usage.is_admin === true;
+    if (!unlimited && used >= limit) {
       const banner = document.getElementById('limitBanner');
       if (banner) { document.getElementById('limitCount').textContent = limit; banner.style.display = 'flex'; }
       document.getElementById('submitBtn').disabled = true;

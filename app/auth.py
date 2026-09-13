@@ -40,6 +40,19 @@ def auth_configured() -> bool:
     return _BCRYPT and _JWT and bool(JWT_SECRET)
 
 
+# Unlimited-use accounts. Lives in the environment rather than the repo, with no
+# default, so a fork or another deployment grants nobody. Signup lowercases and
+# uniquely indexes email, so a differently-cased signup can't claim an entry.
+ADMIN_EMAILS = frozenset(
+    e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()
+)
+
+
+def is_admin(user: Optional[dict]) -> bool:
+    """`user` must be the database row, never a client-supplied claim."""
+    return bool(user) and (user.get("email") or "").strip().lower() in ADMIN_EMAILS
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 

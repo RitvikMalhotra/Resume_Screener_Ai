@@ -267,20 +267,22 @@
     const used  = p.screenings_used  || 0;
     const limit = p.screenings_limit || 5;
     const plan  = p.plan || 'free';
-    const isPro = plan === 'pro';
+    const isAdmin = p.is_admin === true;
+    const isPro = plan === 'pro' || isAdmin;
     const pct   = isPro ? 0 : Math.min((used / limit) * 100, 100);
     const barColor = pct >= 90 ? 'var(--uncertain)' : pct >= 60 ? 'var(--medium)' : 'var(--good)';
 
     document.getElementById('screeningsUsed').textContent  = used;
-    document.getElementById('screeningsLimit').textContent = isPro ? 'Unlimited on Pro' : `of ${limit} used this month`;
+    document.getElementById('screeningsLimit').textContent = isAdmin ? 'Unlimited with admin access' : isPro ? 'Unlimited on Pro' : `of ${limit} used this month`;
     document.getElementById('usageBar').style.width        = isPro ? '0%' : `${pct}%`;
     document.getElementById('usageBar').style.background   = barColor;
-    document.getElementById('planValue').textContent       = isPro ? 'Pro' : 'Free';
+    document.getElementById('planValue').textContent       = isAdmin ? 'Admin' : isPro ? 'Pro' : 'Free';
     document.getElementById('planValue').style.color       = isPro ? 'var(--shortlist)' : 'var(--text)';
     document.getElementById('planSub').textContent         = isPro ? 'Unlimited screenings' : `${limit - used} screenings remaining`;
 
     if (isPro) {
-      document.getElementById('planName').textContent   = 'Pro Plan';
+      if (isAdmin) document.getElementById('proActive').textContent = 'Admin access. Unlimited screenings active.';
+      document.getElementById('planName').textContent   = isAdmin ? 'Admin' : 'Pro Plan';
       document.getElementById('planName').className     = 'plan-name pro';
       document.getElementById('planBadge').textContent  = 'Active';
       document.getElementById('planBadge').className    = 'plan-badge pro';
